@@ -10,8 +10,6 @@ be given to structures that found within the binary file format. These
 identifiers may be used to read and set values within a binary file of the
 target format file after the template has been processed and applied to it. 
 
---------------------------------------------------------------------------------
-
 ## Template Layout
 ### Overview
 (TODO)
