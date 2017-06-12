@@ -75,6 +75,11 @@ namespace WHampson.BFT
         /// </exception>
         private static unsafe T Dereference(IntPtr addr)
         {
+            if (addr == IntPtr.Zero)
+            {
+                throw new ArgumentException("cannot dereference null pointer");
+            }
+
             Type t = typeof(T);
             IPrimitiveType inst = null;
 
@@ -114,6 +119,11 @@ namespace WHampson.BFT
         /// </param>
         public Pointer(IntPtr addr)
         {
+            if (addr == IntPtr.Zero)
+            {
+                throw new ArgumentException("null pointer not allowed");
+            }
+
             Address = addr;
         }
 
