@@ -52,37 +52,9 @@ namespace WHampson.BFT
             // Fill buffer with test data
             CreateTestData(ptr);
 
-            // Map structure to test memory (ugly... I know)
-            // This will later be done with template processor
-            PlayerInfo info = new PlayerInfo();
-            IntPtr mark = ptr;
-            info.Health = mark + 0 * Marshal.SizeOf(typeof(Int8));
-            info.Armor = mark + 1 * Marshal.SizeOf(typeof(Int8));
-            mark = info.Armor.Address + 3;
-            info.Money = mark + 0 * Marshal.SizeOf(typeof(Int32));
-            mark = info.Money.Address + Marshal.SizeOf(typeof(Int32));
-            info.Location = new Vect3D();
-            info.Location.X = mark + 0 * Marshal.SizeOf(typeof(Float));
-            info.Location.Y = mark + 1 * Marshal.SizeOf(typeof(Float));
-            info.Location.Z = mark + 2 * Marshal.SizeOf(typeof(Float));
-            mark = info.Location.Z.Address + Marshal.SizeOf(typeof(Float));
-            info.WeaponAmmo = new Pointer<Int32>[13];
-            for (int i = 0; i < info.WeaponAmmo.Length; i++)
-            {
-                info.WeaponAmmo[i] = mark + i * Marshal.SizeOf(typeof(Int32));
-            }
-
-            // Test modifying data through pointer
-            info.Health.Value = 50;
-            Console.WriteLine("Health:\t\t" + info.Health.Value);
-            
-            // Test modifying data directly
-            unsafe
-            {
-                byte* pHealth = (byte*) ptr;
-                *pHealth = 100;             // Health
-                *(pHealth + 1) = 125;       // Armor
-            }
+            // Read template and map to PlayerInfo instance
+            PlayerInfo info;
+            info = TemplateReader.ProcessTemplate<PlayerInfo>("../../Test.xml", ptr, 128);
 
             // Print all data
             Console.WriteLine("Health:\t\t" + info.Health.Value);

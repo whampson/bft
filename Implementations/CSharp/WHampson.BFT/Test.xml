@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<bft>
+    <int8 name="health" />
+    <int8 name="armor" />
+    <int8 comment="align" />
+    <int8 comment="align" />
+    <int32 name="money" />
+    <struct name="location">
+        <float name="x" />
+        <float name="y" />
+        <float name="z" />
+    </struct>
+    <int32 name="weaponAmmo" count="13" />
+</bft>
