@@ -77,7 +77,7 @@ namespace WHampson.BFT
         {
             if (addr == IntPtr.Zero)
             {
-                throw new ArgumentException("cannot dereference null pointer");
+                throw new ArgumentException("Cannot dereference null pointer.");
             }
 
             Type t = typeof(T);
@@ -121,7 +121,7 @@ namespace WHampson.BFT
         {
             if (addr == IntPtr.Zero)
             {
-                throw new ArgumentException("null pointer not allowed");
+                throw new ArgumentException("Null pointer not allowed.");
             }
 
             Address = addr;
