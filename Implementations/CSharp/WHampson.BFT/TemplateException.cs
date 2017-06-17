@@ -26,24 +26,24 @@ using System.Runtime.Serialization;
 
 namespace WHampson.BFT
 {
-    public class BinaryFileTemplateException : Exception
+    public class TemplateException : Exception
     {
-        public BinaryFileTemplateException()
+        public TemplateException()
             : base()
         {
         }
 
-        public BinaryFileTemplateException(string message)
+        public TemplateException(string message)
             : base(message)
         {
         }
 
-        public BinaryFileTemplateException(string message, Exception innerException)
+        public TemplateException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
-        protected BinaryFileTemplateException(SerializationInfo info, StreamingContext context)
+        protected TemplateException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
         }
