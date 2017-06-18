@@ -1,4 +1,27 @@
-﻿using System;
+﻿#region License
+/* Copyright (c) 2017 Wes Hampson
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+#endregion
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -246,7 +269,7 @@ namespace WHampson.BFT
 
             if (kind.Value != "struct" && !e.IsEmpty)
             {
-                string fmt = "Type definitions not descending from 'struct' cannot contain member fields.";
+                string fmt = "Type definitions not descending directly from 'struct' cannot contain member fields.";
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
             }
             else if (kind.Value == "struct")
@@ -262,11 +285,26 @@ namespace WHampson.BFT
                 ParseStructElement(e, true);
             }
 
-            CustomTypeInfo typeInfo = new CustomTypeInfo();
-            typeInfo.Kind = kind.Value;
-            typeInfo.Element = e;
+            CustomTypeInfo newTypeInfo = new CustomTypeInfo();
+            newTypeInfo.Kind = kind.Value;
+            newTypeInfo.Element = e;
 
-            typedefs[typename.Value] = typeInfo;
+            CustomTypeInfo existingTypeInfo;
+            while (typedefs.TryGetValue(newTypeInfo.Kind, out existingTypeInfo))
+            {
+                newTypeInfo.Kind = existingTypeInfo.Kind;
+            }
+
+            //Keyword result;
+            //bool valid = Keyword.IdentifierMap.TryGetValue(newTypeInfo.Kind, out result);
+            //if (!valid || result.Type != Keyword.KeywordType.PrimitiveType || result.Type != Keyword.KeywordType.StructType)
+            //{
+                
+            //}
+
+            Console.WriteLine("{0} => {1}", typename.Value, newTypeInfo.Kind);
+
+            typedefs[typename.Value] = newTypeInfo;
         }
 
         private bool LookupType(string name, out Keyword kw)
