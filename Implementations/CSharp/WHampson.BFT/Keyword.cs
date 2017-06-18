@@ -25,81 +25,110 @@ using System.Collections.Generic;
 
 namespace WHampson.BFT
 {
-    internal class Keyword
+    internal static class Keyword
     {
-        public static readonly Keyword Double   = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Float    = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Int8     = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Int16    = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Int32    = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Int64    = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword Struct   = new Keyword(KeywordType.StructType);
-        public static readonly Keyword UInt8    = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword UInt16   = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword UInt32   = new Keyword(KeywordType.PrimitiveType);
-        public static readonly Keyword UInt64   = new Keyword(KeywordType.PrimitiveType);
+        // Builtin types and aliases
+        public const string ByteIdentifier = "byte";
+        public const string DoubleIdentifier = "double";
+        public const string DwordIdentifier = "dword";
+        public const string FloatIdentifier = "float";
+        public const string Int8Identifier = "int8";
+        public const string Int16Identifier = "int16";
+        public const string Int32Identifier = "int32";
+        public const string Int64Identifier = "int64";
+        public const string QwordIdentifier = "qword";
+        public const string StructIdentifier = "struct";
+        public const string UInt8Identifier = "uint8";
+        public const string UInt16Identifier = "uint16";
+        public const string UInt32Identifier = "uint32";
+        public const string UInt64Identifier = "uint64";
+        public const string WordIdentifier = "word";
 
-        public static readonly Keyword Align    = new Keyword(KeywordType.Directive);
-        public static readonly Keyword Echo     = new Keyword(KeywordType.Directive);
-        public static readonly Keyword Typedef  = new Keyword(KeywordType.Directive);
+        // Directives
+        public const string AlignIdentifier = "align";
+        public const string EchoIdentifier = "echo";
+        public const string TypedefIdentifier = "typedef";
 
-        public static readonly Keyword Comment  = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Count    = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Kind     = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Message  = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Name     = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Sentinel = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Thresh   = new Keyword(KeywordType.Modifier);
-        public static readonly Keyword Typename = new Keyword(KeywordType.Modifier);
+        // Modifiers
+        public const string CommentIdentifier = "comment";
+        public const string CountIdentifier = "count";
+        public const string KindIdentifier = "kind";
+        public const string MessageIdentifier = "message";
+        public const string NameIdentifier = "name";
+        public const string SentinelIdentifier = "sentinel";
+        public const string ThreshIdentifier = "thresh";
+        //public const string TypenameIdentifier = "typename";
 
-        public static readonly Dictionary<string, Keyword> IdentifierMap = new Dictionary<string, Keyword>()
+        public enum BuiltinType
         {
-            // Data types
-            { "byte", Keyword.UInt8 },
-            { "double", Keyword.Double },
-            { "dword", Keyword.UInt32 },
-            { "float", Keyword.Float },
-            { "int8", Keyword.Int8 },
-            { "int16", Keyword.Int16 },
-            { "int32", Keyword.Int32 },
-            { "int64", Keyword.Int64 },
-            { "qword", Keyword.UInt64 },
-            { "struct", Keyword.Struct },
-            { "uint8", Keyword.UInt8 },
-            { "uint16", Keyword.UInt16 },
-            { "uint32", Keyword.UInt32 },
-            { "uint64", Keyword.UInt64 },
-            { "word", Keyword.UInt16 },
+            Double,
+            Float,
+            Int8,
+            Int16,
+            Int32,
+            Int64,
+            Struct,
+            UInt8,
+            UInt16,
+            UInt32,
+            UInt64
+        }
 
-            // Directives
-            { "align", Keyword.Align },
-            { "echo", Keyword.Echo },
-            { "typedef", Keyword.Typedef },
+        public enum Directive
+        {
+            Align,
+            Echo,
+            Typedef
+        }
 
-            // Modifiers
-            { "comment", Keyword.Comment },
-            { "count", Keyword.Count },
-            { "kind", Keyword.Kind },
-            { "message", Keyword.Message },
-            { "name", Keyword.Name },
-            { "sentinel", Keyword.Sentinel },
-            { "thresh", Keyword.Thresh },
-            { "typename", Keyword.Typename },
+        public enum Modifier
+        {
+            Comment,
+            Count,
+            Kind,
+            Message,
+            Name,
+            Sentinel,
+            Thresh,
+            //Typename
+        }
+
+        public static readonly Dictionary<string, BuiltinType> BuiltinTypeIdentifierMap = new Dictionary<string, BuiltinType>()
+        {
+            { ByteIdentifier, BuiltinType.UInt8 },
+            { DoubleIdentifier, BuiltinType.Double },
+            { DwordIdentifier, BuiltinType.UInt32 },
+            { FloatIdentifier, BuiltinType.Float },
+            { Int8Identifier, BuiltinType.Int8 },
+            { Int16Identifier, BuiltinType.Int16 },
+            { Int32Identifier, BuiltinType.Int32 },
+            { Int64Identifier, BuiltinType.Int64 },
+            { QwordIdentifier, BuiltinType.UInt64 },
+            { StructIdentifier, BuiltinType.Struct },
+            { UInt8Identifier, BuiltinType.UInt8 },
+            { UInt16Identifier, BuiltinType.UInt16 },
+            { UInt32Identifier, BuiltinType.UInt32 },
+            { UInt64Identifier, BuiltinType.UInt64 },
+            { WordIdentifier, BuiltinType.UInt16 }
         };
 
-        public enum KeywordType
+        public static readonly Dictionary<string, Directive> DirectiveIdentifierMap = new Dictionary<string, Directive>()
         {
-            Directive,
-            Modifier,
-            PrimitiveType,
-            StructType
-        }
+            { AlignIdentifier, Directive.Align },
+            { EchoIdentifier, Directive.Echo },
+            { TypedefIdentifier, Directive.Typedef },
+        };
 
-        private Keyword(KeywordType type)
+        public static readonly Dictionary<string, Modifier> ModifierIdentifierMap = new Dictionary<string, Modifier>()
         {
-            Type = type;
-        }
-
-        public KeywordType Type { get; }
+            { CommentIdentifier, Modifier.Comment },
+            { CountIdentifier, Modifier.Count },
+            { KindIdentifier, Modifier.Kind },
+            { MessageIdentifier, Modifier.Message },
+            { NameIdentifier, Modifier.Name },
+            { SentinelIdentifier, Modifier.Sentinel },
+            { ThreshIdentifier, Modifier.Thresh },
+            //{ TypenameIdentifier, Modifier.Typename },
+        };
     }
 }
