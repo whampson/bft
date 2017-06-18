@@ -1,15 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-
 <bft>
-    <int8 name="health" />
-    <int8 name="armor" />
-    <int8 comment="align" />
-    <int8 comment="align" />
-    <int32 name="money" />
-    <struct name="location">
+    <typedef typename="vect3d_t" kind="struct">
         <float name="x" />
         <float name="y" />
         <float name="z" />
+    </typedef>
+    
+    <struct name="PLYR">
+        <int32 name="money" />
+        <uint8 name="health" />
+        <uint8 name="armor" />
+        <vect3d_t name="location" />
+        <align count="4"/>
     </struct>
-    <int32 name="weaponAmmo" count="13" />
 </bft>
