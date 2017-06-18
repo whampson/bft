@@ -24,10 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace WHampson.BFT
@@ -198,6 +194,7 @@ namespace WHampson.BFT
                 Keyword kw;
 
                 // Get member keyword
+
                 bool found = LookupType(childName, out kw);
                 if (!found || kw.Type == Keyword.KeywordType.Modifier)
                 {
@@ -295,12 +292,14 @@ namespace WHampson.BFT
                 newTypeInfo.Kind = existingTypeInfo.Kind;
             }
 
-            //Keyword result;
-            //bool valid = Keyword.IdentifierMap.TryGetValue(newTypeInfo.Kind, out result);
-            //if (!valid || result.Type != Keyword.KeywordType.PrimitiveType || result.Type != Keyword.KeywordType.StructType)
-            //{
-                
-            //}
+            Keyword result;
+            bool valid = Keyword.IdentifierMap.TryGetValue(newTypeInfo.Kind, out result);
+            if (!valid || (result.Type != Keyword.KeywordType.PrimitiveType && result.Type != Keyword.KeywordType.StructType))
+            {
+                string fmt = "Unknown type '{0}'.";
+                string msg = XmlUtils.BuildXmlErrorMsg(kind, fmt, newTypeInfo.Kind);
+                throw new TemplateException(msg);
+            }
 
             Console.WriteLine("{0} => {1}", typename.Value, newTypeInfo.Kind);
 
@@ -310,12 +309,13 @@ namespace WHampson.BFT
         private bool LookupType(string name, out Keyword kw)
         {
             string kind = name;
-            CustomTypeInfo info = null;
-            while (typedefs.TryGetValue(kind, out info))
+            CustomTypeInfo info;
+            bool found = typedefs.TryGetValue(kind, out info);
+            if (found)
             {
                 kind = info.Kind;
             }
-            
+
             return Keyword.IdentifierMap.TryGetValue(kind, out kw);
         }
 
