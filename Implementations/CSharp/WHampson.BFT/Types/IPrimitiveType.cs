@@ -21,7 +21,7 @@
  */
 #endregion
 
-namespace WHampson.BFT
+namespace WHampson.BFT.Types
 {
     /// <summary>
     /// Defines a primitive data type; that is, a fixed-size collection of

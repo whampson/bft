@@ -21,62 +21,81 @@
  */
 #endregion
 
-namespace WHampson.BFT
+namespace WHampson.BFT.Types
 {
     /// <summary>
-    /// Represents an 8-bit signed integer.
-    /// The .NET analog for this type is <see cref="sbyte"/>.
+    /// Represents a 32-bit signed integer.
+    /// The .NET analog for ths type is <see cref="int"/>. 
     /// </summary>
-    public unsafe struct Int8 : IPrimitiveType
+    public unsafe struct Int32 : IPrimitiveType
     {
         /// <summary>
         /// Represents the largest (most positive) possible value of
-        /// <see cref="Int8"/>.
+        /// <see cref="Int32"/>.
         /// </summary>
-        public static readonly Int8 MaxValue = sbyte.MaxValue;
+        public static readonly Int32 MaxValue = int.MaxValue;
 
         /// <summary>
         /// Represents the smallest (most negative) possible value of
-        /// <see cref="Int8"/>.
+        /// <see cref="Int32"/>.
         /// </summary>
-        public static readonly Int8 MinValue = sbyte.MinValue;
+        public static readonly Int32 MinValue = int.MinValue;
 
         /// <summary>
-        /// Handles implicit conversion from <see cref="Int8"/>
-        /// to <see cref="sbyte"/>.
+        /// Handles implicit conversion from <see cref="Int32"/>
+        /// to <see cref="int"/>.
         /// </summary>
-        /// <param name="i8">
-        /// The <see cref="Int8"/> to convert to <see cref="sbyte"/>.
+        /// <param name="i32">
+        /// The <see cref="Int32"/> to convert to <see cref="int"/>.
         /// </param>
-        public static implicit operator sbyte(Int8 i8)
+        public static implicit operator int(Int32 i32)
         {
-            return (sbyte) i8.data[0];
+            int val = 0;
+            int len = sizeof(Int32);
+            for (int i = 0; i < len; i++)
+            {
+                // Decode data from little-endian format
+                val |= i32.data[i] << (i * 8);
+            }
+            
+            return val;
         }
 
         /// <summary>
-        /// Handles implicit conversion from <see cref="sbyte"/>
-        /// to <see cref="Int8"/>.
+        /// Handles implicit conversion from <see cref="int"/>
+        /// to <see cref="Int32"/>.
         /// </summary>
-        /// <param name="sb">
-        /// The <see cref="sbyte"/> to convert to <see cref="Int8"/>.
+        /// <param name="i">
+        /// The <see cref="int"/> to convert to <see cref="Int32"/>.
         /// </param>
-        public static implicit operator Int8(sbyte sb)
+        public static implicit operator Int32(int i)
         {
-            Int8 i8 = new Int8();
-            i8.data[0] = (byte) sb;
+            Int32 i32 = new Int32();
+            int len = sizeof(Int32);
+            for (int k = 0; k < len; k++)
+            {
+                // Encode data in little-endian format
+                i32.data[k] = (byte) ((i >> (k * 8)) & 0xFF);
+            }
 
-            return i8;
+            return i32;
         }
 
-        // Backing data for Int8.
-        private fixed byte data[1];
+        // Backing data for Int32.
+        private fixed byte data[4];
 
         byte[] IPrimitiveType.GetBytes()
         {
-            byte[] b = new byte[1];
+            int siz = sizeof(Int32);
+            byte[] b = new byte[siz];
+
             fixed (byte* pData = data)
             {
-                b[0] = *pData;
+                // Copy bytes from 'data' into 'b'
+                for (int i = 0; i < siz; i++)
+                {
+                    b[i] = *(pData + (i * sizeof(byte)));
+                }
             }
 
             return b;
@@ -85,7 +104,7 @@ namespace WHampson.BFT
         public override string ToString()
         {
             // Use the native type's ToString().
-            return ((sbyte) this).ToString();
+            return ((int) this).ToString();
         }
     }
 }
