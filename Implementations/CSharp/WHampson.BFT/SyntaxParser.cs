@@ -248,10 +248,10 @@ namespace WHampson.BFT
 
         private void ParseTypedefElement(XElement e)
         {
-            ParseDirectiveElement(e, true, Keyword.Kind, Keyword.Typename);
+            ParseDirectiveElement(e, true, Keyword.Kind, Keyword.Name);
 
             XAttribute kind = e.Attribute("kind");
-            XAttribute typename = e.Attribute("typename");
+            XAttribute typename = e.Attribute("name");
 
             if (kind == null)
             {
