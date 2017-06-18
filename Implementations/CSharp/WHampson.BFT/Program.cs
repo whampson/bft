@@ -22,7 +22,13 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
+using WHampson.BFT.Types;
+
+using Int32 = WHampson.BFT.Types.Int32;
 
 namespace WHampson.BFT
 {
@@ -53,20 +59,28 @@ namespace WHampson.BFT
             CreateTestData(ptr);
 
             // Read template and map to PlayerInfo instance
-            PlayerInfo info;
-            info = TemplateReader.ProcessTemplate<PlayerInfo>("../../Test.xml", ptr, 128);
+            TemplateFile template = new TemplateFile("../../Test.xml");
+            string a = template["platform"];
+            Console.WriteLine(a ?? "Undefined");
+            
 
-            // Print all data
-            Console.WriteLine("Health:\t\t" + info.Health.Value);
-            Console.WriteLine("Armor:\t\t" + info.Armor.Value);
-            Console.WriteLine("Money:\t\t" + info.Money.Value);
-            Console.WriteLine("Location.X:\t" + info.Location.X.Value);
-            Console.WriteLine("Location.Y:\t" + info.Location.Y.Value);
-            Console.WriteLine("Location.Z:\t" + info.Location.Z.Value);
-            for (int i = 0; i < info.WeaponAmmo.Length; i++)
-            {
-                Console.WriteLine("WeaponAmmo[" + i + "]:\t" + info.WeaponAmmo[i].Value);
-            }
+            PlayerInfo info;
+            //int bytesRead = bft.Apply(ptr, 128, out info);
+
+            //PlayerInfo info
+            //info = BinaryFileTemplate.ProcessTemplate<PlayerInfo>("../../Test.xml", ptr, 128);
+
+            //// Print all data
+            //Console.WriteLine("Health:\t\t" + info.Health.Value);
+            //Console.WriteLine("Armor:\t\t" + info.Armor.Value);
+            //Console.WriteLine("Money:\t\t" + info.Money.Value);
+            //Console.WriteLine("Location.X:\t" + info.Location.X.Value);
+            //Console.WriteLine("Location.Y:\t" + info.Location.Y.Value);
+            //Console.WriteLine("Location.Z:\t" + info.Location.Z.Value);
+            //for (int i = 0; i < info.WeaponAmmo.Length; i++)
+            //{
+            //    Console.WriteLine("WeaponAmmo[" + i + "]:\t" + info.WeaponAmmo[i].Value);
+            //}
 
             // Free heap-allocated memory
             Marshal.FreeHGlobal(ptr);
