@@ -23,6 +23,9 @@
 
 using System;
 using System.Runtime.InteropServices;
+using WHampson.BFT.Types;
+
+using Int32 = WHampson.BFT.Types.Int32;
 
 namespace WHampson.BFT
 {
