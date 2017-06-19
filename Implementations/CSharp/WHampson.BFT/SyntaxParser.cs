@@ -25,37 +25,59 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using static WHampson.BFT.Keyword;
 
 namespace WHampson.BFT
 {
-    class CustomTypeInfo
-    {
-        public string Kind { get; set; }
-        public XElement Element { get; set; }
-        public bool HasMembers { get { return Element.Descendants().Count() != 0; } }
-    }
-
+    /// <summary>
+    /// Handles syntax validation and name resolution.
+    /// </summary>
     internal class SyntaxParser
     {
         private const string RootElementName = "bft";
 
-        //private const string VariableRegex = "\\$\\{(.+)\\}";
-
-        private delegate void ValidationAction(XElement e);
+        private delegate void ParseAction(XElement e);
 
         private XDocument doc;
-        private Dictionary<Keyword, ValidationAction> validationActionMap;
-        private Dictionary<string, CustomTypeInfo> typedefs;
+        private Dictionary<BuiltinType, ParseAction> builtinTypeParseActionMap;
+        private Dictionary<Directive, ParseAction> directiveParseActionMap;
+        private Dictionary<string, CustomTypeInfo> customTypeMap;
 
+        /// <summary>
+        /// Creates a new <see cref="SyntaxParser"/> object for the specified
+        /// template document.
+        /// </summary>
+        /// <param name="doc">
+        /// The XML document pertaining to the binary file template.
+        /// </param>
         public SyntaxParser(ref XDocument doc)
         {
             this.doc = doc;
-            validationActionMap = new Dictionary<Keyword, ValidationAction>();
-            typedefs = new Dictionary<string, CustomTypeInfo>();
+            builtinTypeParseActionMap = new Dictionary<BuiltinType, ParseAction>();
+            directiveParseActionMap = new Dictionary<Directive, ParseAction>();
+            customTypeMap = new Dictionary<string, CustomTypeInfo>();
 
-            BuildActionMap();
+            BuildActionMaps();
         }
 
+        /// <summary>
+        /// Gets a dictionary of all user-defined types. The dictionary maps
+        /// custom type identifiers (names) to a <see cref="CustomTypeInfo"/>
+        /// object.
+        /// </summary>
+        /// <remarks>
+        /// Call <see cref="ParseTemplateStructure"/> prior to using this
+        /// method, otherwise an empty dictionary will be returned.
+        /// </remarks>
+        public Dictionary<string, CustomTypeInfo> CustomTypes
+        {
+            get { return customTypeMap; }
+        }
+
+        /// <summary>
+        /// Validates the element-wise structure of the template and builds
+        /// a map of user-defined types.
+        /// </summary>
         public void ParseTemplateStructure()
         {
             // Validate root element
@@ -72,7 +94,7 @@ namespace WHampson.BFT
                 throw new TemplateException("Empty template.");
             }
 
-            // Validate rest of document
+            // Parse rest of document
             ParseStructElement(doc.Root, true);
 
             ResolveTypedefs();
@@ -81,27 +103,30 @@ namespace WHampson.BFT
         private void ResolveTypedefs()
         {
             // Remove 'typedef' elements from XML document
-            doc.Descendants().Where(e => e.Name.LocalName == "typedef").Remove();
+            doc.Descendants().Where(e => e.Name.LocalName == Keyword.TypedefIdentifier).Remove();
 
             // Substitute typedef'd types with their definitions
             IEnumerable<XElement> desc = doc.Descendants();
             foreach (XElement elem in desc)
             {
-                if (!typedefs.ContainsKey(elem.Name.LocalName))
+                string identifier = elem.Name.LocalName;
+
+                // Skip builtins and directives
+                if (!customTypeMap.ContainsKey(identifier))
                 {
                     continue;
                 }
 
-                CustomTypeInfo info = typedefs[elem.Name.LocalName];
-                elem.Name = info.Kind;
-                if (info.Kind == "struct" && info.HasMembers)
+                CustomTypeInfo info = customTypeMap[identifier];
+                elem.Name = info.Kind.ToString().ToLower();
+                if (info.Kind == BuiltinType.Struct)
                 {
-                    elem.Add(info.Element.Elements());
+                    elem.Add(info.Members);
                 }
             }
         }
 
-        private void ParseElement(XElement e, bool childrenAllowed, params Keyword[] modifiers)
+        private void ParseElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
         {
             string name = e.Name.LocalName;
             if (!childrenAllowed && !e.IsEmpty)
@@ -113,46 +138,45 @@ namespace WHampson.BFT
             CheckAttributePresence(e, modifiers);
         }
 
-        private void CheckAttributePresence(XElement e, params Keyword[] modifiers)
+        private void CheckAttributePresence(XElement e, params Modifier[] validAttrs)
         {
             IEnumerable<XAttribute> attrs = e.Attributes();
-            foreach (XAttribute m in attrs)
+            foreach (XAttribute attr in attrs)
             {
-                string mName = m.Name.LocalName;
-                Keyword kw;
+                string mId = attr.Name.LocalName;
+                Modifier m;
 
-                // Get modifier keyword
-                bool found = Keyword.IdentifierMap.TryGetValue(mName, out kw);
-                if (!found || kw.Type != Keyword.KeywordType.Modifier)
+                // Get modifier
+                if (!ModifierIdentifierMap.TryGetValue(mId, out m))
                 {
                     string fmt = "Unknown modifier '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(m, fmt, mName));
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
 
-                // Check if modifier valid for current type
-                if (!modifiers.Contains(kw))
+                // Check if modifier is valid for current type
+                if (!validAttrs.Contains(m))
                 {
                     string fmt = "Invalid modifier '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(m, fmt, mName));
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
 
                 // Validate modifier
-                if (string.IsNullOrWhiteSpace(m.Value))
+                if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Value for modifier '{0}' cannot be empty.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(m, fmt, mName));
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
             }
         }
 
-        private void ParseDirectiveElement(XElement e, bool childrenAllowed, params Keyword[] modifiers)
-        {
-            ParseElement(e, childrenAllowed, modifiers);
-        }
-
-        private void ParsePrimitiveElement(XElement e, params Keyword[] modifiers)
+        private void ParseBuiltinTypeElement(XElement e, params Modifier[] modifiers)
         {
             ParseElement(e, false, modifiers);
+        }
+
+        private void ParseDirectiveElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
+        {
+            ParseElement(e, childrenAllowed, modifiers);
         }
 
         private void ParseStructElement(XElement e)
@@ -171,11 +195,12 @@ namespace WHampson.BFT
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
             }
 
+            CustomTypeInfo typeInfo;
+            bool isTypedefd = customTypeMap.TryGetValue(name, out typeInfo);
+
             // Ensure struct has at least one member
-            CustomTypeInfo info;
-            bool typedefd = typedefs.TryGetValue(name, out info);
             IEnumerable<XElement> children = e.Elements();
-            if (!typedefd && children.Count() == 0)
+            if (!isTypedefd && children.Count() == 0)
             {
                 string fmt = "Empty structs are not allowed.";
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
@@ -184,62 +209,80 @@ namespace WHampson.BFT
             // Validate modifiers
             if (!ignoreModifiers)
             {
-                CheckAttributePresence(e, Keyword.Comment, Keyword.Count, Keyword.Name);
+                CheckAttributePresence(e, Modifier.Comment, Modifier.Count, Modifier.Name);
             }
 
-            // Validate members
-            foreach (XElement child in children)
+            // Parse members
+            foreach (XElement memberElem in children)
             {
-                string childName = child.Name.LocalName;
-                Keyword kw;
+                string identifier = memberElem.Name.LocalName;
+                bool doLookupDirective = false;
 
-                // Get member keyword
-
-                bool found = LookupType(childName, out kw);
-                if (!found || kw.Type == Keyword.KeywordType.Modifier)
+                // Look up member type
+                BuiltinType type;
+                bool typeFound = LookupType(identifier, out type);
+                if (!typeFound)
                 {
-                    string fmt = "Unknown type or directive '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(child, fmt, childName));
+                    doLookupDirective = true;
                 }
 
-                // Validate!
-                ValidationAction validate = validationActionMap[kw];
-                validate(child);
+                // Look up directive if necessary
+                Directive dir = Directive.Align;
+                if (doLookupDirective && !DirectiveIdentifierMap.TryGetValue(identifier, out dir))
+                {
+                    string fmt = "Unknown type or directive '{0}'.";
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(memberElem, fmt, identifier));
+                }
+
+                // Parse type or directive
+                ParseAction parse;
+                if (typeFound)
+                {
+                    parse = builtinTypeParseActionMap[type];
+                }
+                else
+                {
+                    parse = directiveParseActionMap[dir];
+                }
+
+                parse(memberElem);
             }
         }
 
         private void ParseFloatElement(XElement e)
         {
-            ParsePrimitiveElement(e, Keyword.Comment, Keyword.Count, Keyword.Name, Keyword.Sentinel, Keyword.Thresh);
+            ParseBuiltinTypeElement(e,
+                Modifier.Comment, Modifier.Count, Modifier.Name, Modifier.Sentinel, Modifier.Thresh);
 
-            XAttribute sentinel = e.Attribute("sentinel");      // I don't like hardcoding these but it'll have to do
-            XAttribute thresh = e.Attribute("thresh");
+            XAttribute sentinelAttr = e.Attribute(SentinelIdentifier);
+            XAttribute threshAttr = e.Attribute(ThreshIdentifier);
 
-            // Ensure 'thresh' is only present when 'sentinel' is also present
-            if (thresh != null && sentinel == null)
+            // Ensure 'thresh' modifier is only present when 'sentinel' is also present
+            if (threshAttr != null && sentinelAttr == null)
             {
-                string fmt = "Modifier 'thresh' requires modifier 'sentinel' to be present.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(thresh, fmt));
+                string fmt = "Modifier '{0}' requires modifier '{1}' to be present.";
+                string msg = XmlUtils.BuildXmlErrorMsg(threshAttr, fmt, ThreshIdentifier, SentinelIdentifier);
+                throw new TemplateException(msg);
             }
         }
 
         private void ParseIntegerElement(XElement e)
         {
-            ParsePrimitiveElement(e, Keyword.Comment, Keyword.Count, Keyword.Name, Keyword.Sentinel);
+            ParseBuiltinTypeElement(e, Modifier.Comment, Modifier.Count, Modifier.Name, Modifier.Sentinel);
         }
 
         private void ParseAlignElement(XElement e)
         {
-            ParseDirectiveElement(e, false, Keyword.Count, Keyword.Kind);
+            ParseDirectiveElement(e, false, Modifier.Count, Modifier.Kind);
         }
 
         private void ParseEchoElement(XElement e)
         {
-            ParseDirectiveElement(e, false, Keyword.Message);
+            ParseDirectiveElement(e, false, Modifier.Message);
 
-            XAttribute message = e.Attribute("message");
+            XAttribute messageAttr = e.Attribute(MessageIdentifier);
             string textData = e.Value;
-            if (message == null)
+            if (messageAttr == null)
             {
                 string fmt = "Missing required message.";
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
@@ -248,30 +291,32 @@ namespace WHampson.BFT
 
         private void ParseTypedefElement(XElement e)
         {
-            ParseDirectiveElement(e, true, Keyword.Kind, Keyword.Name);
+            ParseDirectiveElement(e, true, Modifier.Kind, Modifier.Name);
 
-            XAttribute kind = e.Attribute("kind");
-            XAttribute typename = e.Attribute("name");
+            XAttribute kindAttr = e.Attribute(KindIdentifier);
+            XAttribute nameAttr = e.Attribute(NameIdentifier);
+            
+            if (kindAttr == null)
+            {
+                string fmt = "Missing required modifier '{0}'.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt, KindIdentifier));
+            }
+            else if (nameAttr == null)
+            {
+                string fmt = "Missing required modifier '{0}'.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt, NameIdentifier));
+            }
 
-            if (kind == null)
+            if (kindAttr.Value != StructIdentifier && !e.IsEmpty)
             {
-                string fmt = "Missing required modifier 'kind'.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
+                string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt, StructIdentifier));
             }
-            else if (typename == null)
+            else if (kindAttr.Value == StructIdentifier)
             {
-                string fmt = "Missing required modifier 'typename'.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
-            }
-
-            if (kind.Value != "struct" && !e.IsEmpty)
-            {
-                string fmt = "Type definitions not descending directly from 'struct' cannot contain member fields.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
-            }
-            else if (kind.Value == "struct")
-            {
-                IEnumerable<XElement> nestedTypedefs = e.Descendants().Where(t => t.Name.LocalName == "typedef");
+                // Ensure there are no nested typedefs
+                IEnumerable<XElement> nestedTypedefs = e.Descendants()
+                    .Where(t => t.Name.LocalName == TypedefIdentifier);
                 if (nestedTypedefs.Count() != 0)
                 {
                     string fmt = "Nested type definitions are not allowed.";
@@ -279,65 +324,82 @@ namespace WHampson.BFT
                     throw new TemplateException(msg);
                 }
 
+                // Parse type definition
                 ParseStructElement(e, true);
             }
 
-            CustomTypeInfo newTypeInfo = new CustomTypeInfo();
-            newTypeInfo.Kind = kind.Value;
-            newTypeInfo.Element = e;
+            string newTypeName = nameAttr.Value;
+            string kindIdentifier = kindAttr.Value;
+            BuiltinType kind;
 
+            // Ensure type isn't already defined
+            if (LookupType(newTypeName, out kind))
+            {
+                string fmt = "Type '{0}' has already been defined.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(nameAttr, fmt, newTypeName));
+            }
+
+            // Ensure new type is built from a pre-existing type
+            if (!LookupType(kindIdentifier, out kind))
+            {
+                string fmt = "Unknown type '{0}'.";;
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, kindIdentifier));
+            }
+
+            // If new type descends from another custom type,
+            // get member elements from that type
+            IEnumerable<XElement> members;
             CustomTypeInfo existingTypeInfo;
-            while (typedefs.TryGetValue(newTypeInfo.Kind, out existingTypeInfo))
+            if (customTypeMap.TryGetValue(kindIdentifier, out existingTypeInfo))
             {
-                newTypeInfo.Kind = existingTypeInfo.Kind;
+                members = existingTypeInfo.Members;
+            }
+            else
+            {
+                members = e.Descendants();
             }
 
-            Keyword result;
-            bool valid = Keyword.IdentifierMap.TryGetValue(newTypeInfo.Kind, out result);
-            if (!valid || (result.Type != Keyword.KeywordType.PrimitiveType && result.Type != Keyword.KeywordType.StructType))
-            {
-                string fmt = "Unknown type '{0}'.";
-                string msg = XmlUtils.BuildXmlErrorMsg(kind, fmt, newTypeInfo.Kind);
-                throw new TemplateException(msg);
-            }
+            // Store custom type
+            CustomTypeInfo newTypeInfo = new CustomTypeInfo(kind, members);
+            customTypeMap[newTypeName] = newTypeInfo;
 
-            Console.WriteLine("{0} => {1}", typename.Value, newTypeInfo.Kind);
-
-            typedefs[typename.Value] = newTypeInfo;
+            Console.WriteLine("{0} => {1}", newTypeName, kind.ToString().ToLower());
         }
 
-        private bool LookupType(string name, out Keyword kw)
+        private bool LookupType(string identifier, out BuiltinType type)
         {
-            string kind = name;
+            // Look up in custom type list
             CustomTypeInfo info;
-            bool found = typedefs.TryGetValue(kind, out info);
+            bool found = customTypeMap.TryGetValue(identifier, out info);
             if (found)
             {
-                kind = info.Kind;
+                type = info.Kind;
+                return true;
             }
 
-            return Keyword.IdentifierMap.TryGetValue(kind, out kw);
+            // Look up in builtin type list
+            return BuiltinTypeIdentifierMap.TryGetValue(identifier, out type);
         }
 
-        private void BuildActionMap()
+        private void BuildActionMaps()
         {
-            // Data types
-            validationActionMap[Keyword.Double] = ParseFloatElement;
-            validationActionMap.Add(Keyword.Float, ParseFloatElement);
-            validationActionMap.Add(Keyword.Int8, ParseIntegerElement);
-            validationActionMap.Add(Keyword.Int16, ParseIntegerElement);
-            validationActionMap.Add(Keyword.Int32, ParseIntegerElement);
-            validationActionMap.Add(Keyword.Int64, ParseIntegerElement);
-            validationActionMap.Add(Keyword.Struct, ParseStructElement);
-            validationActionMap.Add(Keyword.UInt8, ParseIntegerElement);
-            validationActionMap.Add(Keyword.UInt16, ParseIntegerElement);
-            validationActionMap.Add(Keyword.UInt32, ParseIntegerElement);
-            validationActionMap.Add(Keyword.UInt64, ParseIntegerElement);
+            // Builtin types
+            builtinTypeParseActionMap[BuiltinType.Double] = ParseFloatElement;
+            builtinTypeParseActionMap[BuiltinType.Float] = ParseFloatElement;
+            builtinTypeParseActionMap[BuiltinType.Int8] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.Int16] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.Int32] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.Int64] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.Struct] = ParseStructElement;
+            builtinTypeParseActionMap[BuiltinType.UInt8] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.UInt16] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.UInt32] = ParseIntegerElement;
+            builtinTypeParseActionMap[BuiltinType.UInt64] = ParseIntegerElement;
 
             // Directives
-            validationActionMap.Add(Keyword.Align, ParseAlignElement);
-            validationActionMap.Add(Keyword.Echo, ParseEchoElement);
-            validationActionMap.Add(Keyword.Typedef, ParseTypedefElement);
+            directiveParseActionMap[Directive.Align] = ParseAlignElement;
+            directiveParseActionMap[Directive.Echo] = ParseEchoElement;
+            directiveParseActionMap[Directive.Typedef] = ParseTypedefElement;
         }
     }
 }
