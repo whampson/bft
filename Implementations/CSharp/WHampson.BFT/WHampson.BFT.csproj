@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomTypeInfo.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="Types\Float.cs" />
     <Compile Include="Types\Int32.cs" />
@@ -58,7 +59,9 @@
     <Compile Include="XmlUtils.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Test.xml" />
+    <Content Include="Test.xml">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="WHampson.BFT.licenseheader" />
