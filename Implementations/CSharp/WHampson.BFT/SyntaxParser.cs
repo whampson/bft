@@ -36,7 +36,7 @@ namespace WHampson.BFT
     {
         private const string RootElementName = "bft";
 
-        private delegate void ParseAction(XElement e);
+        private delegate ISyntaxTreeNode ParseAction(XElement e);
 
         private XDocument doc;
         private Dictionary<BuiltinType, ParseAction> builtinTypeParseActionMap;
@@ -50,7 +50,7 @@ namespace WHampson.BFT
         /// <param name="doc">
         /// The XML document pertaining to the binary file template.
         /// </param>
-        public SyntaxParser(ref XDocument doc)
+        public SyntaxParser(XDocument doc)
         {
             this.doc = doc;
             builtinTypeParseActionMap = new Dictionary<BuiltinType, ParseAction>();
@@ -60,25 +60,12 @@ namespace WHampson.BFT
             BuildActionMaps();
         }
 
-        /// <summary>
-        /// Gets a dictionary of all user-defined types. The dictionary maps
-        /// custom type identifiers (names) to a <see cref="CustomTypeInfo"/>
-        /// object.
-        /// </summary>
-        /// <remarks>
-        /// Call <see cref="ParseTemplateStructure"/> prior to using this
-        /// method, otherwise an empty dictionary will be returned.
-        /// </remarks>
-        public Dictionary<string, CustomTypeInfo> CustomTypes
-        {
-            get { return customTypeMap; }
-        }
 
         /// <summary>
         /// Validates the element-wise structure of the template and builds
         /// a map of user-defined types.
         /// </summary>
-        public void ParseTemplateStructure()
+        public SyntaxTree ParseTemplateStructure()
         {
             // Validate root element
             if (doc.Root.Name != RootElementName)
@@ -94,39 +81,43 @@ namespace WHampson.BFT
                 throw new TemplateException("Empty template.");
             }
 
+
             // Parse rest of document
-            ParseStructElement(doc.Root, true);
+            ISyntaxTreeNode root = ParseStructElement(doc.Root, true);
+            SyntaxTree syntaxTree = new SyntaxTree(root);
 
-            ResolveTypedefs();
+            //ResolveTypedefs();
+
+            return syntaxTree;
         }
 
-        private void ResolveTypedefs()
-        {
-            // Remove 'typedef' elements from XML document
-            doc.Descendants().Where(e => e.Name.LocalName == Keyword.TypedefIdentifier).Remove();
+        //private void ResolveTypedefs()
+        //{
+        //    // Remove 'typedef' elements from XML document
+        //    doc.Descendants().Where(e => e.Name.LocalName == Keyword.TypedefIdentifier).Remove();
 
-            // Substitute typedef'd types with their definitions
-            IEnumerable<XElement> desc = doc.Descendants();
-            foreach (XElement elem in desc)
-            {
-                string identifier = elem.Name.LocalName;
+        //    // Substitute typedef'd types with their definitions
+        //    IEnumerable<XElement> desc = doc.Descendants();
+        //    foreach (XElement elem in desc)
+        //    {
+        //        string identifier = elem.Name.LocalName;
 
-                // Skip builtins and directives
-                if (!customTypeMap.ContainsKey(identifier))
-                {
-                    continue;
-                }
+        //        // Skip builtins and directives
+        //        if (!customTypeMap.ContainsKey(identifier))
+        //        {
+        //            continue;
+        //        }
 
-                CustomTypeInfo info = customTypeMap[identifier];
-                elem.Name = info.Kind.ToString().ToLower();
-                if (info.Kind == BuiltinType.Struct)
-                {
-                    elem.Add(info.Members);
-                }
-            }
-        }
+        //        CustomTypeInfo info = customTypeMap[identifier];
+        //        elem.Name = info.Kind.ToString().ToLower();
+        //        if (info.Kind == BuiltinType.Struct)
+        //        {
+        //            elem.Add(info.Members);
+        //        }
+        //    }
+        //}
 
-        private void ParseElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
+        private Dictionary<Modifier, string> ParseElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
         {
             string name = e.Name.LocalName;
             if (!childrenAllowed && !e.IsEmpty)
@@ -135,12 +126,14 @@ namespace WHampson.BFT
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt, name));
             }
 
-            CheckAttributePresence(e, modifiers);
+            return CheckAttributePresence(e, modifiers);
         }
 
-        private void CheckAttributePresence(XElement e, params Modifier[] validAttrs)
+        private Dictionary<Modifier, string> CheckAttributePresence(XElement e, params Modifier[] validAttrs)
         {
+            Dictionary<Modifier, string> modifierMap = new Dictionary<Modifier, string>();
             IEnumerable<XAttribute> attrs = e.Attributes();
+
             foreach (XAttribute attr in attrs)
             {
                 string mId = attr.Name.LocalName;
@@ -166,25 +159,40 @@ namespace WHampson.BFT
                     string fmt = "Value for modifier '{0}' cannot be empty.";
                     throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
+
+                modifierMap[m] = attr.Value;
             }
+
+            return modifierMap;
         }
 
-        private void ParseBuiltinTypeElement(XElement e, params Modifier[] modifiers)
+        private ISyntaxTreeNode ParseBuiltinTypeElement(XElement e, params Modifier[] modifiers)
         {
-            ParseElement(e, false, modifiers);
+            string identifier = e.Name.LocalName;
+            BuiltinType type;
+            LookupType(identifier, out type);
+
+            Dictionary<Modifier, string> modifierMap = ParseElement(e, false, modifiers);
+
+            return new DataTypeTreeNode(type, modifierMap);
         }
 
-        private void ParseDirectiveElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
+        private ISyntaxTreeNode ParseDirectiveElement(XElement e, bool childrenAllowed, params Modifier[] modifiers)
         {
-            ParseElement(e, childrenAllowed, modifiers);
+            string identifier = e.Name.LocalName;
+            Directive directive = DirectiveIdentifierMap[identifier];
+
+            Dictionary<Modifier, string> modifierMap = ParseElement(e, childrenAllowed, modifiers);
+
+            return new DirectiveTreeNode(directive, modifierMap);
         }
 
-        private void ParseStructElement(XElement e)
+        private ISyntaxTreeNode ParseStructElement(XElement e)
         {
-            ParseStructElement(e, false);
+            return ParseStructElement(e, false);
         }
 
-        private void ParseStructElement(XElement e, bool ignoreModifiers)
+        private ISyntaxTreeNode ParseStructElement(XElement e, bool ignoreModifiers)
         {
             string name = e.Name.LocalName;
 
@@ -207,10 +215,22 @@ namespace WHampson.BFT
             }
 
             // Validate modifiers
+            Dictionary<Modifier, string> modifierMap;
             if (!ignoreModifiers)
             {
-                CheckAttributePresence(e, Modifier.Comment, Modifier.Count, Modifier.Name);
+                modifierMap = CheckAttributePresence(e, Modifier.Comment, Modifier.Count, Modifier.Name);
             }
+            else
+            {
+                modifierMap = new Dictionary<Modifier, string>();
+            }
+
+            if (isTypedefd)
+            {
+                children = typeInfo.Members;
+            }
+
+            DataTypeTreeNode node = new DataTypeTreeNode(BuiltinType.Struct, modifierMap);
 
             // Parse members
             foreach (XElement memberElem in children)
@@ -245,13 +265,20 @@ namespace WHampson.BFT
                     parse = directiveParseActionMap[dir];
                 }
 
-                parse(memberElem);
+                ISyntaxTreeNode n = parse(memberElem);
+                if (!(n is DirectiveTreeNode
+                    && ((DirectiveTreeNode)n).Directive == Directive.Typedef))
+                {
+                    node.Children.Add(n);
+                }
             }
+
+            return node;
         }
 
-        private void ParseFloatElement(XElement e)
+        private ISyntaxTreeNode ParseFloatElement(XElement e)
         {
-            ParseBuiltinTypeElement(e,
+            ISyntaxTreeNode n = ParseBuiltinTypeElement(e,
                 Modifier.Comment, Modifier.Count, Modifier.Name, Modifier.Sentinel, Modifier.Thresh);
 
             XAttribute sentinelAttr = e.Attribute(SentinelIdentifier);
@@ -264,38 +291,44 @@ namespace WHampson.BFT
                 string msg = XmlUtils.BuildXmlErrorMsg(threshAttr, fmt, ThreshIdentifier, SentinelIdentifier);
                 throw new TemplateException(msg);
             }
+
+            return n;
         }
 
-        private void ParseIntegerElement(XElement e)
+        private ISyntaxTreeNode ParseIntegerElement(XElement e)
         {
-            ParseBuiltinTypeElement(e, Modifier.Comment, Modifier.Count, Modifier.Name, Modifier.Sentinel);
+            return ParseBuiltinTypeElement(e, Modifier.Comment, Modifier.Count, Modifier.Name, Modifier.Sentinel);
         }
 
-        private void ParseAlignElement(XElement e)
+        private ISyntaxTreeNode ParseAlignElement(XElement e)
         {
-            ParseDirectiveElement(e, false, Modifier.Count, Modifier.Kind);
+            return ParseDirectiveElement(e, false, Modifier.Count, Modifier.Kind);
         }
 
-        private void ParseEchoElement(XElement e)
+        private ISyntaxTreeNode ParseEchoElement(XElement e)
         {
-            ParseDirectiveElement(e, false, Modifier.Message);
+            ISyntaxTreeNode n = ParseDirectiveElement(e, false, Modifier.Message);
 
-            XAttribute messageAttr = e.Attribute(MessageIdentifier);
-            string textData = e.Value;
-            if (messageAttr == null)
+            //XAttribute messageAttr = e.Attribute(MessageIdentifier);
+            //string textData = e.Value;
+            //if (messageAttr == null)
+            string msg;
+            if (!n.Modifiers.TryGetValue(Modifier.Message, out msg))
             {
                 string fmt = "Missing required message.";
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(e, fmt));
             }
+
+            return n;
         }
 
-        private void ParseTypedefElement(XElement e)
+        private ISyntaxTreeNode ParseTypedefElement(XElement e)
         {
             ParseDirectiveElement(e, true, Modifier.Kind, Modifier.Name);
 
             XAttribute kindAttr = e.Attribute(KindIdentifier);
             XAttribute nameAttr = e.Attribute(NameIdentifier);
-            
+
             if (kindAttr == null)
             {
                 string fmt = "Missing required modifier '{0}'.";
@@ -342,7 +375,7 @@ namespace WHampson.BFT
             // Ensure new type is built from a pre-existing type
             if (!LookupType(kindIdentifier, out kind))
             {
-                string fmt = "Unknown type '{0}'.";;
+                string fmt = "Unknown type '{0}'."; ;
                 throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, kindIdentifier));
             }
 
@@ -364,6 +397,8 @@ namespace WHampson.BFT
             customTypeMap[newTypeName] = newTypeInfo;
 
             Console.WriteLine("{0} => {1}", newTypeName, kind.ToString().ToLower());
+
+            return new DirectiveTreeNode(Directive.Typedef, null);
         }
 
         private bool LookupType(string identifier, out BuiltinType type)

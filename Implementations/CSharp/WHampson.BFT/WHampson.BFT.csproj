@@ -63,6 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CustomTypeInfo.cs" />
+    <Compile Include="SyntaxTree.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="Types\Float.cs" />
     <Compile Include="Types\Int32.cs" />

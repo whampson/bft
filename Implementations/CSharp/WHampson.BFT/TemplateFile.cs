@@ -44,14 +44,16 @@ namespace WHampson.BFT
         }
 
         private XDocument doc;
-        //private TemplateProcessor processor;
+        private TemplateProcessor processor;
 
         public TemplateFile(string path)
         {
             doc = OpenXmlFile(path);
+            processor = new TemplateProcessor(doc);
 
-            SyntaxParser p = new SyntaxParser(ref doc);
-            p.ParseTemplateStructure();
+            processor.Preprocess();
+
+            //doc.Save(path.Replace(".xml", ".Preprocessed.xml"));
         }
 
         public string this[string key]
