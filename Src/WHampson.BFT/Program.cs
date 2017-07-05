@@ -48,6 +48,11 @@ namespace WHampson.BFT
         public Pointer<Int32>[] WeaponAmmo { get; set; }
     }
 
+    public class TestClass
+    {
+        public int PlayerHealth { get; }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -60,9 +65,10 @@ namespace WHampson.BFT
 
             // Read template and map to PlayerInfo instance
             TemplateFile template = new TemplateFile("../../Test.xml");
-            string a = template["platform"];
+            template.Process<TestClass>("../../Test.bin");
+
+            //string a = template["platform"];
             //Console.WriteLine(a ?? "Undefined");
-            
 
             PlayerInfo info;
             //int bytesRead = bft.Apply(ptr, 128, out info);
