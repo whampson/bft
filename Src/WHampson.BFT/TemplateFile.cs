@@ -49,11 +49,13 @@ namespace WHampson.BFT
         public TemplateFile(string path)
         {
             doc = OpenXmlFile(path);
-            processor = new TemplateProcessor(doc);
+        }
 
-            processor.Preprocess();
+        public T Process<T>(string filePath)
+        {
+            TemplateProcessor processor = new TemplateProcessor(doc);
 
-            //doc.Save(path.Replace(".xml", ".Preprocessed.xml"));
+            return processor.Process<T>(filePath);
         }
 
         public string this[string key]
