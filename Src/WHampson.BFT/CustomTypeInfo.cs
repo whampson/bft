@@ -37,10 +37,11 @@ namespace WHampson.BFT
         /// <param name="members">
         /// A list of member elements.
         /// </param>
-        public CustomTypeInfo(Keyword.BuiltinType kind, IEnumerable<XElement> members)
+        public CustomTypeInfo(Keyword.BuiltinType kind, IEnumerable<XElement> members, int size)
         {
             Kind = kind;
             Members = members;
+            Size = size;
         }
 
         /// <summary>
@@ -55,6 +56,14 @@ namespace WHampson.BFT
         /// Gets the list of XML elements that descend from this custom type.
         /// </summary>
         public IEnumerable<XElement> Members
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Gets the size in bytes that this custom type occupies.
+        /// </summary>
+        public int Size
         {
             get;
         }

@@ -61,7 +61,7 @@ namespace WHampson.BFT
             // Read template and map to PlayerInfo instance
             TemplateFile template = new TemplateFile("../../Test.xml");
             string a = template["platform"];
-            Console.WriteLine(a ?? "Undefined");
+            //Console.WriteLine(a ?? "Undefined");
             
 
             PlayerInfo info;

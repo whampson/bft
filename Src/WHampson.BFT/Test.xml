@@ -2,7 +2,6 @@
 <bft>
     <typedef name="my_int" kind="int32" />
     <typedef name="my_int2" kind="my_int" />
-
     <typedef name="vect3d" kind="struct">
         <float name="x" />
         <float name="y" />
@@ -15,7 +14,7 @@
         <my_int2 name="numKills" />
         <int8 name="health" />
         <int8 name="armor" />
-        <align count="64" kind="int32" />
+        <align count="2" />
         <vect3d name="location2" />
     </struct>
 </bft>
