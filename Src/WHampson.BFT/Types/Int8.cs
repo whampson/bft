@@ -68,6 +68,18 @@ namespace WHampson.BFT.Types
             return i8;
         }
 
+        public static bool TryParse(string valStr, out Int8 val)
+        {
+            long v;
+            bool success;
+            if (success = NumberUtils.TryParseInteger(valStr, out v))
+            {
+                val = (Int8) v;
+            }
+
+            return success;
+        }
+
         // Backing data for Int8.
         private fixed byte data[1];
 

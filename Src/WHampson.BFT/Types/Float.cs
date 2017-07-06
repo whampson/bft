@@ -107,6 +107,18 @@ namespace WHampson.BFT.Types
             return fl;
         }
 
+        public static bool TryParse(string valStr, out Float val)
+        {
+            float v;
+            bool success;
+            if (success = float.TryParse(valStr, out v))
+            {
+                val = v;
+            }
+
+            return success;
+        }
+
         // Backing data for Float.
         private fixed byte data[4];
 

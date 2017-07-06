@@ -21,6 +21,8 @@
  */
 #endregion
 
+using System;
+
 namespace WHampson.BFT.Types
 {
     /// <summary>
@@ -79,6 +81,18 @@ namespace WHampson.BFT.Types
             }
 
             return i32;
+        }
+
+        public static bool TryParse(string valStr, out Int32 val)
+        {
+            long v;
+            bool success;
+            if (success = NumberUtils.TryParseInteger(valStr, out v))
+            {
+                val = (Int32)v;
+            }
+
+            return success;
         }
 
         // Backing data for Int32.
