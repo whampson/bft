@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,35 +43,39 @@ namespace WHampson.BFT
 
         //private const string VariableRegex = "\\$\\{(.+)\\}";
 
-        private delegate int ProcessAction(IntPtr pData, XElement intElem, int off);
+        //private delegate int ProcessAction<U>(IntPtr pData, XElement intElem, int off);
 
-        private XDocument doc;
-        private Dictionary<BuiltinType, ProcessAction> builtinTypeParseActionMap;
-        private Dictionary<Directive, ProcessAction> directiveParseActionMap;
+        private XDocument templateDoc;
         private Dictionary<string, CustomTypeInfo> customTypes;
-        private int fileLen;
+        private IntPtr dataPtr;
+        private int dataLen;
+        private int dataOffset;
+
+        private bool isEvalutingTypedef;
 
         public TemplateProcessor(XDocument doc)
         {
-            this.doc = doc;
+            templateDoc = doc;
             customTypes = new Dictionary<string, CustomTypeInfo>();
-            builtinTypeParseActionMap = new Dictionary<BuiltinType, ProcessAction>();
-            directiveParseActionMap = new Dictionary<Directive, ProcessAction>();
+            dataPtr = IntPtr.Zero;
+            dataLen = 0;
+            dataOffset = 0;
+            isEvalutingTypedef = false;
 
-            BuildActionMaps();
+            //BuildActionMaps();
         }
 
         public T Process<T>(string filePath)
         {
             // Validate root element
-            if (doc.Root.Name != RootElementName)
+            if (templateDoc.Root.Name != RootElementName)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                string msg = XmlUtils.BuildXmlErrorMsg(doc.Root, fmt, RootElementName);
+                string msg = XmlUtils.BuildXmlErrorMsg(templateDoc.Root, fmt, RootElementName);
                 throw new TemplateException(msg);
             }
 
-            IEnumerable<XElement> elems = doc.Root.Elements();
+            IEnumerable<XElement> elems = templateDoc.Root.Elements();
             if (elems.Count() == 0)
             {
                 throw new TemplateException("Empty binary file template.");
@@ -78,42 +83,69 @@ namespace WHampson.BFT
 
             // Load binary file
             byte[] data = LoadFile(filePath);
-            fileLen = data.Length;
+            dataLen = data.Length;
 
             // Pin file data to unmanaged memory
-            IntPtr pData = Marshal.AllocHGlobal(data.Length);
-            Marshal.Copy(data, 0, pData, data.Length);
+            dataPtr = Marshal.AllocHGlobal(data.Length);
+            Marshal.Copy(data, 0, dataPtr, data.Length);
 
             // Clear current list of custom types (if any)
             customTypes.Clear();
 
+            Console.WriteLine("File located at: " + dataPtr);
+
             // Process the template with respect to the file data
-            T outObj;
-            int bytesProcessed = ProcessStructure<T>(pData, doc.Root, out outObj);
+            dataOffset = 0;
+            object o;
+            int bytesProcessed = ProcessStructure(templateDoc.Root, true, typeof(T), out o);
             Console.WriteLine("Processed {0} bytes.", bytesProcessed);
 
             // Free pinned file data
             // (This will change in the future depending on how we want to manipulate the file data)
-            Marshal.FreeHGlobal(pData);
+            //Marshal.FreeHGlobal(dataPtr);
 
-            return outObj;
+            return (T) o;
         }
 
-        private int ProcessStructure<T>(IntPtr pData, XElement structureElem, out T outObj)
+        private int ProcessStructure(XElement elem, PropertyInfo[] parentPropertyInfo, out object[] structureArr, out string name)
         {
-            return ProcessStructure<T>(pData, structureElem, false, out outObj);
+            int count = 1;
+            GetStructureModifiers(elem, out count, out name);
+
+            structureArr = new object[count];
+            string nam = name;
+            PropertyInfo prop = parentPropertyInfo.Where(p => p.Name.ToLower() == nam.ToLower()).Single();
+            Type structureType = (prop == null) ? null : prop.PropertyType;
+            if (structureType != null && structureType.IsArray)
+            {
+                structureType = structureType.GetElementType();
+            }
+
+            int localOffset = 0;
+            for (int i = 0; i < count; i++)
+            {
+                object structure;
+                localOffset += ProcessStructure(elem, true, structureType, out structure);
+                structureArr[i] = structure;
+            }
+
+            return localOffset;
         }
 
-        private int ProcessStructure<T>(IntPtr pData, XElement structureElem, bool ignoreAttributes, out T outObj)
+        private int ProcessStructure(XElement elem, Type oType, out object o)
         {
-            Type objType = typeof(T);
-            string dataTypeIdentifier = structureElem.Name.LocalName;
+            return ProcessStructure(elem, false, oType, out o);
+        }
+
+        private int ProcessStructure(XElement elem, bool ignoreModifiers, Type oType, out object o)
+        {
+            string dataTypeIdentifier = elem.Name.LocalName;
 
             // Ensure no text data is present
-            if (!string.IsNullOrWhiteSpace(structureElem.Value))
+            if (!string.IsNullOrWhiteSpace(elem.Value))
             {
                 string fmt = "Unexpected textual data.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(structureElem, fmt));
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
             }
 
             // Check whether this is user-defined type or a plain-old struct
@@ -123,88 +155,377 @@ namespace WHampson.BFT
             // Get member elements
             IEnumerable<XElement> children = (isCustomType)
                 ? typeInfo.Members
-                : structureElem.Elements();
+                : elem.Elements();
 
             // Ensure struct has at least one member field
             if (children.Count() == 0)
             {
                 string fmt = "Empty structs are not allowed.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(structureElem, fmt));
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
             }
 
             // Extract modifiers
-            Dictionary<Modifier, string> modifierMap = (!ignoreAttributes)
-                ? BuildModifierMap(structureElem, Modifier.Comment, Modifier.Count, Modifier.Name)
-                : new Dictionary<Modifier, string>();
+            int count = 1;
+            string name = null;
+            if (!ignoreModifiers)
+            {
+                GetStructureModifiers(elem, out count, out name);
+            }
+
+            // Get type info
+            PropertyInfo[] oProperties = (oType != null)
+                ? oType.GetProperties()
+                : new PropertyInfo[0];
 
             // Process members
-            int offset = 0;
-            bool hasDataFields = false;
+            Dictionary<string, object[]> members = new Dictionary<string, object[]>();
+            int localOffset = 0;
+
             foreach (XElement memberElem in children)
             {
-                string mDataTypeIdentifier = memberElem.Name.LocalName;
-                bool doLookupDirective = false;
+                object[] memberArr;
+                localOffset += ProcessStructureMember(memberElem, oType, oProperties, out memberArr, out name);
 
-                // Look up member type
-                BuiltinType type;
-                bool validType = LookupType(mDataTypeIdentifier, out type);
-                if (validType)
+                if (name != null && members.ContainsKey(name.ToLower()))
                 {
-                    hasDataFields = true;
+                    string fmt = "Variable '{0}' already defined.";
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(memberElem, fmt, name));
+                }
+
+                // Add to member list
+                if (name != null)
+                {
+                    members[name.ToLower()] = memberArr;
+                }
+            }
+            
+            if (localOffset == 0)
+            {
+                string fmt = "Empty structs are not allowed.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+            }
+
+            if (oType == null || name == null)
+            {
+                o = null;
+                return localOffset;
+            }
+
+            // Create object with members (move to func)
+            o = Activator.CreateInstance(oType);
+            foreach (PropertyInfo prop in oProperties)
+            {
+                string pName = prop.Name.ToLower();
+                if (/*!prop.CanWrite || */!members.ContainsKey(pName))
+                {
+                    continue;
+                }
+
+                object[] propVal = members[pName];
+                Type propValType = prop.PropertyType.GetElementType();
+                bool propIsArray = prop.PropertyType.IsArray;
+                if (propVal.Length == 1 && !propIsArray)
+                {
+                    prop.SetValue(o, propVal[0]);
+                }
+                else if (propIsArray)
+                {
+                    Array a = Array.CreateInstance(propValType, propVal.Length);
+                    for (int i = 0; i < propVal.Length; i++)
+                    {
+                        a.SetValue(propVal[i], i);
+                    }
+                    prop.SetValue(o, a);
                 }
                 else
                 {
-                    doLookupDirective = true;
+                    // tried to set array to non-array property, throw excep
+                    string fmt = "Attempt to set an array to a non-array value.";
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
                 }
+            }
 
-                // Look up directive if not a valid data type
-                Directive dir = Directive.Align;    // dummy value
-                if (doLookupDirective && !DirectiveIdentifierMap.TryGetValue(mDataTypeIdentifier, out dir))
+            return localOffset;
+        }
+
+        private int ProcessStructureMember(XElement elem, Type parentType, PropertyInfo[] typeProperties, out object[] memberArray, out string name)
+        {
+            string dataTypeIdentifier = elem.Name.LocalName;
+
+            // Look up member type
+            BuiltinType type;
+            bool validType = LookupType(dataTypeIdentifier, out type);
+
+            // Look up directive if not a valid data type
+            Directive dir = default(Directive);
+            bool validDirective = false;
+            if (!validType)
+            {
+                validDirective = DirectiveIdentifierMap.TryGetValue(dataTypeIdentifier, out dir);
+                if (!validDirective)
                 {
                     string fmt = "Unknown type or directive '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(memberElem, fmt, mDataTypeIdentifier));
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt, dataTypeIdentifier));
                 }
+            }
 
-                if (dir == Directive.Align)
+            if (validDirective)
+            {
+                memberArray = new object[0];
+                name = null;
+                return ProcessDirective(elem, dir);
+            }
+
+            if (type == BuiltinType.Struct)
+            {
+                return ProcessStructure(elem, typeProperties, out memberArray, out name);
+            }
+            else
+            {
+                return ProcessPrimitive(elem, TypeMap[type], out memberArray, out name);
+                //Type valueType = TypeMap[type];
+                //MethodInfo processPrimGeneric = GetType().GetMethod("ProcessPrimitive", BindingFlags.NonPublic | BindingFlags.Instance);
+                //MethodInfo processPromSpecific = processPrimGeneric.MakeGenericMethod(new Type[] { valueType });
+                //object[] parameters = { dataPtr, memberElem, offset };
+                //offset += (int) processPromSpecific.Invoke(this, parameters);
+            }
+        }
+
+        private void GetStructureModifiers(XElement elem, out int count, out string name)
+        {
+            Dictionary<Modifier, Modifier2> modifierMap =
+                BuildModifierMap(elem, Modifier.Comment, Modifier.Count, Modifier.Name);
+
+            CountModifier countModifier = null;
+            NameModifier nameModifier = null;
+
+            Modifier2 tmpModifier;
+            if (modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
+            {
+                countModifier = (CountModifier) tmpModifier;
+            }
+            if (modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            {
+                nameModifier = (NameModifier) tmpModifier;
+            }
+
+            name = (nameModifier != null) ? nameModifier.Value : null;
+            count = (countModifier != null) ? countModifier.Value : 1;
+        }
+
+        private int ProcessDirective(XElement elem, Directive dir)
+        {
+            int localOffset = 0;
+            switch (dir)
+            {
+                case Directive.Align:
+                    localOffset += ProcessAlign(elem);
+                    break;
+
+                case Directive.Echo:
+                    localOffset += ProcessEcho(elem);
+                    break;
+
+                case Directive.Typedef:
+                    localOffset += ProcessTypedef(elem);
+                    break;
+            }
+
+            dataOffset += localOffset;
+
+            return localOffset;
+        }
+
+        private int ProcessAlign(XElement elem)
+        {
+            Dictionary<Modifier, Modifier2> modifierMap =
+                BuildModifierMap(elem, Modifier.Comment, Modifier.Count/*, Modifier.Kind*/);
+
+            CountModifier countModifier = null;
+
+            Modifier2 tmpModifier;
+            if (modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
+            {
+                countModifier = (CountModifier) tmpModifier;
+            }
+
+            int count = (countModifier != null) ? countModifier.Value : 1;
+            int typeSize = 1;
+
+            return count * typeSize;
+        }
+
+        private int ProcessEcho(XElement elem)
+        {
+            return 0;
+        }
+
+        private int ProcessTypedef(XElement elem)
+        {
+            isEvalutingTypedef = true;
+            Dictionary<Modifier, Modifier2> modifierMap =
+                BuildModifierMap(elem, Modifier.Comment, Modifier.Kind, Modifier.Name);
+
+            KindModifier kindModifier = null;
+            NameModifier nameModifier = null;
+
+            Modifier2 tmpModifier;
+            if (modifierMap.TryGetValue(Modifier.Kind, out tmpModifier))
+            {
+                kindModifier = (KindModifier) tmpModifier;
+            }
+            if (modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            {
+                nameModifier = (NameModifier) tmpModifier;
+            }
+
+            string baseType = (kindModifier != null) ? kindModifier.Value : null;
+            string typeName = (nameModifier != null) ? nameModifier.Value : null;
+
+            if (baseType == null || typeName == null)
+            {
+                string fmt = "Missing type name or kind.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+            }
+
+            if (baseType != StructIdentifier && !elem.IsEmpty)
+            {
+                string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt, StructIdentifier));
+            }
+
+            if (baseType == StructIdentifier)
+            {
+                // Ensure there are no nested typedefs
+                IEnumerable<XElement> nestedTypedefs = elem.Descendants()
+                    .Where(t => t.Name.LocalName == TypedefIdentifier);
+                if (nestedTypedefs.Count() != 0)
                 {
-                    hasDataFields = true;
+                    string fmt = "Nested type definitions are not allowed.";
+                    string msg = XmlUtils.BuildXmlErrorMsg(nestedTypedefs.ElementAt(0), fmt);
+                    throw new TemplateException(msg);
                 }
 
-                // Parse type or directive
-                ProcessAction parse = (validType)
-                    ? builtinTypeParseActionMap[type]
-                    : directiveParseActionMap[dir];
-
-                offset += parse(pData, memberElem, offset);
+                // Parse type definition
+                object dummy;
+                ProcessStructure(elem, true, null, out dummy);
             }
 
-            outObj = Activator.CreateInstance<T>();
+            XAttribute kindAttr = elem.Attribute(KindIdentifier);
+            XAttribute nameAttr = elem.Attribute(NameIdentifier);
+            BuiltinType kind;
 
-            return offset;
+            // Ensure type isn't already defined
+            if (LookupType(typeName, out kind))
+            {
+                string fmt = "Type '{0}' has already been defined.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(nameAttr, fmt, typeName));
+            }
+
+            // Ensure new type is built from some pre-existing type
+            if (!LookupType(baseType, out kind))
+            {
+                string fmt = "Unknown type '{0}'.";
+                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, baseType));
+            }
+
+            // If new type descends from another user-defined type,
+            // get member elements from that type
+            IEnumerable<XElement> members;
+            CustomTypeInfo existingTypeInfo;
+            if (customTypes.TryGetValue(baseType, out existingTypeInfo))
+            {
+                members = existingTypeInfo.Members;
+            }
+            else
+            {
+                members = elem.Elements();
+            }
+
+            // Store custom type
+            int size = SizeOf(elem);
+            CustomTypeInfo newTypeInfo = new CustomTypeInfo(kind, members, size);
+            customTypes[typeName] = newTypeInfo;
+
+            // DEBUG: show custom type mapping to its root builtin type
+            Console.WriteLine("{0} => {1}  ({2} bytes)", typeName, kind.ToString().ToLower(), size);
+
+            isEvalutingTypedef = false;
+            return 0;
         }
 
-        private int ProcessInt32Element(IntPtr pData, XElement intElem, int off, out int val)
+        private int ProcessPrimitive(XElement elem, Type type, out object[] memberArray, out string name)
         {
-            if (off + 4 > fileLen)
+            //int typeSize = Marshal.SizeOf(typeof(T));
+            //if (offset + typeSize > dataLen)
+            //{
+            //    throw new IndexOutOfRangeException("File length exceeded.");
+            //}
+
+            // Get modifiers
+            Dictionary<Modifier, Modifier2> modifierMap =
+                BuildModifierMap(elem, Modifier.Comment, Modifier.Count, Modifier.Name/*, Modifier.Sentinel*/);
+
+            bool hasCount;
+            bool hasName;
+            //bool hasSentinel;
+            CountModifier countModifier = null;
+            NameModifier nameModifier = null;
+            //SentinelModifier<U> sentinelModifier = null;
+
+            Modifier2 tmpModifier;
+            if (hasCount = modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
             {
-                throw new IndexOutOfRangeException("File length exceeded.");
+                countModifier = (CountModifier) tmpModifier;
+            }
+            if (hasName = modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            {
+                nameModifier = (NameModifier) tmpModifier;
+            }
+            //if (hasSentinel = modifierMap.TryGetValue(Modifier.Sentinel, out tmpModifier))
+            //{
+            //    sentinelModifier = (SentinelModifier<U>) tmpModifier;
+            //}
+
+            int count = (hasCount) ? countModifier.Value : 1;
+            name = (hasName) ? nameModifier.Value : null;
+            //U sentinel = (hasSentinel) ? sentinelModifier.Value : default(U);
+
+            memberArray = new object[1];
+
+            int localOffset = 0;
+            Type pointerType = typeof(Pointer<>);
+            Type[] typeArgs = new Type[] { type };
+            int typeSize = Marshal.SizeOf(type);
+
+            Type t = pointerType.MakeGenericType(typeArgs);
+            memberArray[0] = Activator.CreateInstance(t, dataPtr + dataOffset, count);
+            localOffset = (typeSize * count);
+            if (!isEvalutingTypedef)
+            {
+                Console.WriteLine("Primitive at: " + (dataPtr + dataOffset));
+                dataOffset += localOffset;
+                Console.WriteLine(dataOffset);
             }
 
-            IntPtr pVal = pData + off;
-            unsafe
-            {
-                val = *(Int32*)pVal;
-                Console.WriteLine("0x{0:X8}", val);
-            }
+            //for (int i = 0; i < count; i++)
+            //{
+            //    Type t = pointerType.MakeGenericType(typeArgs);
+            //    memberArray[i] = Activator.CreateInstance(t, dataPtr + dataOffset);
+            //    dataOffset += typeSize;
+            //    localOffset += typeSize;
+            //}
 
-            return 4;
+            return localOffset;
         }
 
-        private Dictionary<Modifier, string> BuildModifierMap(XElement e, params Modifier[] validAttrs)
+        private Dictionary<Modifier, Modifier2> BuildModifierMap(XElement e, params Modifier[] validAttrs)
         {
-            Dictionary<Modifier, string> modifierMap = new Dictionary<Modifier, string>();
+            Dictionary<Modifier, Modifier2> modifierMap = new Dictionary<Modifier, Modifier2>();
             IEnumerable<XAttribute> attrs = e.Attributes();
 
+            bool hasCount = false;
+            bool hasSentinel = false;
             foreach (XAttribute attr in attrs)
             {
                 string mId = attr.Name.LocalName;
@@ -224,27 +545,138 @@ namespace WHampson.BFT
                     throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
 
-                // Validate modifier
+                // Ensure value is not empty
                 if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Value for modifier '{0}' cannot be empty.";
                     throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
                 }
 
-                modifierMap[m] = attr.Value;
+                // Ensure that both 'count' and 'sentinel' aren't present at the same time
+                // (as this causes confusion about where to end the array)
+                if (m == Modifier.Count)
+                {
+                    if (hasSentinel)
+                    {
+                        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
+                        string msg = XmlUtils.BuildXmlErrorMsg(attr, fmt, CountIdentifier, SentinelIdentifier);
+                        throw new TemplateException(msg);
+                    }
+                    hasCount = true;
+                }
+                else if (m == Modifier.Sentinel)
+                {
+                    if (hasCount)
+                    {
+                        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
+                        string msg = XmlUtils.BuildXmlErrorMsg(attr, fmt, SentinelIdentifier, CountIdentifier);
+                        throw new TemplateException(msg);
+                    }
+                    hasSentinel = true;
+                }
+
+                // Create new instance of Modifier subclass
+                // First, get the modifier subclass
+                Type modifierType = ModifierMap[m];
+
+                // The Sentinel modifier takes a type parameter, so we must supply that
+                // The type parameter matches the value type on which this modifier is used
+                //if (m == Modifier.Sentinel)
+                //{
+                //    Type valueType = typeof(t);
+                //    modifierType = modifierType.MakeGenericType(new Type[] { valueType });
+                //}
+
+                // Create the Modifier instance and try to set it's value
+                Modifier2 mod = (Modifier2) Activator.CreateInstance(modifierType);
+                if (!mod.TrySetValue(attr.Value))
+                {
+                    string fmt = mod.GetTryParseErrorMessage();
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, attr.Value));
+                }
+
+                modifierMap[m] = mod;
             }
 
             return modifierMap;
         }
 
-        private int SizeOf(XElement structure)
-        {
-            return SizeOf(structure, true);
-        }
+        //private int SizeOf(XElement structure)
+        //{
+        //    return SizeOf(structure, true);
+        //}
 
-        private int SizeOf(XElement structure, bool dereferenceVariables)
+        //private int SizeOf(XElement structure, bool dereferenceVariables)
+        //{
+        //    return 0;
+        //}
+
+        // TODO: rewrite
+        private int SizeOf(XElement e)
         {
-            return 0;
+            string typeIdentifier = e.Name.LocalName;
+
+            CustomTypeInfo customTypeInfo;
+            bool isUserDefinedType = customTypes.TryGetValue(typeIdentifier, out customTypeInfo);
+            if (isUserDefinedType)
+            {
+                return customTypeInfo.Size;
+            }
+
+            BuiltinType type;
+            Directive dir;
+            bool isBuiltinType = BuiltinTypeIdentifierMap.TryGetValue(typeIdentifier, out type);
+            bool isDirective = DirectiveIdentifierMap.TryGetValue(typeIdentifier, out dir);
+
+            XAttribute countAttr = e.Attribute(CountIdentifier);
+            int count = 1;
+
+            // TODO: make func bool GetCountValue(XElement, bool allowVariables, out value);
+            if (countAttr != null)
+            {
+                bool countValid = int.TryParse(countAttr.Value, out count);
+                if (!countValid || count < 0)
+                {
+                    string fmt = "'{0}' must be a non-negative integer.";
+                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(countAttr, fmt, CountIdentifier));
+                }
+            }
+
+            if (isDirective)
+            {
+                if (dir != Directive.Align && dir != Directive.Typedef)
+                {
+                    return 0;   // Directives other than 'align' and 'typedef' do not add to the size
+                }
+
+                XAttribute kindAttr = e.Attribute(KindIdentifier);
+                type = BuiltinType.Int8;    // Default
+                if (kindAttr != null)
+                {
+                    bool kindValid = LookupType(kindAttr.Value, out type);
+                    if (!kindValid)
+                    {
+                        string fmt = "Unknown type '{0}'.";
+                        throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, kindAttr.Value));
+                    }
+                }
+            }
+
+            int size = 0;
+            if (type == BuiltinType.Struct)
+            {
+                foreach (XElement memb in e.Elements())
+                {
+                    size += SizeOf(memb);
+                }
+            }
+            else
+            {
+                Type t = TemplateProcessor.TypeMap[type];
+                size = Marshal.SizeOf(t);
+            }
+
+            return size * count;
         }
 
         private bool LookupType(string identifier, out BuiltinType type)
@@ -290,25 +722,12 @@ namespace WHampson.BFT
             return data;
         }
 
-        private void BuildActionMaps()
+        private static readonly Dictionary<Modifier, Type> ModifierMap = new Dictionary<Modifier, Type>()
         {
-            // Builtin types
-            //builtinTypeParseActionMap[BuiltinType.Double] = ParseFloatElement;
-            //builtinTypeParseActionMap[BuiltinType.Float] = ParseFloatElement;
-            //builtinTypeParseActionMap[BuiltinType.Int8] = ParseIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.Int16] = ParseIntegerElement;
-            builtinTypeParseActionMap[BuiltinType.Int32] = ProcessIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.Int64] = ParseIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.Struct] = ParseStructElement;
-            //builtinTypeParseActionMap[BuiltinType.UInt8] = ParseIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.UInt16] = ParseIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.UInt32] = ParseIntegerElement;
-            //builtinTypeParseActionMap[BuiltinType.UInt64] = ParseIntegerElement;
-
-            // Directives
-            //directiveParseActionMap[Directive.Align] = ParseAlignElement;
-            //directiveParseActionMap[Directive.Echo] = ParseEchoElement;
-            //directiveParseActionMap[Directive.Typedef] = ParseTypedefElement;
-        }
+            { Modifier.Count, typeof(CountModifier) },
+            { Modifier.Kind, typeof(KindModifier) },
+            { Modifier.Name, typeof(NameModifier) },
+            //{ Modifier.Sentinel, typeof(SentinelModifier<>) },
+        };
     }
 }
