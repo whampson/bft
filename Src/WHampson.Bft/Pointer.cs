@@ -23,11 +23,11 @@
 
 using System;
 using System.Runtime.InteropServices;
-using WHampson.BFT.Types;
+using WHampson.Bft.Types;
 
-using Int32 = WHampson.BFT.Types.Int32;
+using Int32 = WHampson.Bft.Types.Int32;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     /// <summary>
     /// Represents a pointer to a primitive data type.

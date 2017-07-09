@@ -29,7 +29,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     internal static class NumberUtils
     {

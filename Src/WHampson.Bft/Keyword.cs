@@ -23,7 +23,7 @@
 
 using System.Collections.Generic;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     internal static class Keyword
     {

@@ -28,12 +28,12 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using WHampson.BFT.Types;
+using WHampson.Bft.Types;
 
 
 // TODO: consider modifiers 'maxCount' and 'minCount' to be used with 'sentinel'
 // to serve as upper- and lower-bounds
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     internal abstract class Modifier2
     {

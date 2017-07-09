@@ -21,51 +21,51 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
 using System.Xml.Linq;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
-    internal class CustomTypeInfo
+    public sealed class TemplateFile
     {
-        /// <summary>
-        /// Creates a new <see cref="CustomTypeInfo"/> object.
-        /// </summary>
-        /// <param name="kind">
-        /// The parent type.
-        /// </param>
-        /// <param name="members">
-        /// A list of member elements.
-        /// </param>
-        public CustomTypeInfo(Keyword.BuiltinType kind, IEnumerable<XElement> members, int size)
+        private static XDocument OpenXmlFile(string path)
         {
-            Kind = kind;
-            Members = members;
-            Size = size;
+            try
+            {
+                return XDocument.Load(path, LoadOptions.SetLineInfo);
+            }
+            catch (XmlException e)
+            {
+                throw new TemplateException(e.Message, e);
+            }
         }
 
-        /// <summary>
-        /// Gets the parent type of this custom type.
-        /// </summary>
-        public Keyword.BuiltinType Kind
+        private XDocument doc;
+        private TemplateProcessor processor;
+
+        public TemplateFile(string path)
         {
-            get;
+            doc = OpenXmlFile(path);
         }
 
-        /// <summary>
-        /// Gets the list of XML elements that descend from this custom type.
-        /// </summary>
-        public IEnumerable<XElement> Members
+        public T Process<T>(string filePath)
         {
-            get;
+            TemplateProcessor processor = new TemplateProcessor(doc);
+
+            return processor.Process<T>(filePath);
         }
 
-        /// <summary>
-        /// Gets the size in bytes that this custom type occupies.
-        /// </summary>
-        public int Size
+        public string this[string key]
         {
-            get;
+            // Get template metadata (Root element attribute values)
+            get
+            {
+                XAttribute attr = doc.Root.Attribute(key);
+                return (attr != null) ? attr.Value : null;
+            }
         }
     }
 }

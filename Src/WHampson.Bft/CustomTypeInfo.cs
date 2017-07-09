@@ -21,31 +21,51 @@
  */
 #endregion
 
-using System;
-using System.Runtime.Serialization;
+using System.Collections.Generic;
+using System.Xml.Linq;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
-    public class TemplateException : Exception
+    internal class CustomTypeInfo
     {
-        public TemplateException()
-            : base()
+        /// <summary>
+        /// Creates a new <see cref="CustomTypeInfo"/> object.
+        /// </summary>
+        /// <param name="kind">
+        /// The parent type.
+        /// </param>
+        /// <param name="members">
+        /// A list of member elements.
+        /// </param>
+        public CustomTypeInfo(Keyword.BuiltinType kind, IEnumerable<XElement> members, int size)
         {
+            Kind = kind;
+            Members = members;
+            Size = size;
         }
 
-        public TemplateException(string message)
-            : base(message)
+        /// <summary>
+        /// Gets the parent type of this custom type.
+        /// </summary>
+        public Keyword.BuiltinType Kind
         {
+            get;
         }
 
-        public TemplateException(string message, Exception innerException)
-            : base(message, innerException)
+        /// <summary>
+        /// Gets the list of XML elements that descend from this custom type.
+        /// </summary>
+        public IEnumerable<XElement> Members
         {
+            get;
         }
 
-        protected TemplateException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
+        /// <summary>
+        /// Gets the size in bytes that this custom type occupies.
+        /// </summary>
+        public int Size
         {
+            get;
         }
     }
 }

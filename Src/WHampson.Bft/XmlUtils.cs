@@ -21,51 +21,25 @@
  */
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
-    public sealed class TemplateFile
+    internal static class XmlUtils
     {
-        private static XDocument OpenXmlFile(string path)
+        public static string BuildXmlErrorMsg(XObject o, string msgFmt, params object[] fmtArgs)
         {
-            try
+            IXmlLineInfo lineInfo = o;
+            string msg = string.Format(msgFmt, fmtArgs);
+            if (!msg.EndsWith("."))
             {
-                return XDocument.Load(path, LoadOptions.SetLineInfo);
+                msg += ".";
             }
-            catch (XmlException e)
-            {
-                throw new TemplateException(e.Message, e);
-            }
-        }
 
-        private XDocument doc;
-        private TemplateProcessor processor;
+            msg += " " + string.Format(" Line {0}, position {1}.", lineInfo.LineNumber, lineInfo.LinePosition);
 
-        public TemplateFile(string path)
-        {
-            doc = OpenXmlFile(path);
-        }
-
-        public T Process<T>(string filePath)
-        {
-            TemplateProcessor processor = new TemplateProcessor(doc);
-
-            return processor.Process<T>(filePath);
-        }
-
-        public string this[string key]
-        {
-            // Get template metadata (Root element attribute values)
-            get
-            {
-                XAttribute attr = doc.Root.Attribute(key);
-                return (attr != null) ? attr.Value : null;
-            }
+            return msg;
         }
     }
 }

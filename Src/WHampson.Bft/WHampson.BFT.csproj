@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BA7EE64B-D06B-4907-9DC9-09C4DC0ECE77}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>WHampson.BFT</RootNamespace>
-    <AssemblyName>WHampson.BFT</AssemblyName>
+    <RootNamespace>WHampson.Bft</RootNamespace>
+    <AssemblyName>WHampson.Bft</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -86,7 +86,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <None Include="WHampson.BFT.licenseheader" />
+    <None Include="WHampson.Bft.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">

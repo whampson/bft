@@ -30,12 +30,12 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using WHampson.BFT.Types;
-using static WHampson.BFT.Keyword;
+using WHampson.Bft.Types;
+using static WHampson.Bft.Keyword;
 
-using Int32 = WHampson.BFT.Types.Int32;
+using Int32 = WHampson.Bft.Types.Int32;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     internal class TemplateProcessor
     {

@@ -22,22 +22,30 @@
 #endregion
 
 using System;
+using System.Runtime.Serialization;
 
-namespace WHampson.BFT.Types
+namespace WHampson.Bft
 {
-    /// <summary>
-    /// Defines a primitive data type; that is, a fixed-size collection of
-    /// bytes that represents a unit of data.
-    /// </summary>
-    public interface IPrimitiveType
+    public class TemplateException : Exception
     {
-        /// <summary>
-        /// Returns a copy of the bytes that make up the current value
-        /// represented by this type.
-        /// </summary>
-        /// <returns></returns>
-        byte[] GetBytes();
+        public TemplateException()
+            : base()
+        {
+        }
 
-        bool Equals(IPrimitiveType o);
+        public TemplateException(string message)
+            : base(message)
+        {
+        }
+
+        public TemplateException(string message, Exception innerException)
+            : base(message, innerException)
+        {
+        }
+
+        protected TemplateException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
     }
 }

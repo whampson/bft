@@ -21,25 +21,23 @@
  */
 #endregion
 
-using System.Xml;
-using System.Xml.Linq;
+using System;
 
-namespace WHampson.BFT
+namespace WHampson.Bft.Types
 {
-    internal static class XmlUtils
+    /// <summary>
+    /// Defines a primitive data type; that is, a fixed-size collection of
+    /// bytes that represents a unit of data.
+    /// </summary>
+    public interface IPrimitiveType
     {
-        public static string BuildXmlErrorMsg(XObject o, string msgFmt, params object[] fmtArgs)
-        {
-            IXmlLineInfo lineInfo = o;
-            string msg = string.Format(msgFmt, fmtArgs);
-            if (!msg.EndsWith("."))
-            {
-                msg += ".";
-            }
+        /// <summary>
+        /// Returns a copy of the bytes that make up the current value
+        /// represented by this type.
+        /// </summary>
+        /// <returns></returns>
+        byte[] GetBytes();
 
-            msg += " " + string.Format(" Line {0}, position {1}.", lineInfo.LineNumber, lineInfo.LinePosition);
-
-            return msg;
-        }
+        bool Equals(IPrimitiveType o);
     }
 }

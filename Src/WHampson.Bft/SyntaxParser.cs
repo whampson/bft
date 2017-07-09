@@ -26,9 +26,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
-using static WHampson.BFT.Keyword;
+using static WHampson.Bft.Keyword;
 
-namespace WHampson.BFT
+namespace WHampson.Bft
 {
     /// <summary>
     /// Handles syntax validation and name resolution.
