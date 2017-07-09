@@ -21,6 +21,8 @@
  */
 #endregion
 
+using System;
+
 namespace WHampson.BFT.Types
 {
     /// <summary>
@@ -68,6 +70,16 @@ namespace WHampson.BFT.Types
             return i8;
         }
 
+        public static bool operator ==(Int8 a, Int8 b)
+        {
+            return a.data == b.data;
+        }
+
+        public static bool operator !=(Int8 a, Int8 b)
+        {
+            return a.data != b.data;
+        }
+
         public static bool TryParse(string valStr, out Int8 val)
         {
             long v;
@@ -82,6 +94,18 @@ namespace WHampson.BFT.Types
 
         // Backing data for Int8.
         private fixed byte data[1];
+
+        bool IPrimitiveType.Equals(IPrimitiveType o)
+        {
+            if (!(o is Int8))
+            {
+                return false;
+            }
+
+            Int8 other = (Int8) o;
+
+            return this == other;
+        }
 
         byte[] IPrimitiveType.GetBytes()
         {

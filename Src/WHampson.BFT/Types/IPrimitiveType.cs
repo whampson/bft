@@ -21,6 +21,8 @@
  */
 #endregion
 
+using System;
+
 namespace WHampson.BFT.Types
 {
     /// <summary>
@@ -35,5 +37,7 @@ namespace WHampson.BFT.Types
         /// </summary>
         /// <returns></returns>
         byte[] GetBytes();
+
+        bool Equals(IPrimitiveType o);
     }
 }

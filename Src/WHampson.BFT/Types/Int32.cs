@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace WHampson.BFT.Types
 {
@@ -98,6 +99,17 @@ namespace WHampson.BFT.Types
         // Backing data for Int32.
         private fixed byte data[4];
 
+        bool IPrimitiveType.Equals(IPrimitiveType o)
+        {
+            if (!(o is Int32))
+            {
+                return false;
+            }
+
+            Int32 other = (Int32) o;
+            return this == other;
+        }
+
         byte[] IPrimitiveType.GetBytes()
         {
             int siz = sizeof(Int32);
@@ -119,6 +131,227 @@ namespace WHampson.BFT.Types
         {
             // Use the native type's ToString().
             return ((int) this).ToString();
+        }
+    }
+
+    public interface IBftPrimitive
+    {
+
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BftInt32 : IBftPrimitive, IComparable,
+        IComparable<BftInt32>, IEquatable<BftInt32>
+    {
+        public static readonly BftInt32 MaxValue = 0x7fffffff;
+        public static readonly BftInt32 MinValue = unchecked((int) 0x80000000);
+
+        public static implicit operator BftInt32(int value)
+        {
+            return new BftInt32(value);
+        }
+
+        //public static implicit operator int(BftInt32 value)
+        //{
+        //    return value.m_value;
+        //}
+
+        public static explicit operator int(BftInt32 value)
+        {
+            return value.m_value;
+        }
+
+        public static bool operator ==(BftInt32 a, BftInt32 b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(BftInt32 a, BftInt32 b)
+        {
+            return !a.Equals(b);
+        }
+
+        public static bool operator >(BftInt32 a, BftInt32 b)
+        {
+            return a.CompareTo(b) > 0;
+        }
+
+        public static bool operator <(BftInt32 a, BftInt32 b)
+        {
+            return a.CompareTo(b) < 0;
+        }
+
+        public static bool operator >=(BftInt32 a, BftInt32 b)
+        {
+            return a.CompareTo(b) >= 0;
+        }
+
+        public static bool operator <=(BftInt32 a, BftInt32 b)
+        {
+            return a.CompareTo(b) <= 0;
+        }
+
+        private int m_value;
+
+        private BftInt32(int value)
+        {
+            m_value = value;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null)
+            {
+                return 1;
+            }
+
+            if (!(obj is BftInt32))
+            {
+                throw new ArgumentException("Must be BftInt32.");
+            }
+
+            return CompareTo((BftInt32) obj);
+        }
+
+        public int CompareTo(BftInt32 obj)
+        {
+            if (m_value < obj.m_value)
+            {
+                return -1;
+            }
+            else if (m_value > obj.m_value)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is BftInt32))
+            {
+                return false;
+            }
+
+            return Equals((BftInt32) obj);
+        }
+
+        public bool Equals(BftInt32 obj)
+        {
+            return m_value == obj.m_value;
+        }
+
+        public override int GetHashCode()
+        {
+            return m_value;
+        }
+
+        public override string ToString()
+        {
+            return m_value.ToString();
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BftBool64 : IBftPrimitive, IComparable,
+        IComparable<BftBool64>, IEquatable<BftBool64>
+    {
+        private const int True = 1;
+        private const int False = 0;
+
+        private const ulong TrueUL = 1ul;
+        private const ulong FalseUL = 0ul;
+
+        public static implicit operator BftBool64(bool value)
+        {
+            return new BftBool64(value);
+        }
+
+        //public static implicit operator int(BftInt32 value)
+        //{
+        //    return value.m_value;
+        //}
+
+        public static explicit operator bool(BftBool64 value)
+        {
+            return value.BoolValue();
+        }
+
+        public static bool operator ==(BftBool64 a, BftBool64 b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(BftBool64 a, BftBool64 b)
+        {
+            return !a.Equals(b);
+        }
+
+        private ulong m_value;
+
+        private BftBool64(bool value)
+        {
+            m_value = (value) ? TrueUL : FalseUL;
+        }
+
+        private bool BoolValue()
+        {
+            return m_value != 0;
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null)
+            {
+                return 1;
+            }
+
+            if (!(obj is BftBool64))
+            {
+                throw new ArgumentException("Must be BftBool64.");
+            }
+
+            return CompareTo((BftBool64) obj);
+        }
+
+        public int CompareTo(BftBool64 obj)
+        {
+            if (BoolValue() == obj.BoolValue())
+            {
+                return 0;
+            }
+            else if (BoolValue() == false)
+            {
+                return -1;
+            }
+
+            return 1;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is BftBool64))
+            {
+                return false;
+            }
+
+            return Equals((BftBool64) obj);
+        }
+
+        public bool Equals(BftBool64 obj)
+        {
+            return BoolValue() == obj.BoolValue();
+        }
+
+        public override int GetHashCode()
+        {
+            return (m_value != 0) ? True : False;
+        }
+
+        public override string ToString()
+        {
+            return BoolValue().ToString();
         }
     }
 }

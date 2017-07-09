@@ -122,6 +122,17 @@ namespace WHampson.BFT.Types
         // Backing data for Float.
         private fixed byte data[4];
 
+        bool IPrimitiveType.Equals(IPrimitiveType o)
+        {
+            if (!(o is Float))
+            {
+                return false;
+            }
+
+            Float other = (Float) o;
+            return this == other;
+        }
+
         public byte[] GetBytes()
         {
             int siz = sizeof(Float);
