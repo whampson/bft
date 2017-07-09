@@ -23,6 +23,8 @@
 
 using System;
 using System.Runtime.Serialization;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace WHampson.Bft
 {
@@ -46,6 +48,20 @@ namespace WHampson.Bft
         protected TemplateException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
+        }
+
+        internal static TemplateException Create(XObject obj, string msgFmt, params object[] fmtArgs)
+        {
+            IXmlLineInfo lineInfo = obj;
+            string msg = string.Format(msgFmt, fmtArgs);
+            if (!msg.EndsWith("."))
+            {
+                msg += ".";
+            }
+
+            msg += " " + string.Format(" Line {0}, position {1}.", lineInfo.LineNumber, lineInfo.LinePosition);
+
+            return new TemplateException(msg);
         }
     }
 }
