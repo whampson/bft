@@ -71,8 +71,7 @@ namespace WHampson.Bft
             if (templateDoc.Root.Name != RootElementName)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                string msg = XmlUtils.BuildXmlErrorMsg(templateDoc.Root, fmt, RootElementName);
-                throw new TemplateException(msg);
+                throw TemplateException.Create(templateDoc.Root, fmt, RootElementName);
             }
 
             IEnumerable<XElement> elems = templateDoc.Root.Elements();
@@ -145,7 +144,7 @@ namespace WHampson.Bft
             if (!string.IsNullOrWhiteSpace(elem.Value))
             {
                 string fmt = "Unexpected textual data.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+                throw TemplateException.Create(elem, fmt);
             }
 
             // Check whether this is user-defined type or a plain-old struct
@@ -161,7 +160,7 @@ namespace WHampson.Bft
             if (children.Count() == 0)
             {
                 string fmt = "Empty structs are not allowed.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+                throw TemplateException.Create(elem, fmt);
             }
 
             // Extract modifiers
@@ -189,7 +188,7 @@ namespace WHampson.Bft
                 if (name != null && members.ContainsKey(name.ToLower()))
                 {
                     string fmt = "Variable '{0}' already defined.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(memberElem, fmt, name));
+                    throw TemplateException.Create(elem, fmt, name);
                 }
 
                 // Add to member list
@@ -202,7 +201,7 @@ namespace WHampson.Bft
             if (localOffset == 0)
             {
                 string fmt = "Empty structs are not allowed.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+                throw TemplateException.Create(elem, fmt);
             }
 
             if (oType == null || name == null)
@@ -241,7 +240,7 @@ namespace WHampson.Bft
                 {
                     // tried to set array to non-array property, throw excep
                     string fmt = "Attempt to set an array to a non-array value.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+                    throw TemplateException.Create(elem, fmt);
                 }
             }
 
@@ -265,7 +264,7 @@ namespace WHampson.Bft
                 if (!validDirective)
                 {
                     string fmt = "Unknown type or directive '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt, dataTypeIdentifier));
+                    throw TemplateException.Create(elem, fmt, dataTypeIdentifier);
                 }
             }
 
@@ -385,13 +384,13 @@ namespace WHampson.Bft
             if (baseType == null || typeName == null)
             {
                 string fmt = "Missing type name or kind.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt));
+                throw TemplateException.Create(elem, fmt);
             }
 
             if (baseType != StructIdentifier && !elem.IsEmpty)
             {
                 string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(elem, fmt, StructIdentifier));
+                throw TemplateException.Create(elem, fmt, StructIdentifier);
             }
 
             if (baseType == StructIdentifier)
@@ -402,8 +401,7 @@ namespace WHampson.Bft
                 if (nestedTypedefs.Count() != 0)
                 {
                     string fmt = "Nested type definitions are not allowed.";
-                    string msg = XmlUtils.BuildXmlErrorMsg(nestedTypedefs.ElementAt(0), fmt);
-                    throw new TemplateException(msg);
+                    throw TemplateException.Create(nestedTypedefs.ElementAt(0), fmt);
                 }
 
                 // Parse type definition
@@ -419,14 +417,14 @@ namespace WHampson.Bft
             if (LookupType(typeName, out kind))
             {
                 string fmt = "Type '{0}' has already been defined.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(nameAttr, fmt, typeName));
+                throw TemplateException.Create(nameAttr, fmt, typeName);
             }
 
             // Ensure new type is built from some pre-existing type
             if (!LookupType(baseType, out kind))
             {
                 string fmt = "Unknown type '{0}'.";
-                throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, baseType));
+                throw TemplateException.Create(kindAttr, fmt, baseType);
             }
 
             // If new type descends from another user-defined type,
@@ -535,21 +533,21 @@ namespace WHampson.Bft
                 if (!ModifierIdentifierMap.TryGetValue(mId, out m))
                 {
                     string fmt = "Unknown modifier '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
+                    throw TemplateException.Create(attr, fmt, mId);
                 }
 
                 // Check if modifier is valid for current type
                 if (!validAttrs.Contains(m))
                 {
                     string fmt = "Invalid modifier '{0}'.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
+                    throw TemplateException.Create(attr, fmt, mId);
                 }
 
                 // Ensure value is not empty
                 if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Value for modifier '{0}' cannot be empty.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, mId));
+                    throw TemplateException.Create(attr, fmt, mId);
                 }
 
                 // Ensure that both 'count' and 'sentinel' aren't present at the same time
@@ -559,8 +557,7 @@ namespace WHampson.Bft
                     if (hasSentinel)
                     {
                         string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                        string msg = XmlUtils.BuildXmlErrorMsg(attr, fmt, CountIdentifier, SentinelIdentifier);
-                        throw new TemplateException(msg);
+                        throw TemplateException.Create(attr, fmt, CountIdentifier, SentinelIdentifier);
                     }
                     hasCount = true;
                 }
@@ -569,8 +566,7 @@ namespace WHampson.Bft
                     if (hasCount)
                     {
                         string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                        string msg = XmlUtils.BuildXmlErrorMsg(attr, fmt, SentinelIdentifier, CountIdentifier);
-                        throw new TemplateException(msg);
+                        throw TemplateException.Create(attr, fmt, SentinelIdentifier, CountIdentifier);
                     }
                     hasSentinel = true;
                 }
@@ -592,7 +588,7 @@ namespace WHampson.Bft
                 if (!mod.TrySetValue(attr.Value))
                 {
                     string fmt = mod.GetTryParseErrorMessage();
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(attr, fmt, attr.Value));
+                    throw TemplateException.Create(attr, fmt, attr.Value);
                 }
 
                 modifierMap[m] = mod;
@@ -638,7 +634,7 @@ namespace WHampson.Bft
                 if (!countValid || count < 0)
                 {
                     string fmt = "'{0}' must be a non-negative integer.";
-                    throw new TemplateException(XmlUtils.BuildXmlErrorMsg(countAttr, fmt, CountIdentifier));
+                    throw TemplateException.Create(countAttr, fmt, CountIdentifier);
                 }
             }
 
@@ -657,7 +653,7 @@ namespace WHampson.Bft
                     if (!kindValid)
                     {
                         string fmt = "Unknown type '{0}'.";
-                        throw new TemplateException(XmlUtils.BuildXmlErrorMsg(kindAttr, fmt, kindAttr.Value));
+                        throw TemplateException.Create(kindAttr, fmt, kindAttr.Value);
                     }
                 }
             }
