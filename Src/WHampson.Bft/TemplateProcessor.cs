@@ -31,7 +31,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using WHampson.Bft.Types;
-using static WHampson.Bft.Keyword;
+using static WHampson.Bft.Keywords;
 
 using Int32 = WHampson.Bft.Types.Int32;
 
@@ -252,15 +252,15 @@ namespace WHampson.Bft
             string dataTypeIdentifier = elem.Name.LocalName;
 
             // Look up member type
-            BuiltinType type;
+            BuiltinTypeId type;
             bool validType = LookupType(dataTypeIdentifier, out type);
 
             // Look up directive if not a valid data type
-            Directive dir = default(Directive);
+            DirectiveId dir = default(DirectiveId);
             bool validDirective = false;
             if (!validType)
             {
-                validDirective = DirectiveIdentifierMap.TryGetValue(dataTypeIdentifier, out dir);
+                validDirective = DirectiveIdMap.TryGetValue(dataTypeIdentifier, out dir);
                 if (!validDirective)
                 {
                     string fmt = "Unknown type or directive '{0}'.";
@@ -275,7 +275,7 @@ namespace WHampson.Bft
                 return ProcessDirective(elem, dir);
             }
 
-            if (type == BuiltinType.Struct)
+            if (type == BuiltinTypeId.Struct)
             {
                 return ProcessStructure(elem, typeProperties, out memberArray, out name);
             }
@@ -292,18 +292,18 @@ namespace WHampson.Bft
 
         private void GetStructureModifiers(XElement elem, out int count, out string name)
         {
-            Dictionary<Modifier, Modifier2> modifierMap =
-                BuildModifierMap(elem, Modifier.Comment, Modifier.Count, Modifier.Name);
+            Dictionary<ModifierId, Modifier2> modifierMap =
+                BuildModifierMap(elem, ModifierId.Comment, ModifierId.Count, ModifierId.Name);
 
             CountModifier countModifier = null;
             NameModifier nameModifier = null;
 
             Modifier2 tmpModifier;
-            if (modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
+            if (modifierMap.TryGetValue(ModifierId.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
             }
-            if (modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            if (modifierMap.TryGetValue(ModifierId.Name, out tmpModifier))
             {
                 nameModifier = (NameModifier) tmpModifier;
             }
@@ -312,20 +312,20 @@ namespace WHampson.Bft
             count = (countModifier != null) ? countModifier.Value : 1;
         }
 
-        private int ProcessDirective(XElement elem, Directive dir)
+        private int ProcessDirective(XElement elem, DirectiveId dir)
         {
             int localOffset = 0;
             switch (dir)
             {
-                case Directive.Align:
+                case DirectiveId.Align:
                     localOffset += ProcessAlign(elem);
                     break;
 
-                case Directive.Echo:
+                case DirectiveId.Echo:
                     localOffset += ProcessEcho(elem);
                     break;
 
-                case Directive.Typedef:
+                case DirectiveId.Typedef:
                     localOffset += ProcessTypedef(elem);
                     break;
             }
@@ -337,13 +337,13 @@ namespace WHampson.Bft
 
         private int ProcessAlign(XElement elem)
         {
-            Dictionary<Modifier, Modifier2> modifierMap =
-                BuildModifierMap(elem, Modifier.Comment, Modifier.Count/*, Modifier.Kind*/);
+            Dictionary<ModifierId, Modifier2> modifierMap =
+                BuildModifierMap(elem, ModifierId.Comment, ModifierId.Count/*, Modifier.Kind*/);
 
             CountModifier countModifier = null;
 
             Modifier2 tmpModifier;
-            if (modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
+            if (modifierMap.TryGetValue(ModifierId.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
             }
@@ -362,18 +362,18 @@ namespace WHampson.Bft
         private int ProcessTypedef(XElement elem)
         {
             isEvalutingTypedef = true;
-            Dictionary<Modifier, Modifier2> modifierMap =
-                BuildModifierMap(elem, Modifier.Comment, Modifier.Kind, Modifier.Name);
+            Dictionary<ModifierId, Modifier2> modifierMap =
+                BuildModifierMap(elem, ModifierId.Comment, ModifierId.Kind, ModifierId.Name);
 
             KindModifier kindModifier = null;
             NameModifier nameModifier = null;
 
             Modifier2 tmpModifier;
-            if (modifierMap.TryGetValue(Modifier.Kind, out tmpModifier))
+            if (modifierMap.TryGetValue(ModifierId.Kind, out tmpModifier))
             {
                 kindModifier = (KindModifier) tmpModifier;
             }
-            if (modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            if (modifierMap.TryGetValue(ModifierId.Name, out tmpModifier))
             {
                 nameModifier = (NameModifier) tmpModifier;
             }
@@ -387,17 +387,17 @@ namespace WHampson.Bft
                 throw TemplateException.Create(elem, fmt);
             }
 
-            if (baseType != StructIdentifier && !elem.IsEmpty)
+            if (baseType != Struct && !elem.IsEmpty)
             {
                 string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
-                throw TemplateException.Create(elem, fmt, StructIdentifier);
+                throw TemplateException.Create(elem, fmt, Struct);
             }
 
-            if (baseType == StructIdentifier)
+            if (baseType == Struct)
             {
                 // Ensure there are no nested typedefs
                 IEnumerable<XElement> nestedTypedefs = elem.Descendants()
-                    .Where(t => t.Name.LocalName == TypedefIdentifier);
+                    .Where(t => t.Name.LocalName == Typedef);
                 if (nestedTypedefs.Count() != 0)
                 {
                     string fmt = "Nested type definitions are not allowed.";
@@ -409,9 +409,9 @@ namespace WHampson.Bft
                 ProcessStructure(elem, true, null, out dummy);
             }
 
-            XAttribute kindAttr = elem.Attribute(KindIdentifier);
-            XAttribute nameAttr = elem.Attribute(NameIdentifier);
-            BuiltinType kind;
+            XAttribute kindAttr = elem.Attribute(Kind);
+            XAttribute nameAttr = elem.Attribute(Name);
+            BuiltinTypeId kind;
 
             // Ensure type isn't already defined
             if (LookupType(typeName, out kind))
@@ -461,8 +461,8 @@ namespace WHampson.Bft
             //}
 
             // Get modifiers
-            Dictionary<Modifier, Modifier2> modifierMap =
-                BuildModifierMap(elem, Modifier.Comment, Modifier.Count, Modifier.Name/*, Modifier.Sentinel*/);
+            Dictionary<ModifierId, Modifier2> modifierMap =
+                BuildModifierMap(elem, ModifierId.Comment, ModifierId.Count, ModifierId.Name/*, Modifier.Sentinel*/);
 
             bool hasCount;
             bool hasName;
@@ -472,11 +472,11 @@ namespace WHampson.Bft
             //SentinelModifier<U> sentinelModifier = null;
 
             Modifier2 tmpModifier;
-            if (hasCount = modifierMap.TryGetValue(Modifier.Count, out tmpModifier))
+            if (hasCount = modifierMap.TryGetValue(ModifierId.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
             }
-            if (hasName = modifierMap.TryGetValue(Modifier.Name, out tmpModifier))
+            if (hasName = modifierMap.TryGetValue(ModifierId.Name, out tmpModifier))
             {
                 nameModifier = (NameModifier) tmpModifier;
             }
@@ -517,9 +517,9 @@ namespace WHampson.Bft
             return localOffset;
         }
 
-        private Dictionary<Modifier, Modifier2> BuildModifierMap(XElement e, params Modifier[] validAttrs)
+        private Dictionary<ModifierId, Modifier2> BuildModifierMap(XElement e, params ModifierId[] validAttrs)
         {
-            Dictionary<Modifier, Modifier2> modifierMap = new Dictionary<Modifier, Modifier2>();
+            Dictionary<ModifierId, Modifier2> modifierMap = new Dictionary<ModifierId, Modifier2>();
             IEnumerable<XAttribute> attrs = e.Attributes();
 
             bool hasCount = false;
@@ -527,10 +527,10 @@ namespace WHampson.Bft
             foreach (XAttribute attr in attrs)
             {
                 string mId = attr.Name.LocalName;
-                Modifier m;
+                ModifierId m;
 
                 // Get modifier
-                if (!ModifierIdentifierMap.TryGetValue(mId, out m))
+                if (!ModifierIdMap.TryGetValue(mId, out m))
                 {
                     string fmt = "Unknown modifier '{0}'.";
                     throw TemplateException.Create(attr, fmt, mId);
@@ -552,24 +552,24 @@ namespace WHampson.Bft
 
                 // Ensure that both 'count' and 'sentinel' aren't present at the same time
                 // (as this causes confusion about where to end the array)
-                if (m == Modifier.Count)
-                {
-                    if (hasSentinel)
-                    {
-                        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                        throw TemplateException.Create(attr, fmt, CountIdentifier, SentinelIdentifier);
-                    }
-                    hasCount = true;
-                }
-                else if (m == Modifier.Sentinel)
-                {
-                    if (hasCount)
-                    {
-                        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                        throw TemplateException.Create(attr, fmt, SentinelIdentifier, CountIdentifier);
-                    }
-                    hasSentinel = true;
-                }
+                //if (m == Modifier.Count)
+                //{
+                //    if (hasSentinel)
+                //    {
+                //        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
+                //        throw TemplateException.Create(attr, fmt, CountIdentifier, SentinelIdentifier);
+                //    }
+                //    hasCount = true;
+                //}
+                //else if (m == ModifierId.Sentinel)
+                //{
+                //    if (hasCount)
+                //    {
+                //        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
+                //        throw TemplateException.Create(attr, fmt, SentinelIdentifier, CountIdentifier);
+                //    }
+                //    hasSentinel = true;
+                //}
 
                 // Create new instance of Modifier subclass
                 // First, get the modifier subclass
@@ -619,12 +619,12 @@ namespace WHampson.Bft
                 return customTypeInfo.Size;
             }
 
-            BuiltinType type;
-            Directive dir;
-            bool isBuiltinType = BuiltinTypeIdentifierMap.TryGetValue(typeIdentifier, out type);
-            bool isDirective = DirectiveIdentifierMap.TryGetValue(typeIdentifier, out dir);
+            BuiltinTypeId type;
+            DirectiveId dir;
+            bool isBuiltinType = BuiltinTypeIdMap.TryGetValue(typeIdentifier, out type);
+            bool isDirective = DirectiveIdMap.TryGetValue(typeIdentifier, out dir);
 
-            XAttribute countAttr = e.Attribute(CountIdentifier);
+            XAttribute countAttr = e.Attribute(Count);
             int count = 1;
 
             // TODO: make func bool GetCountValue(XElement, bool allowVariables, out value);
@@ -634,19 +634,19 @@ namespace WHampson.Bft
                 if (!countValid || count < 0)
                 {
                     string fmt = "'{0}' must be a non-negative integer.";
-                    throw TemplateException.Create(countAttr, fmt, CountIdentifier);
+                    throw TemplateException.Create(countAttr, fmt, Count);
                 }
             }
 
             if (isDirective)
             {
-                if (dir != Directive.Align && dir != Directive.Typedef)
+                if (dir != DirectiveId.Align && dir != DirectiveId.Typedef)
                 {
                     return 0;   // Directives other than 'align' and 'typedef' do not add to the size
                 }
 
-                XAttribute kindAttr = e.Attribute(KindIdentifier);
-                type = BuiltinType.Int8;    // Default
+                XAttribute kindAttr = e.Attribute(Kind);
+                type = BuiltinTypeId.Int8;    // Default
                 if (kindAttr != null)
                 {
                     bool kindValid = LookupType(kindAttr.Value, out type);
@@ -659,7 +659,7 @@ namespace WHampson.Bft
             }
 
             int size = 0;
-            if (type == BuiltinType.Struct)
+            if (type == BuiltinTypeId.Struct)
             {
                 foreach (XElement memb in e.Elements())
                 {
@@ -675,7 +675,7 @@ namespace WHampson.Bft
             return size * count;
         }
 
-        private bool LookupType(string identifier, out BuiltinType type)
+        private bool LookupType(string identifier, out BuiltinTypeId type)
         {
             // Look up in custom type list
             CustomTypeInfo info;
@@ -687,14 +687,14 @@ namespace WHampson.Bft
             }
 
             // Look up in builtin type list
-            return BuiltinTypeIdentifierMap.TryGetValue(identifier, out type);
+            return BuiltinTypeIdMap.TryGetValue(identifier, out type);
         }
 
-        internal static Dictionary<BuiltinType, Type> TypeMap = new Dictionary<BuiltinType, Type>()
+        internal static Dictionary<BuiltinTypeId, Type> TypeMap = new Dictionary<BuiltinTypeId, Type>()
         {
-            { BuiltinType.Float, typeof(Float) },
-            { BuiltinType.Int8, typeof(Int8) },
-            { BuiltinType.Int32, typeof(Int32) }
+            { BuiltinTypeId.Float, typeof(Float) },
+            { BuiltinTypeId.Int8, typeof(Int8) },
+            { BuiltinTypeId.Int32, typeof(Int32) }
         };
 
         private byte[] LoadFile(string filePath)
@@ -718,11 +718,11 @@ namespace WHampson.Bft
             return data;
         }
 
-        private static readonly Dictionary<Modifier, Type> ModifierMap = new Dictionary<Modifier, Type>()
+        private static readonly Dictionary<ModifierId, Type> ModifierMap = new Dictionary<ModifierId, Type>()
         {
-            { Modifier.Count, typeof(CountModifier) },
-            { Modifier.Kind, typeof(KindModifier) },
-            { Modifier.Name, typeof(NameModifier) },
+            { ModifierId.Count, typeof(CountModifier) },
+            { ModifierId.Kind, typeof(KindModifier) },
+            { ModifierId.Name, typeof(NameModifier) },
             //{ Modifier.Sentinel, typeof(SentinelModifier<>) },
         };
     }

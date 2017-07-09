@@ -37,7 +37,7 @@ namespace WHampson.Bft
         /// <param name="members">
         /// A list of member elements.
         /// </param>
-        public CustomTypeInfo(Keyword.BuiltinType kind, IEnumerable<XElement> members, int size)
+        public CustomTypeInfo(Keywords.BuiltinTypeId kind, IEnumerable<XElement> members, int size)
         {
             Kind = kind;
             Members = members;
@@ -47,7 +47,7 @@ namespace WHampson.Bft
         /// <summary>
         /// Gets the parent type of this custom type.
         /// </summary>
-        public Keyword.BuiltinType Kind
+        public Keywords.BuiltinTypeId Kind
         {
             get;
         }
