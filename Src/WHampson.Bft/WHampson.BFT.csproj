@@ -78,7 +78,6 @@
     <Compile Include="TemplateFile.cs" />
     <Compile Include="Keyword.cs" />
     <Compile Include="SyntaxParser.cs" />
-    <Compile Include="XmlUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Test.xml">
