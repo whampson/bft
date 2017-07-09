@@ -120,20 +120,67 @@ namespace WHampson.BFT
         /// <param name="addr">
         /// The memory location of the data being pointed to.
         /// </param>
-        public Pointer(IntPtr addr)
+        public Pointer(IntPtr addr) : this(addr, 1)
+        {
+        }
+
+        public Pointer(IntPtr addr, int count)
         {
             if (addr == IntPtr.Zero)
             {
                 throw new ArgumentException("Null pointer not allowed.");
             }
 
+            if (count < 1)
+            {
+                throw new ArgumentException("Count must be a positive integer.");
+            }
+
             Address = addr;
+            Count = count;
+        }
+
+        public T this[int i]
+        {
+            get
+            {
+                if (i < 0 || i > Count - 1)
+                {
+                    string msg = "Index was outside the bounds of the array.";
+                    throw new IndexOutOfRangeException(msg);
+                }
+
+                int siz = Marshal.SizeOf(typeof(T));
+                IntPtr valAddr = Address + (i * siz);
+
+                return Dereference(valAddr);
+            }
+
+            set
+            {
+                if (i < 0 || i > Count - 1)
+                {
+                    string msg = "Index was outside the bounds of the array.";
+                    throw new IndexOutOfRangeException(msg);
+                }
+
+                int siz = Marshal.SizeOf(typeof(T));
+                IntPtr valAddr = Address + (i * siz);
+
+                byte[] data = value.GetBytes();
+                Marshal.Copy(data, 0, valAddr, data.Length);
+            }
         }
 
         /// <summary>
         /// Gets the memory location of the data being pointed to.
         /// </summary>
         public IntPtr Address
+        {
+            get;
+        }
+
+        public int Count
         {
             get;
         }
@@ -145,15 +192,17 @@ namespace WHampson.BFT
         {
             get
             {
-                // Create instance of T using data at address
-                return Dereference(Address);
+                //// Create instance of T using data at address
+                //return Dereference(Address);
+                return this[0];
             }
 
             set
             {
-                // Get bytes of new value, copy bytes to address
-                byte[] data = value.GetBytes();
-                Marshal.Copy(data, 0, Address, data.Length);
+                //// Get bytes of new value, copy bytes to address
+                //byte[] data = value.GetBytes();
+                //Marshal.Copy(data, 0, Address, data.Length);
+                this[0] = value;
             }
         }
 
