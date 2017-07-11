@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <bft>
-    <typedef name="my_int" kind="int32" />
-    <typedef name="my_int2" kind="my_int" />
-    <typedef name="vect3d" kind="struct">
+    <typedef typename="my_int" kind="int32" />
+    <typedef typename="my_int2" kind="my_int" />
+    <typedef typename="vect3d" kind="struct">
         <float name="x" />
         <float name="y" />
         <float name="z" />
