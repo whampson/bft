@@ -437,16 +437,16 @@ namespace WHampson.Bft
                 }
             }
 
+            if (kind != Keywords.Struct && elem.Elements().Count() != 0)
+            {
+                //string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
+                string fmt = "Member fields are not allowed in types that are not '{0}'.";
+                throw TemplateException.Create(elem.Elements().ElementAt(0), fmt, Keywords.Struct);
+            }
+
             if (isAliasOfUserDefinedType && existingCustomTypeInfo.IsStruct)
             {
                 kind = Keywords.Struct;
-            }
-
-            if (kind != Keywords.Struct && !elem.IsEmpty)
-            {
-                //string fmt = "Type definitions not descending directly from '{0}' cannot contain member fields.";
-                string fmt = "Member fields not allowed in types that are not '{0}'.";
-                throw TemplateException.Create(elem, fmt, Keywords.Struct);
             }
 
             if (isAliasOfUserDefinedType)
@@ -499,10 +499,10 @@ namespace WHampson.Bft
             //    throw new IndexOutOfRangeException("File length exceeded.");
             //}
 
-            if (!elem.IsEmpty)
+            if (elem.Elements().Count() != 0)
             {
                 string fmt = "Primtive types cannot have member fields.";
-                throw TemplateException.Create(elem, fmt);
+                throw TemplateException.Create(elem.Elements().ElementAt(0), fmt);
             }
 
             // Get modifiers
