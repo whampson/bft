@@ -44,7 +44,6 @@ namespace WHampson.Bft
         }
 
         private XDocument doc;
-        private TemplateProcessor processor;
 
         public TemplateFile(string path)
         {
