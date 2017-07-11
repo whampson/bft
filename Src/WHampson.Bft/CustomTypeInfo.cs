@@ -21,13 +21,27 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
 namespace WHampson.Bft
 {
     internal class CustomTypeInfo
     {
+        public static CustomTypeInfo CreateStruct(/*string name, */IEnumerable<XElement> members, int size)
+        {
+            return new CustomTypeInfo(/*name, */null, members, size);
+        }
+
+        public static CustomTypeInfo CreatePrimitive(/*string name, */Type baseType)
+        {
+            int siz = Marshal.SizeOf(baseType);
+            return new CustomTypeInfo(/*name, */baseType, new List<XElement>(), siz);
+        }
+
         /// <summary>
         /// Creates a new <see cref="CustomTypeInfo"/> object.
         /// </summary>
@@ -37,17 +51,33 @@ namespace WHampson.Bft
         /// <param name="members">
         /// A list of member elements.
         /// </param>
-        public CustomTypeInfo(Keywords.BuiltinTypeId kind, IEnumerable<XElement> members, int size)
+        private CustomTypeInfo(/*string name, */Type baseType, IEnumerable<XElement> members, int size)
         {
-            Kind = kind;
-            Members = members;
+            //if (name == null)
+            //{
+            //    throw new ArgumentNullException("name");
+            //}
+            if (members == null)
+            {
+                throw new ArgumentNullException("members");
+            }
+            if (size < 0)
+            {
+                throw new ArgumentException("Size must be a non-negative integer.");
+            }
+
+            //TypeName = name;
+            BaseType = baseType;
+            Members = new List<XElement>(members);
             Size = size;
         }
 
-        /// <summary>
-        /// Gets the parent type of this custom type.
-        /// </summary>
-        public Keywords.BuiltinTypeId Kind
+        public bool IsStruct
+        {
+            get { return BaseType == null && Members.Count() != 0; }
+        }
+
+        public Type BaseType
         {
             get;
         }
