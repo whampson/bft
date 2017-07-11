@@ -28,6 +28,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using WHampson.Bft.Types;
 
 
@@ -37,12 +38,15 @@ namespace WHampson.Bft
 {
     internal abstract class Modifier2
     {
-        public Modifier2(string name)
+        public Modifier2(string name, XAttribute srcAttr)
         {
             Name = name;
+            SourceAttribute = srcAttr;
         }
 
         public string Name { get; }
+
+        public XAttribute SourceAttribute { get; }
 
         public abstract object GetValue();
 
@@ -55,7 +59,7 @@ namespace WHampson.Bft
 
     internal abstract class Modifier2<T> : Modifier2
     {
-        public Modifier2(string name) : base(name)
+        public Modifier2(string name, XAttribute srcAttr) : base(name, srcAttr)
         {
         }
 
@@ -71,8 +75,8 @@ namespace WHampson.Bft
     {
         private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
 
-        public NameModifier()
-            : base("name")
+        public NameModifier(XAttribute srcAttr)
+            : base("name", srcAttr)
         {
         }
 
@@ -96,8 +100,27 @@ namespace WHampson.Bft
 
     internal sealed class KindModifier : Modifier2<string>
     {
-        public KindModifier()
-            : base("kind")
+        public KindModifier(XAttribute srcAttr)
+            : base("kind", srcAttr)
+        {
+        }
+
+        public override string GetTryParseErrorMessage()
+        {
+            return "";
+        }
+
+        public override bool TrySetValue(string valStr)
+        {
+            Value = valStr;
+            return true;
+        }
+    }
+
+    internal sealed class MessageModifier : Modifier2<string>
+    {
+        public MessageModifier(XAttribute srcAttr)
+            : base("message", srcAttr)
         {
         }
 
@@ -115,8 +138,8 @@ namespace WHampson.Bft
 
     internal sealed class CommentModifier : Modifier2<string>
     {
-        public CommentModifier()
-            : base("comment")
+        public CommentModifier(XAttribute srcAttr)
+            : base("comment", srcAttr)
         {
         }
 
@@ -134,8 +157,8 @@ namespace WHampson.Bft
 
     internal sealed class CountModifier : Modifier2<int>
     {
-        public CountModifier()
-            : base("count")
+        public CountModifier(XAttribute srcAttr)
+            : base("count", srcAttr)
         {
         }
 
@@ -162,8 +185,8 @@ namespace WHampson.Bft
 
     internal sealed class SentinelModifier : Modifier2<object>
     {
-        public SentinelModifier(string name)
-            : base("sentinel")
+        public SentinelModifier(string name, XAttribute srcAttr)
+            : base("sentinel", srcAttr)
         {
         }
 
@@ -179,37 +202,64 @@ namespace WHampson.Bft
     }
 
 
-    internal sealed class SentinelModifier<T> : Modifier2<T> where T : IPrimitiveType
+    //internal sealed class SentinelModifier<T> : Modifier2<T> where T : IPrimitiveType
+    //{
+    //    public SentinelModifier(XAttribute srcAttr)
+    //        : base("sentinel", srcAttr)
+    //    {
+    //    }
+
+    //    public override string GetTryParseErrorMessage()
+    //    {
+    //        Type t = typeof(T);
+    //        string typeName = t.Name.ToLower();
+
+    //        return "'{0}' is not a valid " + typeName + " value.";
+    //    }
+
+    //    public override bool TrySetValue(string valStr)
+    //    {
+    //        // Get 'TryParse' method for type T
+    //        T val = default(T);
+    //        Type t = typeof(T);
+    //        MethodInfo tryParseMethod = t.GetMethod("TryParse", BindingFlags.Public | BindingFlags.Static);
+    //        object[] args = new object[] { valStr, val };
+
+    //        // Invoke 'TryParse' and set value if successful
+    //        bool success;
+    //        if (success = (bool) tryParseMethod.Invoke(null, args))
+    //        {
+    //            Value = (T) args[1];
+    //        }
+
+    //        return success;
+    //    }
+    //}
+
+    internal sealed class TypenameModifier : Modifier2<string>
     {
-        public SentinelModifier()
-            : base("sentinel")
+        private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
+
+        public TypenameModifier(XAttribute srcAttr)
+            : base("typename", srcAttr)
         {
         }
 
         public override string GetTryParseErrorMessage()
         {
-            Type t = typeof(T);
-            string typeName = t.Name.ToLower();
-
-            return "'{0}' is not a valid " + typeName + " value.";
+            return "'{0}' is not a valid variable name. Variable names can only consist of "
+                + "alphanumeric characters and underscores, and cannot begin with a number.";
         }
 
         public override bool TrySetValue(string valStr)
         {
-            // Get 'TryParse' method for type T
-            T val = default(T);
-            Type t = typeof(T);
-            MethodInfo tryParseMethod = t.GetMethod("TryParse", BindingFlags.Public | BindingFlags.Static);
-            object[] args = new object[] { valStr, val };
-
-            // Invoke 'TryParse' and set value if successful
-            bool success;
-            if (success = (bool) tryParseMethod.Invoke(null, args))
+            if (!NameFormatRegex.IsMatch(valStr))
             {
-                Value = (T) args[1];
+                return false;
             }
 
-            return success;
+            Value = valStr;
+            return true;
         }
     }
 }
