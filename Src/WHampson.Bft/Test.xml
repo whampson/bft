@@ -14,7 +14,7 @@
         <my_int2 name="numKills" />
         <int8 name="health" />
         <int8 name="armor" />
-        <align count="2" />
+        <align count="2" kind="int8" />
         <vect3d name="location2" />
     </struct>
 </bft>

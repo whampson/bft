@@ -322,15 +322,43 @@ namespace WHampson.Bft
                 BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
             CountModifier countModifier = null;
+            KindModifier kindModifier = null;
 
             Modifier tmpModifier;
             if (modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
             }
+            if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
+            {
+                kindModifier = (KindModifier) tmpModifier;
+            }
 
             int count = (countModifier != null) ? countModifier.Value : 1;
-            int typeSize = 1;
+            string kind = (kindModifier != null) ? kindModifier.Value : Keywords.Int8;
+
+            int typeSize;
+
+            CustomTypeInfo userDefinedTypeInfo;
+            bool isKindCustomType = customTypes.TryGetValue(kind, out userDefinedTypeInfo);
+
+            if (isKindCustomType)
+            {
+                typeSize = userDefinedTypeInfo.Size;
+            }
+            else
+            {
+                Keyword dummyKw;
+                Type dummyType;
+                if (!(Keywords.KeywordMap.TryGetValue(kind, out dummyKw)
+                    && TypeMap.TryGetValue(dummyKw, out dummyType)))
+                {
+                    string fmt = "Unknown type '{0}'.";
+                    throw TemplateException.Create(kindModifier.SourceAttribute, fmt, kind);
+                }
+
+                typeSize = Marshal.SizeOf(dummyType);
+            }
 
             int off = count * typeSize;
             if (!isEvalutingTypedef)
