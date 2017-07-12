@@ -32,11 +32,6 @@ namespace WHampson.Bft
         {
         }
 
-        //public override string GetTryParseErrorMessage()
-        //{
-        //    return "'{0}' is not a valid count value. Value must be a non-negative binary, octal, decimal, or hexadecimal number.";
-        //}
-
         public override bool TrySetValue(string valStr)
         {
             long val;

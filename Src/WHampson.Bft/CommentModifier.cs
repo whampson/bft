@@ -32,11 +32,6 @@ namespace WHampson.Bft
         {
         }
 
-        //public override string GetTryParseErrorMessage()
-        //{
-        //    return "";
-        //}
-
         public override bool TrySetValue(string valStr)
         {
             Value = valStr;

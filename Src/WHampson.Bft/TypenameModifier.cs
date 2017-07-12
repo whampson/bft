@@ -35,12 +35,6 @@ namespace WHampson.Bft
         {
         }
 
-        //public override string GetTryParseErrorMessage()
-        //{
-        //    return "'{0}' is not a valid variable name. Variable names can only consist of "
-        //        + "alphanumeric characters and underscores, and cannot begin with a number.";
-        //}
-
         public override bool TrySetValue(string valStr)
         {
             if (!NameFormatRegex.IsMatch(valStr))
