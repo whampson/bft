@@ -27,20 +27,15 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using WHampson.Bft.Types;
-//using static WHampson.Bft.Keywords;
 
 using Int32 = WHampson.Bft.Types.Int32;
 
 namespace WHampson.Bft
 {
-    internal class TemplateProcessor
+    internal sealed class TemplateProcessor
     {
-        //private const string VariableRegex = "\\$\\{(.+)\\}";
-
         private delegate int DirectiveProcessAction(XElement elem);
 
         private XDocument templateDoc;
@@ -324,7 +319,7 @@ namespace WHampson.Bft
         private int ProcessAlign(XElement elem)
         {
             Dictionary<Keyword, Modifier> modifierMap =
-                BuildModifierMap(elem, Keywords.Comment, Keywords.Count/*, Keywords.Kind*/);
+                BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
             CountModifier countModifier = null;
 
@@ -507,14 +502,12 @@ namespace WHampson.Bft
 
             // Get modifiers
             Dictionary<Keyword, Modifier> modifierMap =
-                BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name/*, Keywords.Sentinel*/);
+                BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
             bool hasCount;
             bool hasName;
-            //bool hasSentinel;
             CountModifier countModifier = null;
             NameModifier nameModifier = null;
-            //SentinelModifier<U> sentinelModifier = null;
 
             Modifier tmpModifier;
             if (hasCount = modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
@@ -525,14 +518,9 @@ namespace WHampson.Bft
             {
                 nameModifier = (NameModifier) tmpModifier;
             }
-            //if (hasSentinel = modifierMap.TryGetValue(Modifier.Sentinel, out tmpModifier))
-            //{
-            //    sentinelModifier = (SentinelModifier<U>) tmpModifier;
-            //}
 
             int count = (hasCount) ? countModifier.Value : 1;
             name = (hasName) ? nameModifier.Value : null;
-            //U sentinel = (hasSentinel) ? sentinelModifier.Value : default(U);
 
             memberArray = new object[1];
 
@@ -559,8 +547,6 @@ namespace WHampson.Bft
             Dictionary<Keyword, Modifier> modifierMap = new Dictionary<Keyword, Modifier>();
             IEnumerable<XAttribute> attrs = e.Attributes();
 
-            bool hasCount = false;
-            bool hasSentinel = false;
             foreach (XAttribute attr in attrs)
             {
                 string mId = attr.Name.LocalName;
@@ -587,38 +573,9 @@ namespace WHampson.Bft
                     throw TemplateException.Create(attr, fmt, mId);
                 }
 
-                // Ensure that both 'count' and 'sentinel' aren't present at the same time
-                // (as this causes confusion about where to end the array)
-                //if (m == Modifier.Count)
-                //{
-                //    if (hasSentinel)
-                //    {
-                //        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                //        throw TemplateException.Create(attr, fmt, CountIdentifier, SentinelIdentifier);
-                //    }
-                //    hasCount = true;
-                //}
-                //else if (m == ModifierId.Sentinel)
-                //{
-                //    if (hasCount)
-                //    {
-                //        string fmt = "Modifier '{0}' conflicts with modifier '{1}'.";
-                //        throw TemplateException.Create(attr, fmt, SentinelIdentifier, CountIdentifier);
-                //    }
-                //    hasSentinel = true;
-                //}
-
                 // Create new instance of Modifier subclass
                 // First, get the modifier subclass
                 Type modifierType = ModifierMap[m];
-
-                // The Sentinel modifier takes a type parameter, so we must supply that
-                // The type parameter matches the value type on which this modifier is used
-                //if (m == Modifier.Sentinel)
-                //{
-                //    Type valueType = typeof(t);
-                //    modifierType = modifierType.MakeGenericType(new Type[] { valueType });
-                //}
 
                 // Create the Modifier instance and try to set it's value
                 Modifier mod = (Modifier) Activator.CreateInstance(modifierType, attr);
