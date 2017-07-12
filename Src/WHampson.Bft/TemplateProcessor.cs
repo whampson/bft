@@ -624,7 +624,7 @@ namespace WHampson.Bft
                 Modifier mod = (Modifier) Activator.CreateInstance(modifierType, attr);
                 if (!mod.TrySetValue(attr.Value))
                 {
-                    string fmt = mod.GetTryParseErrorMessage();
+                    string fmt = ModifierSetValueErrorMap[mod.GetType()];
                     throw TemplateException.Create(attr, fmt, attr.Value);
                 }
 
@@ -655,14 +655,29 @@ namespace WHampson.Bft
             return data;
         }
 
+        private static readonly Dictionary<Type, string> ModifierSetValueErrorMap = new Dictionary<Type, string>()
+        {
+            { typeof(CommentModifier), null },
+            { typeof(CountModifier),
+                "'{0}' is not a valid integer. Value must be a non-negative number." },
+            { typeof(KindModifier), null },
+            { typeof(MessageModifier), null },
+            { typeof(NameModifier),
+                "'{0}' is not a valid variable name. Variable names may consist only of "
+                + "alphanumeric characters and underscores, and may not begin with a number." },
+            { typeof(TypenameModifier),
+                "'{0}' is not a valid type name. Type names may consist only of "
+                + "alphanumeric characters and underscores, and may not begin with a number." }
+        };
+
         private static readonly Dictionary<Keyword, Type> ModifierMap = new Dictionary<Keyword, Type>()
         {
+            { Keywords.Comment, typeof(CommentModifier) },
             { Keywords.Count, typeof(CountModifier) },
             { Keywords.Kind, typeof(KindModifier) },
             { Keywords.Message, typeof(MessageModifier) },
             { Keywords.Name, typeof(NameModifier) },
             { Keywords.Typename, typeof(TypenameModifier) },
-            //{ Modifier.Sentinel, typeof(SentinelModifier<>) },
         };
 
         private static readonly Dictionary<Keyword, Type> TypeMap = new Dictionary<Keyword, Type>()
