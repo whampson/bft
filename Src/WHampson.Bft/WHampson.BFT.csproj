@@ -65,7 +65,7 @@
     <Compile Include="CustomTypeInfo.cs" />
     <Compile Include="Keyword.cs" />
     <Compile Include="Keywords.cs" />
-    <Compile Include="Modifier2.cs" />
+    <Compile Include="Modifier.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="Types\Float.cs" />

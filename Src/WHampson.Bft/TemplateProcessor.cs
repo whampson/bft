@@ -301,13 +301,13 @@ namespace WHampson.Bft
 
         private void GetStructureModifiers(XElement elem, out int count, out string name)
         {
-            Dictionary<Keyword, Modifier2> modifierMap =
+            Dictionary<Keyword, Modifier> modifierMap =
                 BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
             CountModifier countModifier = null;
             NameModifier nameModifier = null;
 
-            Modifier2 tmpModifier;
+            Modifier tmpModifier;
             if (modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
@@ -323,12 +323,12 @@ namespace WHampson.Bft
 
         private int ProcessAlign(XElement elem)
         {
-            Dictionary<Keyword, Modifier2> modifierMap =
+            Dictionary<Keyword, Modifier> modifierMap =
                 BuildModifierMap(elem, Keywords.Comment, Keywords.Count/*, Keywords.Kind*/);
 
             CountModifier countModifier = null;
 
-            Modifier2 tmpModifier;
+            Modifier tmpModifier;
             if (modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
@@ -348,12 +348,12 @@ namespace WHampson.Bft
 
         private int ProcessEcho(XElement elem)
         {
-            Dictionary<Keyword, Modifier2> modifierMap =
+            Dictionary<Keyword, Modifier> modifierMap =
                BuildModifierMap(elem, Keywords.Comment, Keywords.Message);
 
             MessageModifier messageModifier = null;
 
-            Modifier2 tmpModifier;
+            Modifier tmpModifier;
             if (modifierMap.TryGetValue(Keywords.Message, out tmpModifier))
             {
                 messageModifier = (MessageModifier) tmpModifier;
@@ -379,13 +379,13 @@ namespace WHampson.Bft
             // evaluating the type structure
             isEvalutingTypedef = true;
 
-            Dictionary<Keyword, Modifier2> modifierMap =
+            Dictionary<Keyword, Modifier> modifierMap =
                 BuildModifierMap(elem, Keywords.Comment, Keywords.Kind, Keywords.Typename);
 
             KindModifier kindModifier = null;
             TypenameModifier typenameModifier = null;
 
-            Modifier2 tmpModifier;
+            Modifier tmpModifier;
             if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
             {
                 kindModifier = (KindModifier) tmpModifier;
@@ -506,7 +506,7 @@ namespace WHampson.Bft
             }
 
             // Get modifiers
-            Dictionary<Keyword, Modifier2> modifierMap =
+            Dictionary<Keyword, Modifier> modifierMap =
                 BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name/*, Keywords.Sentinel*/);
 
             bool hasCount;
@@ -516,7 +516,7 @@ namespace WHampson.Bft
             NameModifier nameModifier = null;
             //SentinelModifier<U> sentinelModifier = null;
 
-            Modifier2 tmpModifier;
+            Modifier tmpModifier;
             if (hasCount = modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
             {
                 countModifier = (CountModifier) tmpModifier;
@@ -554,9 +554,9 @@ namespace WHampson.Bft
             return localOffset;
         }
 
-        private Dictionary<Keyword, Modifier2> BuildModifierMap(XElement e, params Keyword[] validAttrs)
+        private Dictionary<Keyword, Modifier> BuildModifierMap(XElement e, params Keyword[] validAttrs)
         {
-            Dictionary<Keyword, Modifier2> modifierMap = new Dictionary<Keyword, Modifier2>();
+            Dictionary<Keyword, Modifier> modifierMap = new Dictionary<Keyword, Modifier>();
             IEnumerable<XAttribute> attrs = e.Attributes();
 
             bool hasCount = false;
@@ -621,7 +621,7 @@ namespace WHampson.Bft
                 //}
 
                 // Create the Modifier instance and try to set it's value
-                Modifier2 mod = (Modifier2) Activator.CreateInstance(modifierType, attr);
+                Modifier mod = (Modifier) Activator.CreateInstance(modifierType, attr);
                 if (!mod.TrySetValue(attr.Value))
                 {
                     string fmt = mod.GetTryParseErrorMessage();

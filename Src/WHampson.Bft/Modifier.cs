@@ -32,13 +32,11 @@ using System.Xml.Linq;
 using WHampson.Bft.Types;
 
 
-// TODO: consider modifiers 'maxCount' and 'minCount' to be used with 'sentinel'
-// to serve as upper- and lower-bounds
 namespace WHampson.Bft
 {
-    internal abstract class Modifier2
+    internal abstract class Modifier
     {
-        public Modifier2(string name, XAttribute srcAttr)
+        public Modifier(string name, XAttribute srcAttr)
         {
             Name = name;
             SourceAttribute = srcAttr;
@@ -57,9 +55,9 @@ namespace WHampson.Bft
         //public abstract bool TrySetValue(string valStr, SymbolTable sTabl);
     }
 
-    internal abstract class Modifier2<T> : Modifier2
+    internal abstract class Modifier<T> : Modifier
     {
-        public Modifier2(string name, XAttribute srcAttr) : base(name, srcAttr)
+        public Modifier(string name, XAttribute srcAttr) : base(name, srcAttr)
         {
         }
 
@@ -71,7 +69,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class NameModifier : Modifier2<string>
+    internal sealed class NameModifier : Modifier<string>
     {
         private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
 
@@ -98,7 +96,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class KindModifier : Modifier2<string>
+    internal sealed class KindModifier : Modifier<string>
     {
         public KindModifier(XAttribute srcAttr)
             : base("kind", srcAttr)
@@ -117,7 +115,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class MessageModifier : Modifier2<string>
+    internal sealed class MessageModifier : Modifier<string>
     {
         public MessageModifier(XAttribute srcAttr)
             : base("message", srcAttr)
@@ -136,7 +134,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class CommentModifier : Modifier2<string>
+    internal sealed class CommentModifier : Modifier<string>
     {
         public CommentModifier(XAttribute srcAttr)
             : base("comment", srcAttr)
@@ -155,7 +153,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class CountModifier : Modifier2<int>
+    internal sealed class CountModifier : Modifier<int>
     {
         public CountModifier(XAttribute srcAttr)
             : base("count", srcAttr)
@@ -183,7 +181,7 @@ namespace WHampson.Bft
         }
     }
 
-    internal sealed class SentinelModifier : Modifier2<object>
+    internal sealed class SentinelModifier : Modifier<object>
     {
         public SentinelModifier(string name, XAttribute srcAttr)
             : base("sentinel", srcAttr)
@@ -236,7 +234,7 @@ namespace WHampson.Bft
     //    }
     //}
 
-    internal sealed class TypenameModifier : Modifier2<string>
+    internal sealed class TypenameModifier : Modifier<string>
     {
         private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
 
