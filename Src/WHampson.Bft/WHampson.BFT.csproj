@@ -62,12 +62,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommentModifier.cs" />
+    <Compile Include="CountModifier.cs" />
     <Compile Include="CustomTypeInfo.cs" />
     <Compile Include="Keyword.cs" />
     <Compile Include="Keywords.cs" />
+    <Compile Include="KindModifier.cs" />
+    <Compile Include="MessageModifier.cs" />
     <Compile Include="Modifier.cs" />
+    <Compile Include="NameModifier.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="TemplateProcessor.cs" />
+    <Compile Include="TypenameModifier.cs" />
     <Compile Include="Types\Float.cs" />
     <Compile Include="Types\Int32.cs" />
     <Compile Include="Types\Int8.cs" />

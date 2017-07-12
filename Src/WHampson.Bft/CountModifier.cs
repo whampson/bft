@@ -25,49 +25,31 @@ using System.Xml.Linq;
 
 namespace WHampson.Bft
 {
-    internal abstract class Modifier
+    internal sealed class CountModifier : Modifier<int>
     {
-        public Modifier(string name, XAttribute srcAttr)
-        {
-            Name = name;
-            SourceAttribute = srcAttr;
-        }
-
-        public string Name
-        {
-            get;
-        }
-
-        public XAttribute SourceAttribute
-        {
-            get;
-        }
-
-        public abstract object GetValue();
-
-        //public abstract string GetTryParseErrorMessage();
-
-        public abstract bool TrySetValue(string valStr);
-
-        //public abstract bool TrySetValue(string valStr, SymbolTable sTabl);
-    }
-
-    internal abstract class Modifier<T> : Modifier
-    {
-        public Modifier(string name, XAttribute srcAttr)
-            : base(name, srcAttr)
+        public CountModifier(XAttribute srcAttr)
+            : base("count", srcAttr)
         {
         }
 
-        public T Value
-        {
-            get;
-            protected set;
-        }
+        //public override string GetTryParseErrorMessage()
+        //{
+        //    return "'{0}' is not a valid count value. Value must be a non-negative binary, octal, decimal, or hexadecimal number.";
+        //}
 
-        public override object GetValue()
+        public override bool TrySetValue(string valStr)
         {
-            return Value;
+            long val;
+            bool isInt = NumberUtils.TryParseInteger(valStr, out val);
+            if (!isInt || (int) val < 0)
+            {
+                return false;
+            }
+
+            //TODO: process as math expr
+
+            Value = (int) val;
+            return true;
         }
     }
 }

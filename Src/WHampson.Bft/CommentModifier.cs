@@ -25,49 +25,22 @@ using System.Xml.Linq;
 
 namespace WHampson.Bft
 {
-    internal abstract class Modifier
+    internal sealed class CommentModifier : Modifier<string>
     {
-        public Modifier(string name, XAttribute srcAttr)
-        {
-            Name = name;
-            SourceAttribute = srcAttr;
-        }
-
-        public string Name
-        {
-            get;
-        }
-
-        public XAttribute SourceAttribute
-        {
-            get;
-        }
-
-        public abstract object GetValue();
-
-        //public abstract string GetTryParseErrorMessage();
-
-        public abstract bool TrySetValue(string valStr);
-
-        //public abstract bool TrySetValue(string valStr, SymbolTable sTabl);
-    }
-
-    internal abstract class Modifier<T> : Modifier
-    {
-        public Modifier(string name, XAttribute srcAttr)
-            : base(name, srcAttr)
+        public CommentModifier(XAttribute srcAttr)
+            : base("comment", srcAttr)
         {
         }
 
-        public T Value
-        {
-            get;
-            protected set;
-        }
+        //public override string GetTryParseErrorMessage()
+        //{
+        //    return "";
+        //}
 
-        public override object GetValue()
+        public override bool TrySetValue(string valStr)
         {
-            return Value;
+            Value = valStr;
+            return true;
         }
     }
 }

@@ -21,53 +21,35 @@
  */
 #endregion
 
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 namespace WHampson.Bft
 {
-    internal abstract class Modifier
+    internal sealed class NameModifier : Modifier<string>
     {
-        public Modifier(string name, XAttribute srcAttr)
-        {
-            Name = name;
-            SourceAttribute = srcAttr;
-        }
+        private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
 
-        public string Name
-        {
-            get;
-        }
-
-        public XAttribute SourceAttribute
-        {
-            get;
-        }
-
-        public abstract object GetValue();
-
-        //public abstract string GetTryParseErrorMessage();
-
-        public abstract bool TrySetValue(string valStr);
-
-        //public abstract bool TrySetValue(string valStr, SymbolTable sTabl);
-    }
-
-    internal abstract class Modifier<T> : Modifier
-    {
-        public Modifier(string name, XAttribute srcAttr)
-            : base(name, srcAttr)
+        public NameModifier(XAttribute srcAttr)
+            : base("name", srcAttr)
         {
         }
 
-        public T Value
-        {
-            get;
-            protected set;
-        }
+        //public override string GetTryParseErrorMessage()
+        //{
+        //    return "'{0}' is not a valid variable name. Variable names can only consist of "
+        //        + "alphanumeric characters and underscores, and cannot begin with a number.";
+        //}
 
-        public override object GetValue()
+        public override bool TrySetValue(string valStr)
         {
-            return Value;
+            if (!NameFormatRegex.IsMatch(valStr))
+            {
+                return false;
+            }
+
+            Value = valStr;
+            return true;
         }
     }
 }
