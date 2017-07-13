@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using WHampson.Bft.Types;
 
@@ -39,7 +40,8 @@ namespace WHampson.Bft
         private delegate int DirectiveProcessAction(XElement elem);
 
         private XDocument templateDoc;
-        private Dictionary<string, CustomTypeInfo> customTypes;
+        //private Dictionary<string, CustomTypeInfo> customTypes;
+        private Dictionary<string, TypeInfo> typeMap;
         private Dictionary<Keyword, DirectiveProcessAction> directiveActionMap;
         private IntPtr dataPtr;
         private int dataLen;
@@ -49,7 +51,8 @@ namespace WHampson.Bft
         public TemplateProcessor(XDocument doc)
         {
             templateDoc = doc;
-            customTypes = new Dictionary<string, CustomTypeInfo>();
+            //customTypes = new Dictionary<string, CustomTypeInfo>();
+            typeMap = new Dictionary<string, TypeInfo>();
             directiveActionMap = new Dictionary<Keyword, DirectiveProcessAction>();
             dataPtr = IntPtr.Zero;
             dataLen = 0;
@@ -98,7 +101,7 @@ namespace WHampson.Bft
             // Process the template with respect to the file data
             dataOffset = 0;
             object o;
-            int bytesProcessed = ProcessStructure(templateDoc.Root, true, typeof(T), out o);
+            int bytesProcessed = ProcessStruct(templateDoc.Root, true, typeof(T), out o);
 
             // Free pinned file data
             // (This will change in the future depending on how we want to manipulate the file data)
@@ -108,7 +111,7 @@ namespace WHampson.Bft
             return bytesProcessed;
         }
 
-        private int ProcessStructure(XElement elem, PropertyInfo[] parentPropertyInfo, out object[] structureArr, out string name)
+        private int ProcessStruct(XElement elem, PropertyInfo[] parentPropertyInfo, out object[] structureArr, out string name)
         {
             int count = 1;
             GetStructureModifiers(elem, out count, out name);
@@ -126,19 +129,19 @@ namespace WHampson.Bft
             for (int i = 0; i < count; i++)
             {
                 object structure;
-                localOffset += ProcessStructure(elem, true, structureType, out structure);
+                localOffset += ProcessStruct(elem, true, structureType, out structure);
                 structureArr[i] = structure;
             }
 
             return localOffset;
         }
 
-        private int ProcessStructure(XElement elem, Type oType, out object o)
+        private int ProcessStruct(XElement elem, Type oType, out object o)
         {
-            return ProcessStructure(elem, false, oType, out o);
+            return ProcessStruct(elem, false, oType, out o);
         }
 
-        private int ProcessStructure(XElement elem, bool ignoreModifiers, Type oType, out object o)
+        private int ProcessStruct(XElement elem, bool ignoreModifiers, Type oType, out object o)
         {
             string dataTypeIdentifier = elem.Name.LocalName;
 
@@ -185,7 +188,7 @@ namespace WHampson.Bft
             foreach (XElement memberElem in children)
             {
                 object[] memberArr;
-                localOffset += ProcessStructureMember(memberElem, oType, oProperties, out memberArr, out name);
+                localOffset += ProcessStructMember(memberElem, oType, oProperties, out memberArr, out name);
 
                 if (name != null && members.ContainsKey(name.ToLower()))
                 {
@@ -240,7 +243,6 @@ namespace WHampson.Bft
                 }
                 else
                 {
-                    // tried to set array to non-array property, throw excep
                     string fmt = "Attempt to set an array to a non-array value.";
                     throw TemplateException.Create(elem, fmt);
                 }
@@ -249,7 +251,7 @@ namespace WHampson.Bft
             return localOffset;
         }
 
-        private int ProcessStructureMember(XElement elem, Type parentType, PropertyInfo[] typeProperties, out object[] memberArray, out string name)
+        private int ProcessStructMember(XElement elem, Type parentType, PropertyInfo[] typeProperties, out object[] memberArray, out string name)
         {
             string keywordIdentifier = elem.Name.LocalName;
 
@@ -269,7 +271,7 @@ namespace WHampson.Bft
             {
                 if (userDefinedTypeInfo.IsStruct)
                 {
-                    return ProcessStructure(elem, typeProperties, out memberArray, out name);
+                    return ProcessStruct(elem, typeProperties, out memberArray, out name);
                 }
 
                 return ProcessPrimitive(elem, userDefinedTypeInfo.BaseType, out memberArray, out name);
@@ -286,7 +288,7 @@ namespace WHampson.Bft
 
             if (kw == Keywords.Struct)
             {
-                return ProcessStructure(elem, typeProperties, out memberArray, out name);
+                return ProcessStruct(elem, typeProperties, out memberArray, out name);
             }
 
             Type type = TypeMap[kw];
@@ -318,29 +320,33 @@ namespace WHampson.Bft
 
         private int ProcessAlign(XElement elem)
         {
-            Dictionary<Keyword, Modifier> modifierMap =
-                BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
+            //Dictionary<Keyword, Modifier> modifierMap =
+            //    BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
-            CountModifier countModifier = null;
-            KindModifier kindModifier = null;
+            //CountModifier countModifier = null;
+            //KindModifier kindModifier = null;
 
-            Modifier tmpModifier;
-            if (modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
-            {
-                countModifier = (CountModifier) tmpModifier;
-            }
-            if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
-            {
-                kindModifier = (KindModifier) tmpModifier;
-            }
+            //Modifier tmpModifier;
+            //if (modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
+            //{
+            //    countModifier = (CountModifier) tmpModifier;
+            //}
+            //if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
+            //{
+            //    kindModifier = (KindModifier) tmpModifier;
+            //}
 
-            int count = (countModifier != null) ? countModifier.Value : 1;
-            string kind = (kindModifier != null) ? kindModifier.Value : Keywords.Int8;
+            //int count = (countModifier != null) ? countModifier.Value : 1;
+            //string kind = (kindModifier != null) ? kindModifier.Value : Keywords.Int8;
 
-            int typeSize;
+            CheckAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
+            int count = GetCountModifier(elem, false, 1);
+            Type kind = GetKindModifier(elem, false, typeof(Int8));
 
-            CustomTypeInfo userDefinedTypeInfo;
-            bool isKindCustomType = customTypes.TryGetValue(kind, out userDefinedTypeInfo);
+            //CustomTypeInfo userDefinedTypeInfo;
+            //bool isKindCustomType = customTypes.TryGetValue(kind, out userDefinedTypeInfo);
+
+            int typeSize = Marshal.SizeOf(kind);
 
             if (isKindCustomType)
             {
@@ -402,31 +408,34 @@ namespace WHampson.Bft
             // evaluating the type structure
             isEvalutingTypedef = true;
 
-            Dictionary<Keyword, Modifier> modifierMap =
-                BuildModifierMap(elem, Keywords.Comment, Keywords.Kind, Keywords.Typename);
+            //Dictionary<Keyword, Modifier> modifierMap =
+            //    BuildModifierMap(elem, Keywords.Comment, Keywords.Kind, Keywords.Typename);
 
-            KindModifier kindModifier = null;
-            TypenameModifier typenameModifier = null;
+            //KindModifier kindModifier = null;
+            //TypenameModifier typenameModifier = null;
 
-            Modifier tmpModifier;
-            if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
-            {
-                kindModifier = (KindModifier) tmpModifier;
-            }
-            if (modifierMap.TryGetValue(Keywords.Typename, out tmpModifier))
-            {
-                typenameModifier = (TypenameModifier) tmpModifier;
-            }
+            //Modifier tmpModifier;
+            //if (modifierMap.TryGetValue(Keywords.Kind, out tmpModifier))
+            //{
+            //    kindModifier = (KindModifier) tmpModifier;
+            //}
+            //if (modifierMap.TryGetValue(Keywords.Typename, out tmpModifier))
+            //{
+            //    typenameModifier = (TypenameModifier) tmpModifier;
+            //}
 
-            if (kindModifier == null || typenameModifier == null)
-            {
-                Keyword k = (kindModifier == null) ? Keywords.Kind : Keywords.Typename;
-                string fmt = "Missing required modifier '{0}'.";
-                throw TemplateException.Create(elem, fmt, k);
-            }
+            //if (kindModifier == null || typenameModifier == null)
+            //{
+            //    Keyword k = (kindModifier == null) ? Keywords.Kind : Keywords.Typename;
+            //    string fmt = "Missing required modifier '{0}'.";
+            //    throw TemplateException.Create(elem, fmt, k);
+            //}
 
-            string kind = kindModifier.Value;
-            string typename = typenameModifier.Value;
+            //string kind = kindModifier.Value;
+            //string typename = typenameModifier.Value;
+
+            TypeInfo kind = GetKindModifier(elem, true, null);
+            string typename = GetTypenameModifier(elem, true, null);
 
             if (Keywords.KeywordMap.ContainsKey(typename))
             {
@@ -495,7 +504,7 @@ namespace WHampson.Bft
 
                 // Validate type definition
                 object dummy;
-                int size = ProcessStructure(elem, true, null, out dummy);
+                int size = ProcessStruct(elem, true, null, out dummy);
                 newTypeInfo = CustomTypeInfo.CreateStruct(elem.Elements(), size);
             }
             else
@@ -528,27 +537,30 @@ namespace WHampson.Bft
                 throw TemplateException.Create(elem.Elements().ElementAt(0), fmt);
             }
 
-            // Get modifiers
-            Dictionary<Keyword, Modifier> modifierMap =
-                BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
+            //// Get modifiers
+            //Dictionary<Keyword, Modifier> modifierMap =
+            //    BuildModifierMap(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
-            bool hasCount;
-            bool hasName;
-            CountModifier countModifier = null;
-            NameModifier nameModifier = null;
+            //bool hasCount;
+            //bool hasName;
+            //CountModifier countModifier = null;
+            //NameModifier nameModifier = null;
 
-            Modifier tmpModifier;
-            if (hasCount = modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
-            {
-                countModifier = (CountModifier) tmpModifier;
-            }
-            if (hasName = modifierMap.TryGetValue(Keywords.Name, out tmpModifier))
-            {
-                nameModifier = (NameModifier) tmpModifier;
-            }
+            //Modifier tmpModifier;
+            //if (hasCount = modifierMap.TryGetValue(Keywords.Count, out tmpModifier))
+            //{
+            //    countModifier = (CountModifier) tmpModifier;
+            //}
+            //if (hasName = modifierMap.TryGetValue(Keywords.Name, out tmpModifier))
+            //{
+            //    nameModifier = (NameModifier) tmpModifier;
+            //}
 
-            int count = (hasCount) ? countModifier.Value : 1;
-            name = (hasName) ? nameModifier.Value : null;
+            //int count = (hasCount) ? countModifier.Value : 1;
+            //name = (hasName) ? nameModifier.Value : null;
+
+            int count = GetCountModifier(elem, false, 1);
+            name = GetNameModifier(elem, false, null);
 
             memberArray = new object[1];
 
@@ -562,61 +574,193 @@ namespace WHampson.Bft
             localOffset = (typeSize * count);
             if (!isEvalutingTypedef)
             {
-                Console.WriteLine("{0} at: {1} (abs: {2})", type.Name, dataOffset, dataPtr + dataOffset);
+                Console.WriteLine("{0} at: {1}", type.Name, dataOffset);
                 dataOffset += localOffset;
-                Console.WriteLine(dataOffset);
             }
 
             return localOffset;
         }
 
-        private Dictionary<Keyword, Modifier> BuildModifierMap(XElement e, params Keyword[] validAttrs)
-        {
-            Dictionary<Keyword, Modifier> modifierMap = new Dictionary<Keyword, Modifier>();
-            IEnumerable<XAttribute> attrs = e.Attributes();
+        //private Dictionary<Keyword, Modifier> BuildModifierMap(XElement e, params Keyword[] validAttrs)
+        //{
+        //    Dictionary<Keyword, Modifier> modifierMap = new Dictionary<Keyword, Modifier>();
+        //    IEnumerable<XAttribute> attrs = e.Attributes();
 
-            foreach (XAttribute attr in attrs)
+        //    foreach (XAttribute attr in attrs)
+        //    {
+        //        string mId = attr.Name.LocalName;
+        //        Keyword m;
+
+        //        // Get modifier
+        //        if (!Keywords.KeywordMap.TryGetValue(mId, out m))
+        //        {
+        //            string fmt = "Invalid modifier '{0}'.";
+        //            throw TemplateException.Create(attr, fmt, mId);
+        //        }
+
+        //        // Check if modifier is valid for current type
+        //        if (!validAttrs.Contains(m))
+        //        {
+        //            string fmt = "Invalid modifier '{0}'.";
+        //            throw TemplateException.Create(attr, fmt, mId);
+        //        }
+
+        //        // Ensure value is not empty
+        //        if (string.IsNullOrWhiteSpace(attr.Value))
+        //        {
+        //            string fmt = "Value for modifier '{0}' cannot be empty.";
+        //            throw TemplateException.Create(attr, fmt, mId);
+        //        }
+
+        //        // Create new instance of Modifier subclass
+        //        // First, get the modifier subclass
+        //        Type modifierType = ModifierMap[m];
+
+        //        // Create the Modifier instance and try to set it's value
+        //        Modifier mod = (Modifier) Activator.CreateInstance(modifierType, attr);
+        //        if (!mod.TrySetValue(attr.Value))
+        //        {
+        //            string fmt = ModifierSetValueErrorMap[mod.GetType()];
+        //            throw TemplateException.Create(attr, fmt, attr.Value);
+        //        }
+
+        //        modifierMap[m] = mod;
+        //    }
+
+        //    return modifierMap;
+        //}
+
+        private void CheckAttributes(XElement elem, params Keyword[] validAttributes)
+        {
+            foreach (XAttribute attr in elem.Attributes())
             {
-                string mId = attr.Name.LocalName;
+                string name = attr.Name.LocalName;
                 Keyword m;
 
                 // Get modifier
-                if (!Keywords.KeywordMap.TryGetValue(mId, out m))
+                if (!Keywords.KeywordMap.TryGetValue(name, out m))
                 {
                     string fmt = "Invalid modifier '{0}'.";
-                    throw TemplateException.Create(attr, fmt, mId);
+                    throw TemplateException.Create(attr, fmt, name);
                 }
 
                 // Check if modifier is valid for current type
-                if (!validAttrs.Contains(m))
+                if (!validAttributes.Contains(m))
                 {
                     string fmt = "Invalid modifier '{0}'.";
-                    throw TemplateException.Create(attr, fmt, mId);
+                    throw TemplateException.Create(attr, fmt, name);
                 }
+            }
+        }
 
-                // Ensure value is not empty
-                if (string.IsNullOrWhiteSpace(attr.Value))
-                {
-                    string fmt = "Value for modifier '{0}' cannot be empty.";
-                    throw TemplateException.Create(attr, fmt, mId);
-                }
-
-                // Create new instance of Modifier subclass
-                // First, get the modifier subclass
-                Type modifierType = ModifierMap[m];
-
-                // Create the Modifier instance and try to set it's value
-                Modifier mod = (Modifier) Activator.CreateInstance(modifierType, attr);
-                if (!mod.TrySetValue(attr.Value))
-                {
-                    string fmt = ModifierSetValueErrorMap[mod.GetType()];
-                    throw TemplateException.Create(attr, fmt, attr.Value);
-                }
-
-                modifierMap[m] = mod;
+        private int GetCountModifier(XElement elem, bool isRequired, int defaultValue)
+        {
+            XAttribute countAttr;
+            if (!GetAttribute(elem, Keywords.Count, isRequired, out countAttr))
+            {
+                return defaultValue;
             }
 
-            return modifierMap;
+            return ProcessCountModifier(countAttr);
+        }
+
+        private int ProcessCountModifier(XAttribute attr)
+        {
+            long val;
+            bool isInt = NumberUtils.TryParseInteger(attr.Value, out val);
+            if (!isInt || (int) val < 0)
+            {
+                string fmt = "'{0}' is not a valid integer. Value must be a non-negative number.";
+                throw TemplateException.Create(attr, fmt, attr.Value);
+            }
+
+            //TODO: process as math expr
+
+            return (int) val;
+        }
+
+        private TypeInfo GetKindModifier(XElement elem, bool isRequired, TypeInfo defaultValue)
+        {
+            XAttribute kindAttr;
+            if (!GetAttribute(elem, Keywords.Kind, isRequired, out kindAttr))
+            {
+                return defaultValue;
+            }
+
+            return ProcessKindModifier(kindAttr);
+        }
+
+        private TypeInfo ProcessKindModifier(XAttribute attr)
+        {
+            return TypeMap[Keywords.Struct];
+        }
+
+        private string GetMessageModifier(XElement elem, bool isRequired, string defaultValue)
+        {
+            XAttribute nameAttr;
+            if (!GetAttribute(elem, Keywords.Message, isRequired, out nameAttr))
+            {
+                return defaultValue;
+            }
+
+            return ProcessMessageModifier(nameAttr);
+        }
+
+        private string ProcessMessageModifier(XAttribute attr)
+        {
+            // TODO: control chars, escapes, and variable references
+            return attr.Value;
+        }
+
+        private string GetNameModifier(XElement elem, bool isRequired, string defaultValue)
+        {
+            XAttribute nameAttr;
+            if (!GetAttribute(elem, Keywords.Name, isRequired, out nameAttr))
+            {
+                return defaultValue;
+            }
+
+            return ProcessNameModifier(nameAttr);
+        }
+
+        private string ProcessNameModifier(XAttribute attr)
+        {
+            if (!NameFormatRegex.IsMatch(attr.Value))
+            {
+                string fmt = "'{0}' is not a valid identifier. Identifiers may consist only of "
+                + "alphanumeric characters and underscores, and may not begin with a number.";
+                throw TemplateException.Create(attr, fmt, attr.Value);
+            }
+
+            return attr.Value;
+        }
+
+        private string GetTypenameModifier(XElement elem, bool isRequired, string defaultValue)
+        {
+            XAttribute nameAttr;
+            if (!GetAttribute(elem, Keywords.Typename, isRequired, out nameAttr))
+            {
+                return defaultValue;
+            }
+
+            return ProcessNameModifier(nameAttr);
+        }
+
+        private bool GetAttribute(XElement elem, string name, bool isRequired, out XAttribute attr)
+        {
+            attr = elem.Attribute(name);
+            if (attr == null)
+            {
+                if (isRequired)
+                {
+                    string fmt = "Missing required attribute '{0}'.";
+                    throw TemplateException.Create(elem, fmt, name);
+                }
+
+                return false;
+            }
+
+            return true;
         }
 
         private byte[] LoadFile(string filePath)
@@ -665,12 +809,18 @@ namespace WHampson.Bft
             { Keywords.Typename, typeof(TypenameModifier) },
         };
 
-        private static readonly Dictionary<Keyword, Type> TypeMap = new Dictionary<Keyword, Type>()
+        //private static readonly Dictionary<Keyword, Type> TypeMap = new Dictionary<Keyword, Type>()
+        //{
+        //    { Keywords.Float, typeof(Float) },
+        //    { Keywords.Int8, typeof(Int8) },
+        //    { Keywords.Int32, typeof(Int32) },
+        //    { Keywords.Struct, typeof(BftStruct) }
+        //};
+
+        private void BuildTypeMap()
         {
-            { Keywords.Float, typeof(Float) },
-            { Keywords.Int8, typeof(Int8) },
-            { Keywords.Int32, typeof(Int32) },
-        };
+            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(Float));
+        }
 
         private void BuildDirectiveActionMap()
         {
@@ -678,5 +828,12 @@ namespace WHampson.Bft
             directiveActionMap[Keywords.Echo] = ProcessEcho;
             directiveActionMap[Keywords.Typedef] = ProcessTypedef;
         }
+
+        private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
+    }
+
+    internal class BftStruct
+    {
+
     }
 }
