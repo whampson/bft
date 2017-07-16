@@ -52,6 +52,7 @@ namespace WHampson.Bft
         private Dictionary<string, TypeInfo> typeMap;
         private Dictionary<string, DirectiveProcessAction> directiveActionMap;
 
+        private bool isEvalutingTypedef;
         private bool isConductingDryRun;
         private int dryRunRecursionDepth;
 
@@ -65,6 +66,7 @@ namespace WHampson.Bft
             typeMap = new Dictionary<string, TypeInfo>();
             directiveActionMap = new Dictionary<string, DirectiveProcessAction>();
 
+            isEvalutingTypedef = false;
             isConductingDryRun = false;
             dryRunRecursionDepth = 0;
 
@@ -287,6 +289,13 @@ namespace WHampson.Bft
 
         private int ProcessTypedef(XElement elem)
         {
+            if (isEvalutingTypedef)
+            {
+                string fmt = "Nested type definitions are not allowed.";
+                throw TemplateException.Create(elem, fmt);
+            }
+            isEvalutingTypedef = true;
+
             EnsureAttributes(elem, Keywords.Comment, Keywords.Kind, Keywords.Name);
 
             TypeInfo kind = GetKindAttribute(elem, true, null);
@@ -304,6 +313,7 @@ namespace WHampson.Bft
             }
 
             typeMap[typename] = kind;
+            isEvalutingTypedef = false;
 
             return 0;
         }
