@@ -26,17 +26,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using WHampson.Bft.Types;
 
 namespace WHampson.Bft
 {
-    internal class BftStruct
+    internal sealed class BftStruct
     {
-
+        // Dummy type to classify structs
     }
 
     internal sealed class TemplateProcessor2
@@ -122,9 +120,11 @@ namespace WHampson.Bft
         {
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
+            // Get attribute values
             int count = GetCountAttribute(elem, false, 1);
             string name = GetNameAttribute(elem, false, null);
 
+            // Process the struct 'count' times
             int localOffset = 0;
             for (int i = 0; i < count; i++)
             {
@@ -141,50 +141,64 @@ namespace WHampson.Bft
 
         private int ProcessStructMembers(XElement elem)
         {
+            // Ensure struct element has child elements
             if (!HasChildren(elem))
             {
                 string fmt = "Empty struct.";
                 throw TemplateException.Create(elem, fmt);
             }
 
+            // Process child elements
             int localOffset = 0;
             foreach (XElement memberElem in elem.Elements())
             {
-                localOffset += ProcessStructMember(memberElem);
+                localOffset += ProcessElement(memberElem);
             }
 
             return localOffset;
         }
 
-        private int ProcessStructMember(XElement elem)
+        private int ProcessElement(XElement elem)
         {
             string elemName = elem.Name.LocalName;
             int localOffset = 0;
 
+            // Process 'struct'
             if (elemName == Keywords.Struct)
             {
                 localOffset += ProcessStruct(elem);
                 return localOffset;
             }
 
+            // Ensure element name corresponds to either a primitive type,
+            // user-defined type, or directive
+            TypeInfo tInfo;
+            bool isType = typeMap.TryGetValue(elemName, out tInfo);
             bool isDirective = directiveActionMap.ContainsKey(elemName);
-            bool isType = typeMap.ContainsKey(elemName);
-
             if (!isDirective && !isType)
             {
                 string fmt = "Unknown type or directive '{0}'.";
                 throw TemplateException.Create(elem, fmt, elemName);
             }
-            else if (isDirective)
+
+            // Process directive
+            if (isDirective)
             {
                 DirectiveProcessAction action = directiveActionMap[elemName];
                 return action(elem);
             }
 
-            TypeInfo ti = typeMap[elemName];
+            // Process primitive or user-defined type
 
-            if (ti.Type == typeof(BftStruct))
+            if (HasChildren(elem))
             {
+                string fmt = "Type '{0}' cannot contain child elements.";
+                throw TemplateException.Create(elem, fmt, elemName);
+            }
+
+            if (tInfo.Type == typeof(BftStruct))
+            {
+                // Process user-defined type
                 XElement structElem = new XElement(elem);
                 structElem.Add(typeMap[elemName].Members);
                 localOffset += ProcessStruct(structElem);
@@ -199,24 +213,29 @@ namespace WHampson.Bft
 
         private int ProcessPrimitive(XElement elem)
         {
-            if (HasChildren(elem))
-            {
-                string fmt = "Primitives cannot contain child elements.";
-                throw TemplateException.Create(elem, fmt);
-            }
-
             string elemName = elem.Name.LocalName;
 
+            //// Ensure primitive element has NO child elements
+            //if (HasChildren(elem))
+            //{
+            //    string fmt = "Type '{0}' cannot contain child elements.";
+            //    throw TemplateException.Create(elem, fmt, elemName);
+            //}
+
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
+
+            // Get attribute values
             int count = GetCountAttribute(elem, false, 1);
             string name = GetNameAttribute(elem, false, null);
 
             TypeInfo t = typeMap[elemName];
 
+            // Process primitive 'count' times
             int localOffset = 0;
             for (int i = 0; i < count; i++)
             {
                 EnsureCapacity(elem, 0);
+
                 if (!isConductingDryRun)
                 {
                     if (name != null)
@@ -235,9 +254,12 @@ namespace WHampson.Bft
         private int ProcessAlign(XElement elem)
         {
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
+
+            // Get attribute values
             int count = GetCountAttribute(elem, false, 1);
             TypeInfo kind = GetKindAttribute(elem, false, typeMap[Keywords.Int8]);
 
+            // Skip ahead correct number of bytes as defined by 'kind' and 'count'
             int off = kind.Size * count;
             if (!isConductingDryRun)
             {
@@ -247,12 +269,27 @@ namespace WHampson.Bft
             return off;
         }
 
+        private int ProcessEcho(XElement elem)
+        {
+            if (HasChildren(elem))
+            {
+                string fmt = "Directive '{0}' cannot contain child elements.";
+                throw TemplateException.Create(elem, fmt, Keywords.Echo);
+            }
+
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Message);
+
+            string message = GetMessageAttribute(elem, true, null);
+            Console.WriteLine(message);         // TODO: allow for custom output streams
+
+            return 0;
+        }
+
         private void EnsureAttributes(XElement elem, params string[] validAttributes)
         {
             foreach (XAttribute attr in elem.Attributes())
             {
                 string name = attr.Name.LocalName;
-
                 if (!(Keywords.KeywordMap.ContainsKey(name) && validAttributes.Contains(name)))
                 {
                     string fmt = "Unknown attribute '{0}'.";
@@ -318,7 +355,9 @@ namespace WHampson.Bft
         private TypeInfo ProcessKindAttribute(XAttribute attr)
         {
             string typeName = attr.Value;
+            XElement srcElem = attr.Parent;
 
+            // Process 'struct'
             if (typeName == Keywords.Struct)
             {
                 if (dryRunRecursionDepth == 0)
@@ -335,10 +374,19 @@ namespace WHampson.Bft
                     isConductingDryRun = false;
                 }
 
-                return TypeInfo.CreateStruct(attr.Parent.Elements(), size);
+                return TypeInfo.CreateStruct(srcElem.Elements(), size);
             }
-            else if (typeMap.ContainsKey(typeName))
+
+            // Process primitive or user-defined type
+            TypeInfo tInfo;
+            if (typeMap.TryGetValue(typeName, out tInfo))
             {
+                if (HasChildren(srcElem))
+                {
+                    string fmt = "Type '{0}' cannot contain child elements.";
+                    throw TemplateException.Create(attr, fmt, typeName);
+                }
+
                 return typeMap[typeName];
             }
             else
@@ -346,6 +394,17 @@ namespace WHampson.Bft
                 string fmt = "Unknown type '{0}'.";
                 throw TemplateException.Create(attr, fmt, typeName);
             }
+        }
+
+        private string GetMessageAttribute(XElement elem, bool isRequired, string defaultValue)
+        {
+            XAttribute messageAttr;
+            if (!GetAttribute(elem, Keywords.Message, isRequired, out messageAttr))
+            {
+                return defaultValue;
+            }
+
+            return messageAttr.Value;
         }
 
         private string GetNameAttribute(XElement elem, bool isRequired, string defaultValue)
@@ -401,6 +460,7 @@ namespace WHampson.Bft
         private void BuildDirectiveActionMap()
         {
             directiveActionMap[Keywords.Align] = ProcessAlign;
+            directiveActionMap[Keywords.Echo] = ProcessEcho;
         }
 
         private static byte[] LoadFile(string filePath)
