@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <bft>
-    <typedef typename="my_int" kind="int32" />
-    <typedef typename="my_int2" kind="my_int" />
-    <typedef typename="vect3d" kind="struct">
+    <typedef name="my_int" kind="int32" />
+    <typedef name="my_int2" kind="my_int" />
+    <typedef name="vect3d" kind="struct">
         <float name="x" />
         <float name="y" />
         <float name="z" />
     </typedef>
-    
-    <struct name="PLYR">
+
+    <typedef name="PLYR" kind="struct">
         <vect3d name="location" />
         <my_int name="money" />
         <my_int2 name="numKills" />
@@ -16,5 +16,7 @@
         <int8 name="armor" />
         <align count="2" kind="int8" />
         <vect3d name="location2" />
-    </struct>
+    </typedef>
+    
+    <PLYR name="PlayerInfo"/>
 </bft>
