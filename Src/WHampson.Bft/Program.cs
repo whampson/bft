@@ -66,12 +66,12 @@ namespace WHampson.Bft
             // Read template and map to object instance
             TemplateFile template = new TemplateFile("../../Test.xml");
             TestClass test = template.Process<TestClass>("../../Test.bin");
-            Console.WriteLine(test.PLYR.Location);
-            Console.WriteLine(test.PLYR.Money.Value);
-            Console.WriteLine(test.PLYR.NumKills.Value);
-            Console.WriteLine(test.PLYR.Health.Value);
-            Console.WriteLine(test.PLYR.Armor.Value);
-            Console.WriteLine(test.PLYR.Location2);
+            //Console.WriteLine(test.PLYR.Location);
+            //Console.WriteLine(test.PLYR.Money.Value);
+            //Console.WriteLine(test.PLYR.NumKills.Value);
+            //Console.WriteLine(test.PLYR.Health.Value);
+            //Console.WriteLine(test.PLYR.Armor.Value);
+            //Console.WriteLine(test.PLYR.Location2);
 
             // Pause
             Console.ReadKey();
