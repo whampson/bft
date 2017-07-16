@@ -47,9 +47,9 @@ namespace WHampson.Bft
             doc = OpenXmlFile(path);
         }
 
-        public T Process<T>(string filePath)
+        public T Process<T>(string filePath) where T : new()
         {
-            TemplateProcessor processor = new TemplateProcessor(doc);
+            TemplateProcessor2 processor = new TemplateProcessor2(doc);
 
             return processor.Process<T>(filePath);
         }
