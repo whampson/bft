@@ -285,6 +285,29 @@ namespace WHampson.Bft
             return 0;
         }
 
+        private int ProcessTypedef(XElement elem)
+        {
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Kind, Keywords.Name);
+
+            TypeInfo kind = GetKindAttribute(elem, true, null);
+            string typename = GetNameAttribute(elem, true, null);
+
+            if (typeMap.ContainsKey(typename))
+            {
+                string fmt = "Type '{0}' has already been defined.";
+                throw TemplateException.Create(elem, fmt, typename);
+            }
+            else if (directiveActionMap.ContainsKey(typename))
+            {
+                string fmt = "Cannot use reserved word '{0}' as a type name.";
+                throw TemplateException.Create(elem, fmt, typename);
+            }
+
+            typeMap[typename] = kind;
+
+            return 0;
+        }
+
         private void EnsureAttributes(XElement elem, params string[] validAttributes)
         {
             foreach (XAttribute attr in elem.Attributes())
@@ -447,20 +470,16 @@ namespace WHampson.Bft
 
         private void BuildTypeMap()
         {
-            XElement memb = new XElement("my_int32");
-            memb.SetAttributeValue("name", "memb");
-
             typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(Float));
             typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(Int8));
             typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(Types.Int32));
-            typeMap["my_int32"] = typeMap[Keywords.Int32];
-            typeMap["my_struct"] = TypeInfo.CreateStruct(new List<XElement>(new XElement[] { memb }), 4);
         }
 
         private void BuildDirectiveActionMap()
         {
             directiveActionMap[Keywords.Align] = ProcessAlign;
             directiveActionMap[Keywords.Echo] = ProcessEcho;
+            directiveActionMap[Keywords.Typedef] = ProcessTypedef;
         }
 
         private static byte[] LoadFile(string filePath)
