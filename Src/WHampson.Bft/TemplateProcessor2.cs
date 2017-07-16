@@ -90,11 +90,14 @@ namespace WHampson.Bft
                 string fmt = "Template must have a root element named '{0}'.";
                 throw TemplateException.Create(templateDoc.Root, fmt, Keywords.Bft);
             }
-
             if (!HasChildren(templateDoc.Root))
             {
                 throw new TemplateException("Empty binary file template.");
             }
+
+            isEvalutingTypedef = false;
+            isConductingDryRun = false;
+            dryRunRecursionDepth = 0;
 
             // Load binary file
             byte[] data = LoadFile(filePath);
@@ -130,11 +133,6 @@ namespace WHampson.Bft
             int localOffset = 0;
             for (int i = 0; i < count; i++)
             {
-                if (name != null)
-                {
-                    Console.Write("{0}[{1}] => ", name, i);
-                }
-                Console.WriteLine("{0} (offset: {1})", "struct", dataOffset);
                 localOffset += ProcessStructMembers(elem);
             }
 
@@ -191,7 +189,7 @@ namespace WHampson.Bft
             }
 
             // Process primitive or user-defined type
-
+            // Ensure element has no child elements (only allowed on 'struct's)
             if (HasChildren(elem))
             {
                 string fmt = "Type '{0}' cannot contain child elements.";
@@ -207,6 +205,7 @@ namespace WHampson.Bft
             }
             else
             {
+                // Process primitive
                 localOffset += ProcessPrimitive(elem);
             }
 
@@ -215,36 +214,23 @@ namespace WHampson.Bft
 
         private int ProcessPrimitive(XElement elem)
         {
-            string elemName = elem.Name.LocalName;
-
-            //// Ensure primitive element has NO child elements
-            //if (HasChildren(elem))
-            //{
-            //    string fmt = "Type '{0}' cannot contain child elements.";
-            //    throw TemplateException.Create(elem, fmt, elemName);
-            //}
-
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
             // Get attribute values
             int count = GetCountAttribute(elem, false, 1);
             string name = GetNameAttribute(elem, false, null);
 
+            string elemName = elem.Name.LocalName;
             TypeInfo t = typeMap[elemName];
 
             // Process primitive 'count' times
             int localOffset = 0;
             for (int i = 0; i < count; i++)
             {
-                EnsureCapacity(elem, 0);
+                EnsureCapacity(elem, t.Size);
 
                 if (!isConductingDryRun)
                 {
-                    if (name != null)
-                    {
-                        Console.Write("{0}[{1}] => ", name, i);
-                    }
-                    Console.WriteLine("{0} (offset: {1})", t.Type.Name, dataOffset);
                     dataOffset += t.Size;
                 }
                 localOffset += t.Size;
@@ -263,6 +249,8 @@ namespace WHampson.Bft
 
             // Skip ahead correct number of bytes as defined by 'kind' and 'count'
             int off = kind.Size * count;
+            EnsureCapacity(elem, off);
+
             if (!isConductingDryRun)
             {
                 dataOffset += off;
@@ -466,7 +454,7 @@ namespace WHampson.Bft
         private void EnsureCapacity(XElement elem, int localOffset)
         {
             int absOffset = dataOffset + localOffset;
-            if (absOffset < 0 || absOffset > dataLen - 1)
+            if (/*absOffset < 0 || */absOffset > dataLen)
             {
                 string fmt = "Reached end of file. Offset: {0}, length: {1}.";
                 throw TemplateException.Create(elem, fmt, absOffset, dataLen);
