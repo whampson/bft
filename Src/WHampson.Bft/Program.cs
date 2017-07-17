@@ -63,9 +63,9 @@ namespace WHampson.Bft
     {
         static void Main(string[] args)
         {
-            // Read template and map to object instance
-            TemplateFile template = new TemplateFile("../../Test.xml");
-            TestClass test = template.Process<TestClass>("../../Test.bin");
+            //// Read template and map to object instance
+            //TemplateFile template = new TemplateFile("../../Test.xml");
+            //TestClass test = template.Process<TestClass>("../../Test.bin");
             //Console.WriteLine(test.PLYR.Location);
             //Console.WriteLine(test.PLYR.Money.Value);
             //Console.WriteLine(test.PLYR.NumKills.Value);
@@ -73,8 +73,62 @@ namespace WHampson.Bft
             //Console.WriteLine(test.PLYR.Armor.Value);
             //Console.WriteLine(test.PLYR.Location2);
 
+            SymbolTableTest();
+
             // Pause
             Console.ReadKey();
+        }
+
+        static void SymbolTableTest()
+        {
+            /* {
+             *     struct {
+             *         int8 baz;
+             *     } foo;
+             *     
+             *     struct {
+             *         int8 biz;
+             *         struct {
+             *             int32 b;
+             *             int32 c;
+             *         } a;
+             *     } bar;
+             * } tabl
+             * 
+             */
+            SymbolTableEntry foo = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 1), 0);
+            SymbolTableEntry baz = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int8)), 0);
+            SymbolTableEntry bar = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 2), 1);
+            SymbolTableEntry biz = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int8)), 1);
+            SymbolTableEntry a = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 1), 2);
+            SymbolTableEntry b = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Types.Int32)), 2);
+            SymbolTableEntry c = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Types.Int32)), 6);
+
+            SymbolTable tabl = new SymbolTable();
+            tabl.Entries.Add("foo", foo);
+            tabl.Entries.Add("bar", bar);
+            SymbolTable fooTabl = new SymbolTable(tabl);
+            foo.Child = fooTabl;
+            fooTabl.Entries.Add("baz", baz);
+            SymbolTable barTabl = new SymbolTable(tabl);
+            bar.Child = barTabl;
+            barTabl.Entries.Add("biz", biz);
+            barTabl.Entries.Add("a", a);
+            SymbolTable aTabl = new SymbolTable(barTabl);
+            a.Child = aTabl;
+            aTabl.Entries.Add("b", b);
+            aTabl.Entries.Add("c", c);
+
+
+            SymbolTableEntry e = barTabl.Find("foo.baz");
+            if (e == null)
+            {
+                Console.WriteLine("null");
+            }
+            else
+            {
+                Console.WriteLine("{0} => {1}", e.Offset, e.Type.Type.Name);
+            }
         }
     }
 }
