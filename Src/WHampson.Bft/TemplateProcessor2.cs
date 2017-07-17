@@ -32,6 +32,76 @@ using WHampson.Bft.Types;
 
 namespace WHampson.Bft
 {
+    internal sealed class SymbolTableEntry
+    {
+        public SymbolTableEntry(TypeInfo type, int offset)
+        {
+            Type = type;
+            Offset = offset;
+            Child = null;
+        }
+
+        public TypeInfo Type { get; set; }
+        public int Offset { get; }
+        public SymbolTable Child { get; set; }
+    }
+
+    internal sealed class SymbolTable
+    {
+        public SymbolTable()
+            : this(null)
+        {
+        }
+
+        public SymbolTable(SymbolTable parent)
+        {
+            Parent = parent;
+            Entries = new Dictionary<string, SymbolTableEntry>();
+        }
+
+        public SymbolTable Parent { get; }
+        public Dictionary<string, SymbolTableEntry> Entries { get; }
+
+        public SymbolTableEntry Find(string symbolName)
+        {
+            string[] splitSymbolName = symbolName.Split('.');
+            SymbolTable tabl = this;
+            SymbolTableEntry result = null;
+
+            foreach (string sym in splitSymbolName)
+            {
+                result = SearchUp(tabl, sym);
+                if (result != null)
+                {
+                    tabl = result.Child;
+                }
+            }
+
+            return result;
+        }
+
+        public bool AddEntry(SymbolTableEntry e)
+        {
+            return false;
+        }
+
+        private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
+        {
+            if (tabl == null)
+            {
+                return null;
+            }
+
+            SymbolTableEntry entry;
+            if (tabl.Entries.TryGetValue(symbolName, out entry))
+            {
+                return entry;
+            }
+
+            return SearchUp(tabl.Parent, symbolName);
+        }
+    }
+
     internal sealed class BftStruct
     {
         // Dummy type to classify structs
