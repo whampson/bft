@@ -34,6 +34,11 @@ namespace WHampson.Bft
 {
     internal sealed class SymbolTableEntry
     {
+        public SymbolTableEntry(int offset)
+            : this(null, offset)
+        {
+        }
+
         public SymbolTableEntry(TypeInfo type, int offset)
         {
             Type = type;
@@ -44,36 +49,55 @@ namespace WHampson.Bft
         public TypeInfo Type { get; set; }
         public int Offset { get; }
         public SymbolTable Child { get; set; }
+
+        public override string ToString()
+        {
+            string s = "{";
+            s += string.Format("{0}: {1:X8}", Type.Type.Name, Offset);
+            s += "}";
+
+            return s;
+        }
     }
 
     internal sealed class SymbolTable
     {
         public SymbolTable()
-            : this(null)
+            : this(null, null)
         {
         }
 
-        public SymbolTable(SymbolTable parent)
+        public SymbolTable(string name, SymbolTable parent)
         {
+            Name = name;
             Parent = parent;
             Entries = new Dictionary<string, SymbolTableEntry>();
         }
 
+        public string Name { get; }
         public SymbolTable Parent { get; }
         public Dictionary<string, SymbolTableEntry> Entries { get; }
 
         public SymbolTableEntry Find(string symbolName)
         {
             string[] splitSymbolName = symbolName.Split('.');
-            SymbolTable tabl = this;
-            SymbolTableEntry result = null;
 
-            foreach (string sym in splitSymbolName)
+            SymbolTableEntry top = SearchUp(this, splitSymbolName[0]);
+            if (top == null)
             {
-                result = SearchUp(tabl, sym);
-                if (result != null)
+                return null;
+            }
+
+            SymbolTableEntry result = top;
+            SymbolTable tabl = result.Child;
+            string sym;
+
+            for (int i = 1; i < splitSymbolName.Length; i++)
+            {
+                sym = splitSymbolName[i];
+                if (tabl == null || !tabl.Entries.TryGetValue(sym, out result))
                 {
-                    tabl = result.Child;
+                    return null;
                 }
             }
 
@@ -83,6 +107,32 @@ namespace WHampson.Bft
         public bool AddEntry(SymbolTableEntry e)
         {
             return false;
+        }
+
+        public override string ToString()
+        {
+            string baseName = "";
+            if (!(Parent == null || Parent.Name == null))
+            {
+                baseName += Parent.Name + ".";
+            }
+
+            baseName += Name ?? null;
+
+            string s = "";
+            foreach (KeyValuePair<string, SymbolTableEntry> kvp in Entries)
+            {
+                s += baseName;
+                s += (baseName == "") ? "" : ".";
+                s += string.Format("{0}: {1}\n", kvp.Key, kvp.Value);
+
+                if (kvp.Value.Child != null)
+                {
+                    s += kvp.Value.Child;
+                }
+
+            }
+            return s;
         }
 
         private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
@@ -122,6 +172,9 @@ namespace WHampson.Bft
         private Dictionary<string, TypeInfo> typeMap;
         private Dictionary<string, DirectiveProcessAction> directiveActionMap;
 
+        private SymbolTable symbolTable;
+        private Stack<SymbolTable> symTablStack;
+
         private bool isEvalutingTypedef;
         private bool isConductingDryRun;
         private int dryRunRecursionDepth;
@@ -139,6 +192,10 @@ namespace WHampson.Bft
             isEvalutingTypedef = false;
             isConductingDryRun = false;
             dryRunRecursionDepth = 0;
+
+            symbolTable = new SymbolTable();
+            symTablStack = new Stack<SymbolTable>();
+            symTablStack.Push(symbolTable);
 
             BuildTypeMap();
             BuildDirectiveActionMap();
@@ -186,6 +243,7 @@ namespace WHampson.Bft
             //Marshal.FreeHGlobal(dataPtr);
 
             Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
+            Console.WriteLine(symbolTable);
 
             obj = new T();
             return bytesProcessed;
@@ -199,11 +257,30 @@ namespace WHampson.Bft
             int count = GetCountAttribute(elem, false, 1);
             string name = GetNameAttribute(elem, false, null);
 
+            SymbolTableEntry e = null;
+            if (!isConductingDryRun)
+            {
+                e = new SymbolTableEntry(dataOffset);
+                SymbolTable curSymTabl = symTablStack.Peek();
+                SymbolTable newSymTabl = new SymbolTable(name, curSymTabl);
+                e.Child = newSymTabl;
+                curSymTabl.Entries.Add(name, e);
+                symTablStack.Push(newSymTabl);
+            }
+
             // Process the struct 'count' times
             int localOffset = 0;
             for (int i = 0; i < count; i++)
             {
                 localOffset += ProcessStructMembers(elem);
+            }
+
+            if (!isConductingDryRun)
+            {
+                TypeInfo ti = TypeInfo.CreateStruct(elem.Elements(), localOffset);
+                e.Type = ti;
+
+                symTablStack.Pop();
             }
 
             return localOffset;
@@ -301,6 +378,8 @@ namespace WHampson.Bft
 
                 if (!isConductingDryRun)
                 {
+                    SymbolTableEntry e = new SymbolTableEntry(t, dataOffset);
+                    symTablStack.Peek().Entries.Add(name, e);
                     dataOffset += t.Size;
                 }
                 localOffset += t.Size;
