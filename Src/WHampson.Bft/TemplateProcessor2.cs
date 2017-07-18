@@ -32,127 +32,6 @@ using WHampson.Bft.Types;
 
 namespace WHampson.Bft
 {
-    internal sealed class SymbolTableEntry
-    {
-        public SymbolTableEntry(int offset)
-            : this(null, offset)
-        {
-        }
-
-        public SymbolTableEntry(TypeInfo type, int offset)
-        {
-            Type = type;
-            Offset = offset;
-            Child = null;
-        }
-
-        public TypeInfo Type { get; set; }
-        public int Offset { get; }
-        public SymbolTable Child { get; set; }
-
-        public override string ToString()
-        {
-            string s = "{";
-            s += string.Format("{0}: {1:X8}", Type.Type.Name, Offset);
-            s += "}";
-
-            return s;
-        }
-    }
-
-    internal sealed class SymbolTable
-    {
-        public SymbolTable()
-            : this(null, null)
-        {
-        }
-
-        public SymbolTable(string name, SymbolTable parent)
-        {
-            Name = name;
-            Parent = parent;
-            Entries = new Dictionary<string, SymbolTableEntry>();
-        }
-
-        public string Name { get; }
-        public SymbolTable Parent { get; }
-        public Dictionary<string, SymbolTableEntry> Entries { get; }
-
-        public SymbolTableEntry Find(string symbolName)
-        {
-            string[] splitSymbolName = symbolName.Split('.');
-
-            SymbolTableEntry top = SearchUp(this, splitSymbolName[0]);
-            if (top == null)
-            {
-                return null;
-            }
-
-            SymbolTableEntry result = top;
-            SymbolTable tabl = result.Child;
-            string sym;
-
-            for (int i = 1; i < splitSymbolName.Length; i++)
-            {
-                sym = splitSymbolName[i];
-                if (tabl == null || !tabl.Entries.TryGetValue(sym, out result))
-                {
-                    return null;
-                }
-                tabl = result.Child;
-            }
-
-            return result;
-        }
-
-        public bool AddEntry(SymbolTableEntry e)
-        {
-            return false;
-        }
-
-        public override string ToString()
-        {
-            string baseName = "";
-            if (!(Parent == null || Parent.Name == null))
-            {
-                baseName += Parent.Name + ".";
-            }
-
-            baseName += Name ?? null;
-
-            string s = "";
-            foreach (KeyValuePair<string, SymbolTableEntry> kvp in Entries)
-            {
-                s += baseName;
-                s += (baseName == "") ? "" : ".";
-                s += string.Format("{0}: {1}\n", kvp.Key, kvp.Value);
-
-                if (kvp.Value.Child != null)
-                {
-                    s += kvp.Value.Child;
-                }
-
-            }
-            return s;
-        }
-
-        private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
-        {
-            if (tabl == null)
-            {
-                return null;
-            }
-
-            SymbolTableEntry entry;
-            if (tabl.Entries.TryGetValue(symbolName, out entry))
-            {
-                return entry;
-            }
-
-            return SearchUp(tabl.Parent, symbolName);
-        }
-    }
-
     internal sealed class BftStruct
     {
         // Dummy type to classify structs
@@ -257,30 +136,39 @@ namespace WHampson.Bft
             int count = GetCountAttribute(elem, false, 1);
             string name = GetNameAttribute(elem, false, null);
 
-            SymbolTableEntry e = null;
-            if (!isConductingDryRun)
-            {
-                e = new SymbolTableEntry(dataOffset);
-                SymbolTable curSymTabl = symTablStack.Peek();
-                SymbolTable newSymTabl = new SymbolTable(name, curSymTabl);
-                e.Child = newSymTabl;
-                curSymTabl.Entries.Add(name, e);
-                symTablStack.Push(newSymTabl);
-            }
-
             // Process the struct 'count' times
             int localOffset = 0;
+            string varName;
             for (int i = 0; i < count; i++)
             {
+                varName = name + "[" + i + "]";
+
+                SymbolTableEntry entry = null;
+                if (!isConductingDryRun && name != null)
+                {
+                    // Create new symbol table and make current table its parent
+                    SymbolTable curSymTabl = symTablStack.Peek();
+                    SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
+
+                    // Create symbol table entry for this struct in the current table
+                    // Type reamins 'null' because we haven't processed teh struct yet
+                    entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
+                    curSymTabl.AddEntry(varName, entry);
+
+                    // Push new symbol table onto the stack to make it "active"
+                    symTablStack.Push(newSymTabl);
+                }
+
                 localOffset += ProcessStructMembers(elem);
-            }
 
-            if (!isConductingDryRun)
-            {
-                TypeInfo ti = TypeInfo.CreateStruct(elem.Elements(), localOffset);
-                e.Type = ti;
+                if (!isConductingDryRun && name != null)
+                {
+                    // We've finished processing the struct, so now we can set the type
+                    entry.Type = TypeInfo.CreateStruct(elem.Elements(), localOffset);
 
-                symTablStack.Pop();
+                    // Make the previous table "active"
+                    symTablStack.Pop();
+                }
             }
 
             return localOffset;
@@ -372,14 +260,20 @@ namespace WHampson.Bft
 
             // Process primitive 'count' times
             int localOffset = 0;
+            string varName;
             for (int i = 0; i < count; i++)
             {
                 EnsureCapacity(elem, t.Size);
 
+                varName = name + "[" + i + "]";
                 if (!isConductingDryRun)
                 {
-                    SymbolTableEntry e = new SymbolTableEntry(t, dataOffset);
-                    symTablStack.Peek().Entries.Add(name, e);
+                    // Create symbol table entry for this type
+                    // It's not a struct so it doesn't have a child table
+                    SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
+                    symTablStack.Peek().AddEntry(varName, e);
+
+                    // Increment data pointer
                     dataOffset += t.Size;
                 }
                 localOffset += t.Size;
