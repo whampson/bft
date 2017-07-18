@@ -99,6 +99,7 @@ namespace WHampson.Bft
                 {
                     return null;
                 }
+                tabl = result.Child;
             }
 
             return result;
@@ -243,7 +244,6 @@ namespace WHampson.Bft
             //Marshal.FreeHGlobal(dataPtr);
 
             Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
-            Console.WriteLine(symbolTable);
 
             obj = new T();
             return bytesProcessed;
