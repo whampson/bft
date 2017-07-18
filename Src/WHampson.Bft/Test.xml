@@ -8,7 +8,7 @@
         <float name="z" />
     </typedef>
 
-    <typedef name="PLYR" kind="struct">
+    <struct name="PLYR">
         <vect3d name="location" />
         <my_int name="money" />
         <my_int2 name="numKills" />
@@ -16,7 +16,10 @@
         <int8 name="armor" />
         <align count="2" kind="int8" />
         <vect3d name="location2" />
-    </typedef>
+    </struct>
+
+    <echo message="value(PLYR.money)  = ${PLYR.money}"/>
+    <echo message="offset(PLYR.money) = $[PLYR.money]"/>
+    <echo message="size(PLYR.money)   = $(PLYR.money)\n"/>
     
-    <PLYR name="PlayerInfo"/>
 </bft>
