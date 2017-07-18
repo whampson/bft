@@ -66,6 +66,8 @@
     <Compile Include="Keyword.cs" />
     <Compile Include="Keywords.cs" />
     <Compile Include="NumberUtils.cs" />
+    <Compile Include="SymbolTable.cs" />
+    <Compile Include="SymbolTableEntry.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="TemplateProcessor2.cs" />
     <Compile Include="TypeInfo.cs" />
