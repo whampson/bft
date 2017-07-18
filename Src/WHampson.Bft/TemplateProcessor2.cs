@@ -123,6 +123,7 @@ namespace WHampson.Bft
             //Marshal.FreeHGlobal(dataPtr);
 
             Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
+            Console.WriteLine(symbolTable);
 
             obj = new T();
             return bytesProcessed;
@@ -153,7 +154,11 @@ namespace WHampson.Bft
                     // Create symbol table entry for this struct in the current table
                     // Type reamins 'null' because we haven't processed teh struct yet
                     entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
-                    curSymTabl.AddEntry(varName, entry);
+                    if (!curSymTabl.AddEntry(varName, entry))
+                    {
+                        string fmt = "Variable '{0}' already defined.";
+                        throw TemplateException.Create(elem, fmt, name);
+                    }
 
                     // Push new symbol table onto the stack to make it "active"
                     symTablStack.Push(newSymTabl);
@@ -268,10 +273,17 @@ namespace WHampson.Bft
                 varName = name + "[" + i + "]";
                 if (!isConductingDryRun)
                 {
-                    // Create symbol table entry for this type
-                    // It's not a struct so it doesn't have a child table
-                    SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
-                    symTablStack.Peek().AddEntry(varName, e);
+                    if (name != null)
+                    {
+                        // Create symbol table entry for this type
+                        // It's not a struct so it doesn't have a child table
+                        SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
+                        if (!symTablStack.Peek().AddEntry(varName, e))
+                        {
+                            string fmt = "Variable '{0}' already defined.";
+                            throw TemplateException.Create(elem, fmt, name);
+                        }
+                    }
 
                     // Increment data pointer
                     dataOffset += t.Size;
@@ -304,6 +316,11 @@ namespace WHampson.Bft
 
         private int ProcessEcho(XElement elem)
         {
+            if(isEvalutingTypedef)
+            {
+                return 0;
+            }
+
             if (HasChildren(elem))
             {
                 string fmt = "Directive '{0}' cannot contain child elements.";
@@ -468,7 +485,62 @@ namespace WHampson.Bft
                 return defaultValue;
             }
 
-            return messageAttr.Value;
+            return ProcessMessageAttribute(messageAttr);
+        }
+
+        private string ProcessMessageAttribute(XAttribute attr)
+        {
+            string msg = ResolveVariables(attr.Value);
+
+            // Handle control chars
+            msg = Regex.Replace(msg, @"\\([bnr])", m =>
+            {
+                string esc = "";
+                switch (m.Groups[1].Value[0])
+                {
+                    case 'b':
+                        esc += '\b';
+                        break;
+
+                    case 'n':
+                        esc += '\n';
+                        break;
+
+                    case 'r':
+                        esc += '\r';
+                        break;
+                }
+
+                return esc;
+            });
+
+            return msg;
+
+            //string[] tokens = msg.Split('$');
+            //msg = "";
+            //foreach (string token in tokens)
+            //{
+            //    string tok = token;
+            //    if (token.StartsWith("{"))
+            //    {
+            //        tok = "$" + token;
+            //    }
+            //    Console.WriteLine(token);
+
+            //    foreach (Match m in varNameRegex.Matches(tok))
+            //    {
+            //        Console.WriteLine("Getting " + m.Groups[1].Value + "...");
+
+            //        SymbolTableEntry e = symTablStack.Peek().GetEntry(m.Groups[1].Value);
+            //        Type ptrTypeGeneric = typeof(Pointer<>);
+            //        Type ptrType = ptrTypeGeneric.MakeGenericType(new Type[] { e.Type.Type });
+            //        object ptr = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
+            //        object val = ptr.GetType().GetProperty("Value").GetValue(ptr);
+            //        tok = "" + val;
+            //    }
+            //    msg += tok;
+            //}
+            //return msg;
         }
 
         private string GetNameAttribute(XElement elem, bool isRequired, string defaultValue)
@@ -492,6 +564,51 @@ namespace WHampson.Bft
             }
 
             return attr.Value;
+        }
+
+        private string ResolveVariables(string s)
+        {
+            // Resolve variable values
+            s = Regex.Replace(s, @"\${([\[\]\._\da-zA-Z]+)}", m =>
+            {
+                string varName = m.Groups[1].Value;
+                switch (varName)
+                {
+                    case "__OFFSET__":
+                        return dataOffset + "";
+                }
+
+                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
+                Type ptrTypeGeneric = typeof(Pointer<>);
+                Type ptrType = ptrTypeGeneric.MakeGenericType(new Type[] { e.Type.Type });
+                object ptr = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
+                object val = ptr.GetType().GetProperty("Value").GetValue(ptr);
+                return val.ToString();
+            });
+
+            // Resolve variable offsets
+            s = Regex.Replace(s, @"\$\[([\[\]\._\da-zA-Z]+)\]", m =>
+            {
+                string varName = m.Groups[1].Value;
+                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
+                return e.Offset + "";
+            });
+
+            // Resolve variable sizes
+            s = Regex.Replace(s, @"\$\(([\[\]\._\da-zA-Z]+)\)", m =>
+            {
+                string varName = m.Groups[1].Value;
+                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
+                if (e.Type == null)
+                {
+                    // TODO: throw exception
+                    return "";
+                }
+
+                return e.Type.Size + "";
+            });
+
+            return s;
         }
 
         private void EnsureCapacity(XElement elem, int localOffset)
