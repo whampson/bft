@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<bft>
+    <typedef name="elem" kind="int32"/>
+    <!-- TODO: be able to get size of type at runtime -->
+    
+    <int32 name="arrSize"/>
+    <echo message="Array size (bytes): ${arrSize}"/>
+    <elem name="arr" count="${arrSize} / 4"/>
+    <echo message="Offset: ${__OFFSET__}"/>
+    <align count="${__FILESIZE__} - ${__OFFSET__}"/>
+    <echo message="Offset: ${__OFFSET__}"/>
+</bft>
