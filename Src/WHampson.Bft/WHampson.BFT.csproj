@@ -83,6 +83,7 @@
     <Compile Include="SyntaxParser.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DynamicArray.xml" />
     <Content Include="Test.xml">
       <SubType>Designer</SubType>
     </Content>
