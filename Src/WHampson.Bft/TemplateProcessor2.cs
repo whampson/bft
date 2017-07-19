@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -39,7 +40,7 @@ namespace WHampson.Bft
 
     internal sealed class TemplateProcessor2
     {
-        private static readonly Regex NameFormatRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
+        private static readonly Regex IdentifierRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
 
         private delegate int DirectiveProcessAction(XElement elem);
 
@@ -123,7 +124,7 @@ namespace WHampson.Bft
             //Marshal.FreeHGlobal(dataPtr);
 
             Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
-            Console.WriteLine(symbolTable);
+            //Console.WriteLine(symbolTable);
 
             obj = new T();
             return bytesProcessed;
@@ -409,17 +410,27 @@ namespace WHampson.Bft
 
         private int ProcessCountAttribute(XAttribute attr)
         {
-            long val;
-            bool isInt = NumberUtils.TryParseInteger(attr.Value, out val);
-            if (!isInt || (int) val < 0)
+            //long val;
+            //bool isInt = NumberUtils.TryParseInteger(attr.Value, out val);
+            //if (!isInt || (int) val < 0)
+            //{
+            //    string fmt = "'{0}' is not a valid integer. Value must be a non-negative number.";
+            //    throw TemplateException.Create(attr, fmt, attr.Value);
+            //}
+
+            string valStr = ResolveVariables(attr.Value);
+            Regex mathExprPattern = new Regex(@"^[-+*/().\d ]+$");
+
+            if (!mathExprPattern.IsMatch(valStr))
             {
-                string fmt = "'{0}' is not a valid integer. Value must be a non-negative number.";
-                throw TemplateException.Create(attr, fmt, attr.Value);
+                string fmt = "Invalid math expression '{0}'";
+                throw TemplateException.Create(attr, fmt, valStr);
             }
 
-            //TODO: process as math expr
+            DataTable dt = new DataTable();
+            object val = dt.Compute(valStr, "");
 
-            return (int) val;
+            return Convert.ToInt32(val);
         }
 
         private TypeInfo GetKindAttribute(XElement elem, bool isRequired, TypeInfo defaultValue)
@@ -515,32 +526,6 @@ namespace WHampson.Bft
             });
 
             return msg;
-
-            //string[] tokens = msg.Split('$');
-            //msg = "";
-            //foreach (string token in tokens)
-            //{
-            //    string tok = token;
-            //    if (token.StartsWith("{"))
-            //    {
-            //        tok = "$" + token;
-            //    }
-            //    Console.WriteLine(token);
-
-            //    foreach (Match m in varNameRegex.Matches(tok))
-            //    {
-            //        Console.WriteLine("Getting " + m.Groups[1].Value + "...");
-
-            //        SymbolTableEntry e = symTablStack.Peek().GetEntry(m.Groups[1].Value);
-            //        Type ptrTypeGeneric = typeof(Pointer<>);
-            //        Type ptrType = ptrTypeGeneric.MakeGenericType(new Type[] { e.Type.Type });
-            //        object ptr = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
-            //        object val = ptr.GetType().GetProperty("Value").GetValue(ptr);
-            //        tok = "" + val;
-            //    }
-            //    msg += tok;
-            //}
-            //return msg;
         }
 
         private string GetNameAttribute(XElement elem, bool isRequired, string defaultValue)
@@ -556,7 +541,7 @@ namespace WHampson.Bft
 
         private string ProcessNameAttribute(XAttribute attr)
         {
-            if (!NameFormatRegex.IsMatch(attr.Value))
+            if (!IdentifierRegex.IsMatch(attr.Value))
             {
                 string fmt = "'{0}' is not a valid identifier. Identifiers may consist only of "
                     + "alphanumeric characters and underscores, and may not begin with a number.";
@@ -576,6 +561,8 @@ namespace WHampson.Bft
                 {
                     case "__OFFSET__":
                         return dataOffset + "";
+                    case "__FILESIZE__":
+                        return dataLen + "";
                 }
 
                 SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
