@@ -148,8 +148,7 @@ namespace WHampson.Bft
                 return null;
             }
 
-            SymbolTableEntry entry;
-            if (tabl.entries.TryGetValue(symbolName, out entry))
+            if (tabl.entries.TryGetValue(symbolName, out SymbolTableEntry entry))
             {
                 return entry;
             }
