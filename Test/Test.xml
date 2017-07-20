@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<bft>
+    <typedef name="my_int" kind="int32" />
+    <typedef name="my_int2" kind="my_int" />
+    <typedef name="vect3d" kind="struct">
+        <float name="x" />
+        <float name="y" />
+        <float name="z" />
+    </typedef>
+
+    <struct name="PLYR">
+        <vect3d name="location" />
+        <my_int name="money" />
+        <my_int2 name="numKills" />
+        <int8 name="health" />
+        <int8 name="armor" />
+        <align count="2" kind="int8" />
+        <vect3d name="location2" />
+    </struct>
+
+    <echo message="value(PLYR.money)  = ${PLYR.money}"/>
+    <echo message="offset(PLYR.money) = $[PLYR.money]"/>
+    <echo message="size(PLYR.money)   = $(PLYR.money)\n"/>
+    
+</bft>

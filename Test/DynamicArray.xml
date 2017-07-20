@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<bft>
+    <!--
+        Operators
+            ${...}          ->  'valueof' operator
+            $[...]          ->  'offsetof' operator
+            $(...)          ->  'sizeof' operator
+
+        Special Operators
+            ${expr(...)}    ->  valueof math expression
+            $(type(...))    ->  sizeof type
+        
+        Special 'valueof' Variables
+            __FILESIZE__    ->  the size in bytes of the file being processed
+            __OFFSET__      ->  the current offset in the file being processed
+    -->
+    
+    <typedef name="elem" kind="int32"/>
+    <int32 name="arrSize"/>
+    <echo message="Array size (bytes): ${arrSize}"/>
+    <elem name="arr" count="${arrSize} / $(type(elem))"/>
+    <echo message="NumElems: ${expr(${arrSize} / $(type(elem)))}"/>
+    <echo message="Offset: ${__OFFSET__}"/>
+    <align count="${__FILESIZE__} - ${__OFFSET__}"/>
+    <echo message="Offset: ${__OFFSET__}"/>
+    <echo message="Test expr: ${expr(3 + $(type(int32)) - $[arr[1]])}"/>
+</bft>

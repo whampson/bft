@@ -65,8 +65,8 @@ namespace WHampson.Bft
         static void Main(string[] args)
         {
             // Read template and map to object instance
-            TemplateFile template = new TemplateFile("../../DynamicArray.xml");
-            TestClass test = template.Process<TestClass>("../../DynamicArray.bin");
+            TemplateFile template = new TemplateFile("../../../../Test/DynamicArray.xml");
+            TestClass test = template.Process<TestClass>("../../../../Test/DynamicArray.bin");
             //Console.WriteLine(test.PLYR.Location);
             //Console.WriteLine(test.PLYR.Money.Value);
             //Console.WriteLine(test.PLYR.NumKills.Value);

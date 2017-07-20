@@ -81,12 +81,6 @@
     <Compile Include="TemplateFile.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="DynamicArray.xml" />
-    <Content Include="Test.xml">
-      <SubType>Designer</SubType>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="WHampson.Bft.licenseheader" />
   </ItemGroup>
   <ItemGroup>
