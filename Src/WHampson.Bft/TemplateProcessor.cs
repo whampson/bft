@@ -41,6 +41,8 @@ namespace WHampson.Bft
     internal sealed class TemplateProcessor
     {
         private static readonly Regex IdentifierRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
+        private static readonly Regex MathExpressionRegex = new Regex(@"^[-+*/().\d ]+$");
+        private static readonly Type GenericPointerType = typeof(Pointer<>);
 
         private delegate int DirectiveProcessAction(XElement elem);
 
@@ -57,12 +59,15 @@ namespace WHampson.Bft
         private Stack<SymbolTable> symTablStack;
 
         private bool isEvalutingTypedef;
-        private bool isConductingDryRun;
+        private bool isConductingDryRun;    // Analyzing a struct and computing size, but not applying to binary data
         private int dryRunRecursionDepth;
+
+        private TextWriter echoWriter;
 
         public TemplateProcessor(XDocument doc)
         {
             templateDoc = doc ?? throw new ArgumentNullException("doc");
+
             dataPtr = IntPtr.Zero;
             dataLen = 0;
             dataOffset = 0;
@@ -70,28 +75,38 @@ namespace WHampson.Bft
             typeMap = new Dictionary<string, TypeInfo>();
             directiveActionMap = new Dictionary<string, DirectiveProcessAction>();
 
+            symbolTable = new SymbolTable();
+            symTablStack = new Stack<SymbolTable>();
+            symTablStack.Push(symbolTable);
+
             isEvalutingTypedef = false;
             isConductingDryRun = false;
             dryRunRecursionDepth = 0;
 
-            symbolTable = new SymbolTable();
-            symTablStack = new Stack<SymbolTable>();
-            symTablStack.Push(symbolTable);
+            echoWriter = Console.Out;
 
             BuildTypeMap();
             BuildDirectiveActionMap();
         }
 
+        public void SetEchoWriter(TextWriter w)
+        {
+            echoWriter = w ?? throw new ArgumentNullException("w");
+        }
+
         public T Process<T>(string filePath) where T : new()
         {
-            T obj;
-            Process(filePath, out obj);
+            Process(filePath, out T obj);
 
             return obj;
         }
 
         public int Process<T>(string filePath, out T obj) where T : new()
         {
+            isEvalutingTypedef = false;
+            isConductingDryRun = false;
+            dryRunRecursionDepth = 0;
+
             // Validate root element
             if (templateDoc.Root.Name.LocalName != Keywords.Bft)
             {
@@ -102,10 +117,6 @@ namespace WHampson.Bft
             {
                 throw new TemplateException("Empty binary file template.");
             }
-
-            isEvalutingTypedef = false;
-            isConductingDryRun = false;
-            dryRunRecursionDepth = 0;
 
             // Load binary file
             byte[] data = LoadFile(filePath);
@@ -143,6 +154,7 @@ namespace WHampson.Bft
             string varName;
             for (int i = 0; i < count; i++)
             {
+                // Tack on array index to var name so it's unique
                 varName = name + "[" + i + "]";
 
                 SymbolTableEntry entry = null;
@@ -153,7 +165,7 @@ namespace WHampson.Bft
                     SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
 
                     // Create symbol table entry for this struct in the current table
-                    // Type reamins 'null' because we haven't processed teh struct yet
+                    // Type reamins 'null' because we haven't processed the struct yet
                     entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
@@ -165,12 +177,13 @@ namespace WHampson.Bft
                     symTablStack.Push(newSymTabl);
                 }
 
+                // Process the struct
                 localOffset += ProcessStructMembers(elem);
 
                 if (!isConductingDryRun && name != null)
                 {
                     // We've finished processing the struct, so now we can set the type
-                    entry.Type = TypeInfo.CreateStruct(elem.Elements(), localOffset);
+                    entry.TypeInfo = TypeInfo.CreateStruct(elem.Elements(), localOffset);
 
                     // Make the previous table "active"
                     symTablStack.Pop();
@@ -213,8 +226,7 @@ namespace WHampson.Bft
 
             // Ensure element name corresponds to either a primitive type,
             // user-defined type, or directive
-            TypeInfo tInfo;
-            bool isType = typeMap.TryGetValue(elemName, out tInfo);
+            bool isType = typeMap.TryGetValue(elemName, out TypeInfo tInfo);
             bool isDirective = directiveActionMap.ContainsKey(elemName);
             if (!isDirective && !isType)
             {
@@ -239,7 +251,8 @@ namespace WHampson.Bft
 
             if (tInfo.Type == typeof(BftStruct))
             {
-                // Process user-defined type
+                // Process user-defined struct type
+                // "Copy and paste" members from type definition into current element
                 XElement structElem = new XElement(elem);
                 structElem.Add(typeMap[elemName].Members);
                 localOffset += ProcessStruct(structElem);
@@ -269,15 +282,18 @@ namespace WHampson.Bft
             string varName;
             for (int i = 0; i < count; i++)
             {
+                // Make sure we have enough bytes left in the buffer
                 EnsureCapacity(elem, t.Size);
 
+                // Tack on array index to var name so it's unique
                 varName = name + "[" + i + "]";
+
                 if (!isConductingDryRun)
                 {
                     if (name != null)
                     {
                         // Create symbol table entry for this type
-                        // It's not a struct so it doesn't have a child table
+                        // It's not a struct so the child symbol table is 'null'
                         SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
@@ -317,11 +333,10 @@ namespace WHampson.Bft
 
         private int ProcessEcho(XElement elem)
         {
-            if(isEvalutingTypedef)
+            if (isEvalutingTypedef)
             {
                 return 0;
             }
-
             if (HasChildren(elem))
             {
                 string fmt = "Directive '{0}' cannot contain child elements.";
@@ -331,7 +346,7 @@ namespace WHampson.Bft
             EnsureAttributes(elem, Keywords.Comment, Keywords.Message);
 
             string message = GetMessageAttribute(elem, true, null);
-            Console.WriteLine(message);         // TODO: allow for custom output streams
+            echoWriter.WriteLine(message);
 
             return 0;
         }
@@ -347,7 +362,7 @@ namespace WHampson.Bft
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Kind, Keywords.Name);
 
-            TypeInfo kind = GetKindAttribute(elem, true, null);
+            TypeInfo kind = GetKindAttribute(elem, true, null);     // Type analysis happens here
             string typename = GetNameAttribute(elem, true, null);
 
             if (typeMap.ContainsKey(typename))
@@ -367,6 +382,21 @@ namespace WHampson.Bft
             return 0;
         }
 
+        /// <summary>
+        /// Makes sure the only attributes present on a given <see cref="XElement"/>
+        /// are ones with names matching a list of valid attributes. Also makes sure
+        /// that each attribute has a non-whitespace value.
+        /// </summary>
+        /// <param name="elem">
+        /// The <see cref="XElement"/> to check for valid attributes.
+        /// </param>
+        /// <param name="validAttributes">
+        /// An array of valid attribute names.
+        /// </param>
+        /// <exception cref="TemplateException">
+        /// If an attribute whose name does not appear in the list of valid attributes
+        /// is present or if the attribute value is empty.
+        /// </exception>
         private void EnsureAttributes(XElement elem, params string[] validAttributes)
         {
             foreach (XAttribute attr in elem.Attributes())
@@ -377,9 +407,37 @@ namespace WHampson.Bft
                     string fmt = "Unknown attribute '{0}'.";
                     throw TemplateException.Create(attr, fmt, name);
                 }
+                else if (string.IsNullOrWhiteSpace(attr.Value))
+                {
+                    string fmt = "Attribute '{0}' cannot have an empty value.";
+                    throw TemplateException.Create(attr, fmt, name);
+                }
             }
         }
 
+        /// <summary>
+        /// Gets the <see cref="XAttribute"/> object with the specified name from
+        /// a given <see cref="XElement"/>.
+        /// </summary>
+        /// <param name="elem">
+        /// The element to retireve the attribute from.
+        /// </param>
+        /// <param name="name">
+        /// The name of the attribute to retrieve.
+        /// </param>
+        /// <param name="isRequired">
+        /// A boolean value indicating whether the requested attribute must be present.
+        /// </param>
+        /// <param name="attr">
+        /// The retrieved <see cref="XAttribute"/> object.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the attribute was present, <code>False</code> otherwise.
+        /// </returns>
+        /// <exception cref="TemplateException">
+        /// If the requested attribute was marked as required, but not present in the
+        /// <see cref="XElement"/>.
+        /// </exception>
         private bool GetAttribute(XElement elem, string name, bool isRequired, out XAttribute attr)
         {
             attr = elem.Attribute(name);
@@ -399,8 +457,7 @@ namespace WHampson.Bft
 
         private int GetCountAttribute(XElement elem, bool isRequired, int defaultValue)
         {
-            XAttribute countAttr;
-            if (!GetAttribute(elem, Keywords.Count, isRequired, out countAttr))
+            if (!GetAttribute(elem, Keywords.Count, isRequired, out XAttribute countAttr))
             {
                 return defaultValue;
             }
@@ -410,33 +467,27 @@ namespace WHampson.Bft
 
         private int ProcessCountAttribute(XAttribute attr)
         {
-            //long val;
-            //bool isInt = NumberUtils.TryParseInteger(attr.Value, out val);
-            //if (!isInt || (int) val < 0)
-            //{
-            //    string fmt = "'{0}' is not a valid integer. Value must be a non-negative number.";
-            //    throw TemplateException.Create(attr, fmt, attr.Value);
-            //}
-
-            string valStr = ResolveVariables(attr.Value);
-            Regex mathExprPattern = new Regex(@"^[-+*/().\d ]+$");
-
-            if (!mathExprPattern.IsMatch(valStr))
+            try
             {
-                string fmt = "Invalid math expression '{0}'";
-                throw TemplateException.Create(attr, fmt, valStr);
+                string valStr = ResolveVariables(attr.Value);
+                double val = EvaluateExpression(valStr);
+
+                return Convert.ToInt32(val);
             }
+            catch (Exception e)
+            {
+                if (e is TemplateException || e is OverflowException)
+                {
+                    throw TemplateException.Create(e, attr, e.Message);
+                }
 
-            DataTable dt = new DataTable();
-            object val = dt.Compute(valStr, "");
-
-            return Convert.ToInt32(val);
+                throw;
+            }
         }
 
         private TypeInfo GetKindAttribute(XElement elem, bool isRequired, TypeInfo defaultValue)
         {
-            XAttribute countAttr;
-            if (!GetAttribute(elem, Keywords.Kind, isRequired, out countAttr))
+            if (!GetAttribute(elem, Keywords.Kind, isRequired, out XAttribute countAttr))
             {
                 return defaultValue;
             }
@@ -452,15 +503,19 @@ namespace WHampson.Bft
             // Process 'struct'
             if (typeName == Keywords.Struct)
             {
+                // Enable 'dry run'
+                // We only want to gather the type information,
+                // but not apply it to underlying data
                 if (dryRunRecursionDepth == 0)
                 {
                     isConductingDryRun = true;
                 }
+
                 dryRunRecursionDepth++;
-
-                int size = ProcessStructMembers(attr.Parent);
-
+                int size = ProcessStructMembers(srcElem);
                 dryRunRecursionDepth--;
+
+                // Disable 'dry run'
                 if (dryRunRecursionDepth == 0)
                 {
                     isConductingDryRun = false;
@@ -470,8 +525,7 @@ namespace WHampson.Bft
             }
 
             // Process primitive or user-defined type
-            TypeInfo tInfo;
-            if (typeMap.TryGetValue(typeName, out tInfo))
+            if (typeMap.ContainsKey(typeName))
             {
                 if (HasChildren(srcElem))
                 {
@@ -490,8 +544,7 @@ namespace WHampson.Bft
 
         private string GetMessageAttribute(XElement elem, bool isRequired, string defaultValue)
         {
-            XAttribute messageAttr;
-            if (!GetAttribute(elem, Keywords.Message, isRequired, out messageAttr))
+            if (!GetAttribute(elem, Keywords.Message, isRequired, out XAttribute messageAttr))
             {
                 return defaultValue;
             }
@@ -501,37 +554,27 @@ namespace WHampson.Bft
 
         private string ProcessMessageAttribute(XAttribute attr)
         {
-            string msg = ResolveVariables(attr.Value);
-
-            // Handle control chars
-            msg = Regex.Replace(msg, @"\\([bnr])", m =>
+            try
             {
-                string esc = "";
-                switch (m.Groups[1].Value[0])
+                string msg = ResolveVariables(attr.Value);
+                msg = ResolveEscapeSequences(msg);
+
+                return msg;
+            }
+            catch (Exception e)
+            {
+                if (e is FormatException || e is TemplateException)
                 {
-                    case 'b':
-                        esc += '\b';
-                        break;
-
-                    case 'n':
-                        esc += '\n';
-                        break;
-
-                    case 'r':
-                        esc += '\r';
-                        break;
+                    throw TemplateException.Create(e, attr, e.Message);
                 }
 
-                return esc;
-            });
-
-            return msg;
+                throw;
+            }
         }
 
         private string GetNameAttribute(XElement elem, bool isRequired, string defaultValue)
         {
-            XAttribute nameAttr;
-            if (!GetAttribute(elem, Keywords.Name, isRequired, out nameAttr))
+            if (!GetAttribute(elem, Keywords.Name, isRequired, out XAttribute nameAttr))
             {
                 return defaultValue;
             }
@@ -551,65 +594,135 @@ namespace WHampson.Bft
             return attr.Value;
         }
 
+        private double EvaluateExpression(string expr)
+        {
+            if (!MathExpressionRegex.IsMatch(expr))
+            {
+                string msg = string.Format("Invalid math expression '{0}'", expr);
+                throw new FormatException(msg);
+            }
+
+            object valObj = new DataTable().Compute(expr, null);
+            double val = Convert.ToDouble(valObj);
+            if (double.IsInfinity(val))
+            {
+                string msg = string.Format("Expression '{0}' evaluates to infinity.", expr);
+                throw new TemplateException(msg);
+            }
+
+            return val;
+        }
+
+        /// <summary>
+        /// Replaces all variable references in the given string with their values.
+        /// </summary>
+        /// <param name="s">
+        /// The string on which to resolve variables.
+        /// </param>
+        /// <returns>
+        /// The input string with all variables replaced with their corresponding values.
+        /// </returns>
+        /// <exception cref="TemplateException">
+        /// If an undefined variable is present in the string.
+        /// </exception>
         private string ResolveVariables(string s)
         {
-            // Resolve variable values
-            s = Regex.Replace(s, @"\${([\[\]\._\da-zA-Z]+)}", m =>
+            // Resolve values
+            s = Regex.Replace(s, @"\${([^()]+?|expr\((.*?)\))}", m =>
             {
                 string varName = m.Groups[1].Value;
-                switch (varName)
+                string expr = m.Groups[2].Value;
+
+                // Evaluate expression
+                if (!string.IsNullOrWhiteSpace(expr))
                 {
-                    case "__OFFSET__":
-                        return dataOffset + "";
-                    case "__FILESIZE__":
-                        return dataLen + "";
+                    expr = ResolveVariables(expr);
+                    try
+                    {
+                        return EvaluateExpression(expr) + "";
+                    }
+                    catch (FormatException ex)
+                    {
+                        throw new TemplateException(ex.Message, ex);
+                    }
                 }
 
-                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
-                Type ptrTypeGeneric = typeof(Pointer<>);
-                Type ptrType = ptrTypeGeneric.MakeGenericType(new Type[] { e.Type.Type });
-                object ptr = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
-                object val = ptr.GetType().GetProperty("Value").GetValue(ptr);
+                // Handle special variables
+                switch (varName)
+                {
+                    case "__FILESIZE__":
+                        return dataLen + "";
+
+                    case "__OFFSET__":
+                        return dataOffset + "";
+                }
+
+                SymbolTableEntry e = GetVariableInfo(varName);
+                if (e.TypeInfo == null)
+                {
+                    string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
+                    throw new TemplateException(msg);
+                }
+
+                // Create pointer to value and dereference
+                Type ptrType = GenericPointerType.MakeGenericType(new Type[] { e.TypeInfo.Type });
+                object ptrObj = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
+                object val = ptrObj.GetType().GetProperty("Value").GetValue(ptrObj);
+
                 return val.ToString();
             });
 
-            // Resolve variable offsets
-            s = Regex.Replace(s, @"\$\[([\[\]\._\da-zA-Z]+)\]", m =>
+            // Resolve offsets
+            s = Regex.Replace(s, @"\$\[([\[\]\S]*)\]", m =>
             {
                 string varName = m.Groups[1].Value;
+                SymbolTableEntry e = GetVariableInfo(varName);
 
-                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
                 return e.Offset + "";
             });
 
-            // Resolve variable sizes
-            s = Regex.Replace(s, @"\$\(([\[\]\._\da-zA-Z]+)\)|\$\(type\((.[^)]*)\)\)", m =>
+            // Resolve sizes
+            s = Regex.Replace(s, @"\$\(([^()]+?|type\(([^\s]*?)\))\)", m =>
             {
                 string varName = m.Groups[1].Value;
                 string typename = m.Groups[2].Value;
 
-                if (string.IsNullOrWhiteSpace(varName) && !string.IsNullOrWhiteSpace(typename))
+                if (!string.IsNullOrWhiteSpace(typename))
                 {
-                    TypeInfo info;
-                    if (!typeMap.TryGetValue(typename, out info))
+                    // Get size of type
+                    if (!typeMap.TryGetValue(typename, out TypeInfo info))
                     {
-                        // todo: except
+                        string msg = string.Format("Invalid type '{0}'", typename);
+                        throw new TemplateException(msg);
                     }
 
                     return info.Size + "";
                 }
 
-                SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
-                if (e.Type == null)
+                // Get size of variable value
+                SymbolTableEntry e = GetVariableInfo(varName);
+                if (e.TypeInfo == null)
                 {
-                    // TODO: throw exception
-                    return "";
+                    string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
+                    throw new TemplateException(msg);
                 }
 
-                return e.Type.Size + "";
+                return e.TypeInfo.Size + "";
             });
 
             return s;
+        }
+
+        private SymbolTableEntry GetVariableInfo(string varName)
+        {
+            SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
+            if (e == null)
+            {
+                string msg = string.Format("Variable '{0}' not defined.", varName);
+                throw new TemplateException(msg);
+            }
+
+            return e;
         }
 
         private void EnsureCapacity(XElement elem, int localOffset)
@@ -660,6 +773,60 @@ namespace WHampson.Bft
             }
 
             return data;
+        }
+
+        /// <summary>
+        /// Replaces all C-like escape sequences with the character they
+        /// represent.
+        /// </summary>
+        /// <remarks>
+        /// Not all C escape sequences are supported.
+        /// </remarks>
+        /// <param name="s">
+        /// The string on which to resolve escape sequences.
+        /// </param>
+        /// <returns>
+        /// The input string with all valid C-like escape sequences
+        /// resolved.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// If an invalid escape sequence exists in the string.
+        /// </exception>
+        private static string ResolveEscapeSequences(string s)
+        {
+            return Regex.Replace(s, @"\\([\S\s])", m =>
+            {
+                char c = m.Groups[1].Value[0];
+                string esc = "";
+                switch (c)
+                {
+                    case 'b':
+                        esc += '\b';
+                        break;
+
+                    case 'n':
+                        esc += '\n';
+                        break;
+
+                    case 'r':
+                        esc += '\r';
+                        break;
+
+                    case 't':
+                        esc += '\t';
+                        break;
+
+                    case '\\':
+                        esc += '\\';
+                        break;
+
+                    default:
+                        string exMsg = string.Format(@"Invalid escape sequence '\{0}'", c);
+                        throw new FormatException(exMsg);
+                }
+
+                return esc;
+            });
         }
     }
 }
