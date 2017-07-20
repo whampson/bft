@@ -49,7 +49,7 @@ namespace WHampson.Bft
 
         public T Process<T>(string filePath) where T : new()
         {
-            TemplateProcessor2 processor = new TemplateProcessor2(doc);
+            TemplateProcessor processor = new TemplateProcessor(doc);
 
             return processor.Process<T>(filePath);
         }
