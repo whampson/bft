@@ -69,7 +69,6 @@
     <Compile Include="SymbolTable.cs" />
     <Compile Include="SymbolTableEntry.cs" />
     <Compile Include="TemplateProcessor.cs" />
-    <Compile Include="TemplateProcessor2.cs" />
     <Compile Include="TypeInfo.cs" />
     <Compile Include="Types\Float.cs" />
     <Compile Include="Types\Int32.cs" />
