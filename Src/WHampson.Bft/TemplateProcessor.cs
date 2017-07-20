@@ -108,10 +108,10 @@ namespace WHampson.Bft
             dryRunRecursionDepth = 0;
 
             // Validate root element
-            if (templateDoc.Root.Name.LocalName != Keywords.Bft)
+            if (templateDoc.Root.Name.LocalName != Keywords.BftRoot)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                throw TemplateException.Create(templateDoc.Root, fmt, Keywords.Bft);
+                throw TemplateException.Create(templateDoc.Root, fmt, Keywords.BftRoot);
             }
             if (!HasChildren(templateDoc.Root))
             {
@@ -402,7 +402,7 @@ namespace WHampson.Bft
             foreach (XAttribute attr in elem.Attributes())
             {
                 string name = attr.Name.LocalName;
-                if (!(Keywords.KeywordMap.ContainsKey(name) && validAttributes.Contains(name)))
+                if (!(Keywords.KeywordList.Contains(name) && validAttributes.Contains(name)))
                 {
                     string fmt = "Unknown attribute '{0}'.";
                     throw TemplateException.Create(attr, fmt, name);
