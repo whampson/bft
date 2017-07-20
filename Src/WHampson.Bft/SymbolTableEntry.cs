@@ -30,14 +30,14 @@ namespace WHampson.Bft
         private TypeInfo type;
         private bool isTypeSet;
 
-        public SymbolTableEntry(TypeInfo type, int offset, SymbolTable child)
+        public SymbolTableEntry(TypeInfo typeInfo, int offset, SymbolTable child)
         {
-            Type = type;
+            TypeInfo = typeInfo;
             Offset = offset;
             Child = child;
         }
 
-        public TypeInfo Type
+        public TypeInfo TypeInfo
         {
             get
             {
@@ -75,7 +75,7 @@ namespace WHampson.Bft
         public override string ToString()
         {
             string s = "{";
-            s += string.Format("{0}: {1:X8}", Type.Type.Name, Offset);
+            s += string.Format("{0}: {1:X8}", TypeInfo.Type.Name, Offset);
             s += "}";
 
             return s;
