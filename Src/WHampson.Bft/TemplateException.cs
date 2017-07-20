@@ -50,7 +50,29 @@ namespace WHampson.Bft
         {
         }
 
+        internal static TemplateException Create(XObject obj, string msg)
+        {
+            return new TemplateException(msg);
+        }
+
         internal static TemplateException Create(XObject obj, string msgFmt, params object[] fmtArgs)
+        {
+            string msg = FormatMessage(obj, msgFmt, fmtArgs);
+            return new TemplateException(msg);
+        }
+
+        internal static TemplateException Create(Exception innerException, XObject obj, string msg)
+        {
+            return new TemplateException(msg, innerException);
+        }
+
+        internal static TemplateException Create(Exception innerException, XObject obj, string msgFmt, params object[] fmtArgs)
+        {
+            string msg = FormatMessage(obj, msgFmt, fmtArgs);
+            return new TemplateException(msg, innerException);
+        }
+
+        private static string FormatMessage(XObject obj, string msgFmt, params object[] fmtArgs)
         {
             IXmlLineInfo lineInfo = obj;
             string msg = string.Format(msgFmt, fmtArgs);
@@ -58,10 +80,9 @@ namespace WHampson.Bft
             {
                 msg += ".";
             }
-
             msg += " " + string.Format(" Line {0}, position {1}.", lineInfo.LineNumber, lineInfo.LinePosition);
 
-            return new TemplateException(msg);
+            return msg;
         }
     }
 }
