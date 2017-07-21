@@ -370,7 +370,7 @@ namespace WHampson.Bft
                 string fmt = "Type '{0}' has already been defined.";
                 throw TemplateException.Create(elem, fmt, typename);
             }
-            else if (Keywords.KeywordList.Contains(typename))
+            else if (Keywords.ReservedWords.Contains(typename))
             {
                 string fmt = "Cannot use reserved word '{0}' as a type name.";
                 throw TemplateException.Create(elem, fmt, typename);
@@ -402,7 +402,7 @@ namespace WHampson.Bft
             foreach (XAttribute attr in elem.Attributes())
             {
                 string name = attr.Name.LocalName;
-                if (!(Keywords.KeywordList.Contains(name) && validAttributes.Contains(name)))
+                if (!validAttributes.Contains(name))
                 {
                     string fmt = "Unknown attribute '{0}'.";
                     throw TemplateException.Create(attr, fmt, name);

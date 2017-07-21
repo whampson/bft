@@ -89,7 +89,7 @@ namespace WHampson.Bft
         public const string Filesize = "__FILESIZE__";
         public const string Offset = "__OFFSET__";
 
-        public static readonly IEnumerable<string> KeywordList = new List<string>()
+        public static readonly IEnumerable<string> ReservedWords = new List<string>()
         {
             // Root element
             BftRoot,
@@ -126,12 +126,12 @@ namespace WHampson.Bft
             Echo,
             Typedef,
 
-            // Modifiers
-            Comment,
-            Count,
-            Kind,
-            Message,
-            Name,
+            //// Modifiers
+            //Comment,
+            //Count,
+            //Kind,
+            //Message,
+            //Name,
 
             // Special Variables
             Filesize,
