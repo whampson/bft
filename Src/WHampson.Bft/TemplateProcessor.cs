@@ -370,7 +370,7 @@ namespace WHampson.Bft
                 string fmt = "Type '{0}' has already been defined.";
                 throw TemplateException.Create(elem, fmt, typename);
             }
-            else if (directiveActionMap.ContainsKey(typename))
+            else if (Keywords.KeywordList.Contains(typename))
             {
                 string fmt = "Cannot use reserved word '{0}' as a type name.";
                 throw TemplateException.Create(elem, fmt, typename);
