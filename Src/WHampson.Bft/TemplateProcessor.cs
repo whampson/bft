@@ -349,10 +349,26 @@ namespace WHampson.Bft
                 throw TemplateException.Create(elem, fmt, Keywords.Echo);
             }
 
-            EnsureAttributes(elem, Keywords.Comment, Keywords.Message);
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Message, Keywords.Newline, Keywords.Raw);
 
             string message = GetAttributeValue<string>(elem, Keywords.Message, true, null);
-            echoWriter.WriteLine(message);
+            bool hasNewline = GetAttributeValue<bool>(elem, Keywords.Newline, false, true);
+            bool isRaw = GetAttributeValue<bool>(elem, Keywords.Raw, false, false);
+
+            if (!isRaw)
+            {
+                message = ResolveVariables(message);
+                message = ResolveEscapeSequences(message);
+            }
+
+            if (hasNewline)
+            {
+                echoWriter.WriteLine(message);
+            }
+            else
+            {
+                echoWriter.Write(message);
+            }
 
             return 0;
         }
@@ -522,22 +538,7 @@ namespace WHampson.Bft
 
         private string ProcessMessageAttribute(XAttribute attr)
         {
-            try
-            {
-                string msg = ResolveVariables(attr.Value);
-                msg = ResolveEscapeSequences(msg);
-
-                return msg;
-            }
-            catch (Exception e)
-            {
-                if (e is FormatException || e is TemplateException)
-                {
-                    throw TemplateException.Create(e, attr, e.Message);
-                }
-
-                throw;
-            }
+            return attr.Value;
         }
 
         private string ProcessNameAttribute(XAttribute attr)
@@ -552,16 +553,25 @@ namespace WHampson.Bft
             return attr.Value;
         }
 
-        private string ProcessNewlineAttribute(XAttribute attr)
+        private bool ProcessNewlineAttribute(XAttribute attr)
         {
-            // TODO
-            return "";
+            return ProcessBooleanAttribute(attr);
         }
 
-        private string ProcessRawAttribute(XAttribute attr)
+        private bool ProcessRawAttribute(XAttribute attr)
         {
-            // TODO
-            return "";
+            return ProcessBooleanAttribute(attr);
+        }
+
+        private bool ProcessBooleanAttribute(XAttribute attr)
+        {
+            if (!bool.TryParse(attr.Value, out bool val))
+            {
+                string fmt = "'{0}' is not a valid boolean value.";
+                throw TemplateException.Create(attr, fmt, attr.Value);
+            }
+
+            return val;
         }
 
         /// <summary>
@@ -732,8 +742,8 @@ namespace WHampson.Bft
             attributeActionMap[Keywords.Kind] = (AttributeProcessAction<TypeInfo>) ProcessKindAttribute;
             attributeActionMap[Keywords.Message] = (AttributeProcessAction<string>) ProcessMessageAttribute;
             attributeActionMap[Keywords.Name] = (AttributeProcessAction<string>) ProcessNameAttribute;
-            attributeActionMap[Keywords.Newline] = (AttributeProcessAction<string>) ProcessNewlineAttribute;
-            attributeActionMap[Keywords.Raw] = (AttributeProcessAction<string>) ProcessRawAttribute;
+            attributeActionMap[Keywords.Newline] = (AttributeProcessAction<bool>) ProcessNewlineAttribute;
+            attributeActionMap[Keywords.Raw] = (AttributeProcessAction<bool>) ProcessRawAttribute;
         }
 
         private static byte[] LoadFile(string filePath)
