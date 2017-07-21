@@ -83,6 +83,8 @@ namespace WHampson.Bft
         public const string Kind = "kind";
         public const string Message = "message";
         public const string Name = "name";
+        public const string Newline = "newline";
+        public const string Raw = "raw";
         //public const string Typename = "typename";
 
         // Special variables
@@ -125,13 +127,6 @@ namespace WHampson.Bft
             Align,
             Echo,
             Typedef,
-
-            //// Modifiers
-            //Comment,
-            //Count,
-            //Kind,
-            //Message,
-            //Name,
 
             // Special Variables
             Filesize,
