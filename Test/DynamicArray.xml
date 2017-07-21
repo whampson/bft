@@ -16,13 +16,23 @@
             __OFFSET__      ->  the current offset in the file being processed
     -->
     
-    <typedef name="elem" kind="int32"/>
-    <int32 name="arrSize"/>
-    <echo message="Array size (bytes): ${arrSize}"/>
-    <elem name="arr" count="${arrSize} / $(type(elem))"/>
-    <echo message="NumElems: ${expr(${arrSize} / $(type(elem)))}"/>
-    <echo message="Offset: ${__OFFSET__}"/>
+    <!-- In ths structure, both members are the same distance from zero -->
+    <typedef name="ZeroOffset" kind="struct">
+        <int32 name="neg"/>
+        <int32 name="pos"/>
+    </typedef>
+    
+    <int32 name="size"/>
+    <ZeroOffset name="zArr" count="${size} / $(type(ZeroOffset))"/>
     <align count="${__FILESIZE__} - ${__OFFSET__}"/>
-    <echo message="Offset: ${__OFFSET__}"/>
-    <echo message="Test expr: ${expr(3 + $(type(int32)) - $[arr[1]])}"/>
+   
+    <!-- Idea: local variables (not attached to the underlying file) -->
+    <!-- <local name="skipSize" value="${__FILESIZE__} - ${__OFFSET__}"/> -->
+    <!-- <echo message="Skipping ${skipSize} bytes..."/> -->
+    <!-- <align count="${skipSize}"/> -->
+    
+    <echo message="${zArr[0].neg} ${zArr[0].pos}"/>
+    <echo message="${zArr[1].neg} ${zArr[1].pos}"/>
+    <echo message="${zArr[2].neg} ${zArr[2].pos}"/>
+    <echo message="${zArr[3].neg} ${zArr[3].pos}"/>
 </bft>
