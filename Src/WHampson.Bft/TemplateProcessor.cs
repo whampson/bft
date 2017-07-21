@@ -464,7 +464,7 @@ namespace WHampson.Bft
             }
             catch (Exception e)
             {
-                if (e is ArithmeticException || e is FormatException || e is OverflowException)
+                if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
                 {
                     throw TemplateException.Create(e, attr, e.Message);
                 }
@@ -588,6 +588,11 @@ namespace WHampson.Bft
 
         private string ResolveValueof(Match m)
         {
+            if (isEvalutingTypedef)
+            {
+                throw new TemplateException("Variables cannot be used when defining a type.");
+            }
+
             string varName = m.Groups[1].Value;
             string expr = m.Groups[2].Value;
 
@@ -632,6 +637,11 @@ namespace WHampson.Bft
 
         private string ResolveOffsetof(Match m)
         {
+            if (isEvalutingTypedef)
+            {
+                throw new TemplateException("Variables cannot be used when defining a type.");
+            }
+
             string varName = m.Groups[1].Value;
             SymbolTableEntry e = GetVariableInfo(varName);
 
@@ -640,6 +650,11 @@ namespace WHampson.Bft
 
         private string ResolveSizeof(Match m)
         {
+            if (isEvalutingTypedef)
+            {
+                throw new TemplateException("Variables cannot be used when defining a type.");
+            }
+
             string varName = m.Groups[1].Value;
             string typename = m.Groups[2].Value;
 
