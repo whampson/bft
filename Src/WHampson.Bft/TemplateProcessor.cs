@@ -41,7 +41,6 @@ namespace WHampson.Bft
     internal sealed class TemplateProcessor
     {
         private static readonly Regex IdentifierRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
-        private static readonly Regex MathExpressionRegex = new Regex(@"^[-+*/().\d ]+$");
         private static readonly Type GenericPointerType = typeof(Pointer<>);
 
         private delegate int DirectiveProcessAction(XElement elem);
@@ -145,6 +144,60 @@ namespace WHampson.Bft
             return bytesProcessed;
         }
 
+        private int ProcessElement(XElement elem)
+        {
+            string elemName = elem.Name.LocalName;
+            int localOffset = 0;
+
+            // Process 'struct'
+            if (elemName == Keywords.Struct)
+            {
+                localOffset += ProcessStruct(elem);
+                return localOffset;
+            }
+
+            // Ensure element name corresponds to either a primitive type,
+            // user-defined type, or directive
+            bool isType = typeMap.TryGetValue(elemName, out TypeInfo tInfo);
+            bool isDirective = directiveActionMap.ContainsKey(elemName);
+            if (!isDirective && !isType)
+            {
+                string fmt = "Unknown type or directive '{0}'.";
+                throw TemplateException.Create(elem, fmt, elemName);
+            }
+
+            // Process directive
+            if (isDirective)
+            {
+                DirectiveProcessAction action = directiveActionMap[elemName];
+                return action(elem);
+            }
+
+            // Process primitive or user-defined type
+            // Ensure element has no child elements (only allowed on 'struct's)
+            if (HasChildren(elem))
+            {
+                string fmt = "Type '{0}' cannot contain child elements.";
+                throw TemplateException.Create(elem, fmt, elemName);
+            }
+
+            if (tInfo.Type == typeof(BftStruct))
+            {
+                // Process user-defined struct type
+                // "Copy and paste" members from type definition into current element
+                XElement structElem = new XElement(elem);
+                structElem.Add(typeMap[elemName].Members);
+                localOffset += ProcessStruct(structElem);
+            }
+            else
+            {
+                // Process primitive
+                localOffset += ProcessPrimitiveType(elem);
+            }
+
+            return localOffset;
+        }
+
         private int ProcessStruct(XElement elem)
         {
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
@@ -216,61 +269,7 @@ namespace WHampson.Bft
             return localOffset;
         }
 
-        private int ProcessElement(XElement elem)
-        {
-            string elemName = elem.Name.LocalName;
-            int localOffset = 0;
-
-            // Process 'struct'
-            if (elemName == Keywords.Struct)
-            {
-                localOffset += ProcessStruct(elem);
-                return localOffset;
-            }
-
-            // Ensure element name corresponds to either a primitive type,
-            // user-defined type, or directive
-            bool isType = typeMap.TryGetValue(elemName, out TypeInfo tInfo);
-            bool isDirective = directiveActionMap.ContainsKey(elemName);
-            if (!isDirective && !isType)
-            {
-                string fmt = "Unknown type or directive '{0}'.";
-                throw TemplateException.Create(elem, fmt, elemName);
-            }
-
-            // Process directive
-            if (isDirective)
-            {
-                DirectiveProcessAction action = directiveActionMap[elemName];
-                return action(elem);
-            }
-
-            // Process primitive or user-defined type
-            // Ensure element has no child elements (only allowed on 'struct's)
-            if (HasChildren(elem))
-            {
-                string fmt = "Type '{0}' cannot contain child elements.";
-                throw TemplateException.Create(elem, fmt, elemName);
-            }
-
-            if (tInfo.Type == typeof(BftStruct))
-            {
-                // Process user-defined struct type
-                // "Copy and paste" members from type definition into current element
-                XElement structElem = new XElement(elem);
-                structElem.Add(typeMap[elemName].Members);
-                localOffset += ProcessStruct(structElem);
-            }
-            else
-            {
-                // Process primitive
-                localOffset += ProcessPrimitive(elem);
-            }
-
-            return localOffset;
-        }
-
-        private int ProcessPrimitive(XElement elem)
+        private int ProcessPrimitiveType(XElement elem)
         {
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
@@ -315,7 +314,7 @@ namespace WHampson.Bft
             return localOffset;
         }
 
-        private int ProcessAlign(XElement elem)
+        private int ProcessAlignDirective(XElement elem)
         {
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
@@ -335,7 +334,7 @@ namespace WHampson.Bft
             return off;
         }
 
-        private int ProcessEcho(XElement elem)
+        private int ProcessEchoDirective(XElement elem)
         {
             if (isEvalutingTypedef)
             {
@@ -355,7 +354,7 @@ namespace WHampson.Bft
             return 0;
         }
 
-        private int ProcessTypedef(XElement elem)
+        private int ProcessTypedefDirective(XElement elem)
         {
             if (isEvalutingTypedef)
             {
@@ -366,9 +365,7 @@ namespace WHampson.Bft
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Kind, Keywords.Name);
 
-            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, true, null);   // Type analysis happens here
             string typename = GetAttributeValue<string>(elem, Keywords.Name, true, null);
-
             if (typeMap.ContainsKey(typename))
             {
                 string fmt = "Type '{0}' has already been defined.";
@@ -379,6 +376,8 @@ namespace WHampson.Bft
                 string fmt = "Cannot use reserved word '{0}' as a type name.";
                 throw TemplateException.Create(elem, fmt, typename);
             }
+
+            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, true, null);   // Type analysis happens here
 
             typeMap[typename] = kind;
             isEvalutingTypedef = false;
@@ -419,48 +418,6 @@ namespace WHampson.Bft
             }
         }
 
-        /// <summary>
-        /// Gets the <see cref="XAttribute"/> object with the specified name from
-        /// a given <see cref="XElement"/>.
-        /// </summary>
-        /// <param name="elem">
-        /// The element to retireve the attribute from.
-        /// </param>
-        /// <param name="name">
-        /// The name of the attribute to retrieve.
-        /// </param>
-        /// <param name="isRequired">
-        /// A boolean value indicating whether the requested attribute must be present.
-        /// </param>
-        /// <param name="attr">
-        /// The retrieved <see cref="XAttribute"/> object.
-        /// </param>
-        /// <returns>
-        /// <code>True</code> if the attribute was present, <code>False</code> otherwise.
-        /// </returns>
-        /// <exception cref="TemplateException">
-        /// If the requested attribute was marked as required, but not present in the
-        /// <see cref="XElement"/>.
-        /// </exception>
-        //private bool GetAttribute(XElement elem, string name, bool isRequired, out XAttribute attr)
-        //{
-        //    attr = elem.Attribute(name);
-        //    if (attr == null)
-        //    {
-        //        if (isRequired)
-        //        {
-        //            string fmt = "Missing required attribute '{0}'.";
-        //            throw TemplateException.Create(elem, fmt, name);
-        //        }
-
-        //        return false;
-        //    }
-
-        //    return true;
-        //}
-
-        //private delegate T AttributeProcessAction<T>(XAttribute attr);
-
         private T GetAttributeValue<T>(XElement elem, string name, bool isRequired, T defaultValue)
         {
             if (!attributeActionMap.ContainsKey(name))
@@ -483,6 +440,7 @@ namespace WHampson.Bft
                 return defaultValue;
             }
 
+            // Process the attribute value
             AttributeProcessAction<T> process = (AttributeProcessAction<T>) attributeActionMap[name];
             return process(attr);
         }
@@ -492,13 +450,13 @@ namespace WHampson.Bft
             try
             {
                 string valStr = ResolveVariables(attr.Value);
-                double val = EvaluateExpression(valStr);
+                double val = NumberUtils.EvaluateExpression(valStr);
 
                 return Convert.ToInt32(val);
             }
             catch (Exception e)
             {
-                if (e is TemplateException || e is OverflowException)
+                if (e is ArithmeticException || e is FormatException || e is OverflowException)
                 {
                     throw TemplateException.Create(e, attr, e.Message);
                 }
@@ -598,25 +556,6 @@ namespace WHampson.Bft
             return "";
         }
 
-        private double EvaluateExpression(string expr)
-        {
-            if (!MathExpressionRegex.IsMatch(expr))
-            {
-                string msg = string.Format("Invalid math expression '{0}'", expr);
-                throw new FormatException(msg);
-            }
-
-            object valObj = new DataTable().Compute(expr, null);
-            double val = Convert.ToDouble(valObj);
-            if (double.IsInfinity(val))
-            {
-                string msg = string.Format("Expression '{0}' evaluates to infinity.", expr);
-                throw new TemplateException(msg);
-            }
-
-            return val;
-        }
-
         /// <summary>
         /// Replaces all variable references in the given string with their values.
         /// </summary>
@@ -654,10 +593,10 @@ namespace WHampson.Bft
                 // Handle special variables
                 switch (varName)
                 {
-                    case "__FILESIZE__":
+                    case Keywords.Filesize:
                         return dataLen + "";
 
-                    case "__OFFSET__":
+                    case Keywords.Offset:
                         return dataOffset + "";
                 }
 
@@ -753,9 +692,9 @@ namespace WHampson.Bft
 
         private void BuildDirectiveActionMap()
         {
-            directiveActionMap[Keywords.Align] = ProcessAlign;
-            directiveActionMap[Keywords.Echo] = ProcessEcho;
-            directiveActionMap[Keywords.Typedef] = ProcessTypedef;
+            directiveActionMap[Keywords.Align] = ProcessAlignDirective;
+            directiveActionMap[Keywords.Echo] = ProcessEchoDirective;
+            directiveActionMap[Keywords.Typedef] = ProcessTypedefDirective;
         }
 
         private void BuildAttributeActionMap()

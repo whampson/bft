@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -33,13 +34,34 @@ namespace WHampson.Bft
 {
     internal static class NumberUtils
     {
-        private const string Base2RegexString = @"^([01]{1,64})[bB]$";
-        private const string Base8RegexString = @"^([0-7]{1,64})[oO]$";
-        private const string Base16RegexString = @"^0?[xX]{1}([0-9a-fA-F]{1,16})$|^([0-9a-fA-F]{1,16})[hH]{1}$";
+        private const string Base2Pattern = @"^([01]{1,64})[bB]$";
+        private const string Base8Pattern = @"^([0-7]{1,64})[oO]$";
+        private const string Base16Pattern = @"^0?[xX]{1}([0-9a-fA-F]{1,16})$|^([0-9a-fA-F]{1,16})[hH]{1}$";
+        private const string MathExprPattern = @"^[-+*/().\d ]+$";
 
-        private static readonly Regex Base2Regex = new Regex(Base2RegexString);
-        private static readonly Regex Base8Regex = new Regex(Base8RegexString);
-        private static readonly Regex Base16Regex = new Regex(Base16RegexString);
+        private static readonly Regex Base2Regex = new Regex(Base2Pattern);
+        private static readonly Regex Base8Regex = new Regex(Base8Pattern);
+        private static readonly Regex Base16Regex = new Regex(Base16Pattern);
+        private static readonly Regex MathExprRegex = new Regex(MathExprPattern);
+
+        public static double EvaluateExpression(string expr)
+        {
+            if (!MathExprRegex.IsMatch(expr))
+            {
+                string msg = string.Format("Invalid math expression '{0}'", expr);
+                throw new FormatException(msg);
+            }
+
+            object valObj = new DataTable().Compute(expr, null);
+            double val = Convert.ToDouble(valObj);
+            if (double.IsInfinity(val))
+            {
+                string msg = string.Format("Expression '{0}' evaluates to infinity.", expr);
+                throw new ArithmeticException(msg);
+            }
+
+            return val;
+        }
 
         /// <summary>
         /// Attempts to convert a string to a 64-bit integer value.
