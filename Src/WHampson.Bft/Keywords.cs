@@ -85,6 +85,10 @@ namespace WHampson.Bft
         public const string Name = "name";
         //public const string Typename = "typename";
 
+        // Special variables
+        public const string Filesize = "__FILESIZE__";
+        public const string Offset = "__OFFSET__";
+
         public static readonly IEnumerable<string> KeywordList = new List<string>()
         {
             // Root element
@@ -128,7 +132,10 @@ namespace WHampson.Bft
             Kind,
             Message,
             Name,
-            //Typename
+
+            // Special Variables
+            Filesize,
+            Offset
         };
     }
 }
