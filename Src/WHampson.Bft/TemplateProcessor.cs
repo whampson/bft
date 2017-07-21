@@ -45,6 +45,7 @@ namespace WHampson.Bft
         private static readonly Type GenericPointerType = typeof(Pointer<>);
 
         private delegate int DirectiveProcessAction(XElement elem);
+        private delegate T AttributeProcessAction<T>(XAttribute attr);
 
         private XDocument templateDoc;
 
@@ -54,6 +55,7 @@ namespace WHampson.Bft
 
         private Dictionary<string, TypeInfo> typeMap;
         private Dictionary<string, DirectiveProcessAction> directiveActionMap;
+        private Dictionary<string, Delegate> attributeActionMap;
 
         private SymbolTable symbolTable;
         private Stack<SymbolTable> symTablStack;
@@ -74,6 +76,7 @@ namespace WHampson.Bft
 
             typeMap = new Dictionary<string, TypeInfo>();
             directiveActionMap = new Dictionary<string, DirectiveProcessAction>();
+            attributeActionMap = new Dictionary<string, Delegate>();
 
             symbolTable = new SymbolTable();
             symTablStack = new Stack<SymbolTable>();
@@ -87,6 +90,7 @@ namespace WHampson.Bft
 
             BuildTypeMap();
             BuildDirectiveActionMap();
+            BuildAttributeActionMap();
         }
 
         public void SetEchoWriter(TextWriter w)
@@ -146,8 +150,8 @@ namespace WHampson.Bft
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
             // Get attribute values
-            int count = GetCountAttribute(elem, false, 1);
-            string name = GetNameAttribute(elem, false, null);
+            int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
+            string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
 
             // Process the struct 'count' times
             int localOffset = 0;
@@ -271,8 +275,8 @@ namespace WHampson.Bft
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
 
             // Get attribute values
-            int count = GetCountAttribute(elem, false, 1);
-            string name = GetNameAttribute(elem, false, null);
+            int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
+            string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
 
             string elemName = elem.Name.LocalName;
             TypeInfo t = typeMap[elemName];
@@ -316,8 +320,8 @@ namespace WHampson.Bft
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
             // Get attribute values
-            int count = GetCountAttribute(elem, false, 1);
-            TypeInfo kind = GetKindAttribute(elem, false, typeMap[Keywords.Int8]);
+            int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
+            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, false, typeMap[Keywords.Int8]);
 
             // Skip ahead correct number of bytes as defined by 'kind' and 'count'
             int off = kind.Size * count;
@@ -345,7 +349,7 @@ namespace WHampson.Bft
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Message);
 
-            string message = GetMessageAttribute(elem, true, null);
+            string message = GetAttributeValue<string>(elem, Keywords.Message, true, null);
             echoWriter.WriteLine(message);
 
             return 0;
@@ -362,8 +366,8 @@ namespace WHampson.Bft
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Kind, Keywords.Name);
 
-            TypeInfo kind = GetKindAttribute(elem, true, null);     // Type analysis happens here
-            string typename = GetNameAttribute(elem, true, null);
+            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, true, null);   // Type analysis happens here
+            string typename = GetAttributeValue<string>(elem, Keywords.Name, true, null);
 
             if (typeMap.ContainsKey(typename))
             {
@@ -438,9 +442,36 @@ namespace WHampson.Bft
         /// If the requested attribute was marked as required, but not present in the
         /// <see cref="XElement"/>.
         /// </exception>
-        private bool GetAttribute(XElement elem, string name, bool isRequired, out XAttribute attr)
+        //private bool GetAttribute(XElement elem, string name, bool isRequired, out XAttribute attr)
+        //{
+        //    attr = elem.Attribute(name);
+        //    if (attr == null)
+        //    {
+        //        if (isRequired)
+        //        {
+        //            string fmt = "Missing required attribute '{0}'.";
+        //            throw TemplateException.Create(elem, fmt, name);
+        //        }
+
+        //        return false;
+        //    }
+
+        //    return true;
+        //}
+
+        //private delegate T AttributeProcessAction<T>(XAttribute attr);
+
+        private T GetAttributeValue<T>(XElement elem, string name, bool isRequired, T defaultValue)
         {
-            attr = elem.Attribute(name);
+            if (!attributeActionMap.ContainsKey(name))
+            {
+                // Should never happen;
+                // name SHOULD HAVE been validated before this method is called
+                string msg = string.Format("Unknown attribute '{0}'", name);
+                throw new TemplateException(msg);
+            }
+
+            XAttribute attr = elem.Attribute(name);
             if (attr == null)
             {
                 if (isRequired)
@@ -449,20 +480,11 @@ namespace WHampson.Bft
                     throw TemplateException.Create(elem, fmt, name);
                 }
 
-                return false;
-            }
-
-            return true;
-        }
-
-        private int GetCountAttribute(XElement elem, bool isRequired, int defaultValue)
-        {
-            if (!GetAttribute(elem, Keywords.Count, isRequired, out XAttribute countAttr))
-            {
                 return defaultValue;
             }
 
-            return ProcessCountAttribute(countAttr);
+            AttributeProcessAction<T> process = (AttributeProcessAction<T>) attributeActionMap[name];
+            return process(attr);
         }
 
         private int ProcessCountAttribute(XAttribute attr)
@@ -483,16 +505,6 @@ namespace WHampson.Bft
 
                 throw;
             }
-        }
-
-        private TypeInfo GetKindAttribute(XElement elem, bool isRequired, TypeInfo defaultValue)
-        {
-            if (!GetAttribute(elem, Keywords.Kind, isRequired, out XAttribute countAttr))
-            {
-                return defaultValue;
-            }
-
-            return ProcessKindAttribute(countAttr);
         }
 
         private TypeInfo ProcessKindAttribute(XAttribute attr)
@@ -542,16 +554,6 @@ namespace WHampson.Bft
             }
         }
 
-        private string GetMessageAttribute(XElement elem, bool isRequired, string defaultValue)
-        {
-            if (!GetAttribute(elem, Keywords.Message, isRequired, out XAttribute messageAttr))
-            {
-                return defaultValue;
-            }
-
-            return ProcessMessageAttribute(messageAttr);
-        }
-
         private string ProcessMessageAttribute(XAttribute attr)
         {
             try
@@ -572,16 +574,6 @@ namespace WHampson.Bft
             }
         }
 
-        private string GetNameAttribute(XElement elem, bool isRequired, string defaultValue)
-        {
-            if (!GetAttribute(elem, Keywords.Name, isRequired, out XAttribute nameAttr))
-            {
-                return defaultValue;
-            }
-
-            return ProcessNameAttribute(nameAttr);
-        }
-
         private string ProcessNameAttribute(XAttribute attr)
         {
             if (!IdentifierRegex.IsMatch(attr.Value))
@@ -592,6 +584,18 @@ namespace WHampson.Bft
             }
 
             return attr.Value;
+        }
+
+        private string ProcessNewlineAttribute(XAttribute attr)
+        {
+            // TODO
+            return "";
+        }
+
+        private string ProcessRawAttribute(XAttribute attr)
+        {
+            // TODO
+            return "";
         }
 
         private double EvaluateExpression(string expr)
@@ -752,6 +756,16 @@ namespace WHampson.Bft
             directiveActionMap[Keywords.Align] = ProcessAlign;
             directiveActionMap[Keywords.Echo] = ProcessEcho;
             directiveActionMap[Keywords.Typedef] = ProcessTypedef;
+        }
+
+        private void BuildAttributeActionMap()
+        {
+            attributeActionMap[Keywords.Count] = (AttributeProcessAction<int>) ProcessCountAttribute;
+            attributeActionMap[Keywords.Kind] = (AttributeProcessAction<TypeInfo>) ProcessKindAttribute;
+            attributeActionMap[Keywords.Message] = (AttributeProcessAction<string>) ProcessMessageAttribute;
+            attributeActionMap[Keywords.Name] = (AttributeProcessAction<string>) ProcessNameAttribute;
+            attributeActionMap[Keywords.Newline] = (AttributeProcessAction<string>) ProcessNewlineAttribute;
+            attributeActionMap[Keywords.Raw] = (AttributeProcessAction<string>) ProcessRawAttribute;
         }
 
         private static byte[] LoadFile(string filePath)
