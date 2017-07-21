@@ -63,6 +63,11 @@ namespace WHampson.Bft
             return val;
         }
 
+        public static bool IsInteger(double d)
+        {
+            return Math.Abs(d % 1) <= (Double.Epsilon * 100);
+        }
+
         /// <summary>
         /// Attempts to convert a string to a 64-bit integer value.
         /// A return value indicates whether the conversion succeeded.
