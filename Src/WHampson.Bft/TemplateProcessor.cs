@@ -185,9 +185,8 @@ namespace WHampson.Bft
             {
                 // Process user-defined struct type
                 // "Copy and paste" members from type definition into current element
-                XElement structElem = new XElement(elem);
-                structElem.Add(typeMap[elemName].Members);
-                localOffset += ProcessStruct(structElem);
+                elem.Add(typeMap[elemName].Members);
+                localOffset += ProcessStruct(elem);
             }
             else
             {
@@ -451,6 +450,11 @@ namespace WHampson.Bft
             {
                 string valStr = ResolveVariables(attr.Value);
                 double val = NumberUtils.EvaluateExpression(valStr);
+                if (val < 0 || !NumberUtils.IsInteger(val))
+                {
+                    string msg = "Value must be a non-negative integer.";
+                    throw TemplateException.Create(attr, msg);
+                }
 
                 return Convert.ToInt32(val);
             }
@@ -582,7 +586,7 @@ namespace WHampson.Bft
                     expr = ResolveVariables(expr);
                     try
                     {
-                        return EvaluateExpression(expr) + "";
+                        return NumberUtils.EvaluateExpression(expr) + "";
                     }
                     catch (FormatException ex)
                     {
