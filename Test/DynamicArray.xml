@@ -31,8 +31,15 @@
     <!-- <echo message="Skipping ${skipSize} bytes..."/> -->
     <!-- <align count="${skipSize}"/> -->
     
-    <echo message="${zArr[0].neg} ${zArr[0].pos}"/>
-    <echo message="${zArr[1].neg} ${zArr[1].pos}"/>
-    <echo message="${zArr[2].neg} ${zArr[2].pos}"/>
-    <echo message="${zArr[3].neg} ${zArr[3].pos}"/>
+    <echo message="${zArr[0].neg} = " newline="false" raw="true"/>
+    <echo message="${zArr[0].neg}"/>
+
+    <echo message="${zArr[1].neg} = " newline="false" raw="true"/>
+    <echo message="${zArr[1].neg}"/>
+
+    <echo message="${zArr[2].neg} = " newline="false" raw="true"/>
+    <echo message="${zArr[2].neg}"/>
+
+    <echo message="${zArr[3].neg} = " newline="false" raw="true"/>
+    <echo message="${zArr[3].neg}"/>
 </bft>
