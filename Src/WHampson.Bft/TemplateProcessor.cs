@@ -626,6 +626,10 @@ namespace WHampson.Bft
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
+            else if (e.TypeInfo.Type == typeof(BftStruct))
+            {
+                throw new TemplateException("Cannot take the value of a struct.");
+            }
 
             // Create pointer to value and dereference
             Type ptrType = GenericPointerType.MakeGenericType(new Type[] { e.TypeInfo.Type });
