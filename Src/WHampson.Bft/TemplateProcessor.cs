@@ -40,7 +40,11 @@ namespace WHampson.Bft
 
     internal sealed class TemplateProcessor
     {
-        private static readonly Regex IdentifierRegex = new Regex(@"^[a-zA-Z_][\da-zA-Z_]*$");
+        private const string IdentifierPattern = @"^[a-zA-Z_][\da-zA-Z_]*$";
+        private const string ValueofPattern = @"\${([^()]+?|expr\((.*?)\))}";
+        private const string OffsetofPattern = @"\$\[([\[\]\S]*)\]";
+        private const string SizeofPattern = @"\$\(([^()]+?|type\(([^\s]*?)\))\)";
+
         private static readonly Type GenericPointerType = typeof(Pointer<>);
 
         private delegate int DirectiveProcessAction(XElement elem);
@@ -538,7 +542,7 @@ namespace WHampson.Bft
 
         private string ProcessNameAttribute(XAttribute attr)
         {
-            if (!IdentifierRegex.IsMatch(attr.Value))
+            if (!Regex.IsMatch(attr.Value, IdentifierPattern))
             {
                 string fmt = "'{0}' is not a valid identifier. Identifiers may consist only of "
                     + "alphanumeric characters and underscores, and may not begin with a number.";
@@ -575,89 +579,91 @@ namespace WHampson.Bft
         private string ResolveVariables(string s)
         {
             // Resolve values
-            s = Regex.Replace(s, @"\${([^()]+?|expr\((.*?)\))}", m =>
-            {
-                string varName = m.Groups[1].Value;
-                string expr = m.Groups[2].Value;
-
-                // Evaluate expression
-                if (!string.IsNullOrWhiteSpace(expr))
-                {
-                    expr = ResolveVariables(expr);
-                    try
-                    {
-                        return NumberUtils.EvaluateExpression(expr) + "";
-                    }
-                    catch (FormatException ex)
-                    {
-                        throw new TemplateException(ex.Message, ex);
-                    }
-                }
-
-                // Handle special variables
-                switch (varName)
-                {
-                    case Keywords.Filesize:
-                        return dataLen + "";
-
-                    case Keywords.Offset:
-                        return dataOffset + "";
-                }
-
-                SymbolTableEntry e = GetVariableInfo(varName);
-                if (e.TypeInfo == null)
-                {
-                    string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
-                    throw new TemplateException(msg);
-                }
-
-                // Create pointer to value and dereference
-                Type ptrType = GenericPointerType.MakeGenericType(new Type[] { e.TypeInfo.Type });
-                object ptrObj = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
-                object val = ptrObj.GetType().GetProperty("Value").GetValue(ptrObj);
-
-                return val.ToString();
-            });
-
-            // Resolve offsets
-            s = Regex.Replace(s, @"\$\[([\[\]\S]*)\]", m =>
-            {
-                string varName = m.Groups[1].Value;
-                SymbolTableEntry e = GetVariableInfo(varName);
-
-                return e.Offset + "";
-            });
-
-            // Resolve sizes
-            s = Regex.Replace(s, @"\$\(([^()]+?|type\(([^\s]*?)\))\)", m =>
-            {
-                string varName = m.Groups[1].Value;
-                string typename = m.Groups[2].Value;
-
-                if (!string.IsNullOrWhiteSpace(typename))
-                {
-                    // Get size of type
-                    if (!typeMap.TryGetValue(typename, out TypeInfo info))
-                    {
-                        string msg = string.Format("Invalid type '{0}'", typename);
-                        throw new TemplateException(msg);
-                    }
-
-                    return info.Size + "";
-                }
-
-                // Get size of variable value
-                SymbolTableEntry e = GetVariableInfo(varName);
-                if (e.TypeInfo == null)
-                {
-                    string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
-                    throw new TemplateException(msg);
-                }
-
-                return e.TypeInfo.Size + "";
-            });
+            s = Regex.Replace(s, ValueofPattern, ResolveValueof);
+            s = Regex.Replace(s, OffsetofPattern, ResolveOffsetof);
+            s = Regex.Replace(s, SizeofPattern, ResolveSizeof);
 
             return s;
+        }
+
+        private string ResolveValueof(Match m)
+        {
+            string varName = m.Groups[1].Value;
+            string expr = m.Groups[2].Value;
+
+            // Evaluate expression
+            if (!string.IsNullOrWhiteSpace(expr))
+            {
+                expr = ResolveVariables(expr);
+                try
+                {
+                    return NumberUtils.EvaluateExpression(expr) + "";
+                }
+                catch (FormatException ex)
+                {
+                    throw new TemplateException(ex.Message, ex);
+                }
+            }
+
+            // Handle special variables
+            switch (varName)
+            {
+                case Keywords.Filesize:
+                    return dataLen + "";
+
+                case Keywords.Offset:
+                    return dataOffset + "";
+            }
+
+            SymbolTableEntry e = GetVariableInfo(varName);
+            if (e.TypeInfo == null)
+            {
+                string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
+                throw new TemplateException(msg);
+            }
+
+            // Create pointer to value and dereference
+            Type ptrType = GenericPointerType.MakeGenericType(new Type[] { e.TypeInfo.Type });
+            object ptrObj = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
+            object val = ptrObj.GetType().GetProperty("Value").GetValue(ptrObj);
+
+            return val.ToString();
+        }
+
+        private string ResolveOffsetof(Match m)
+        {
+            string varName = m.Groups[1].Value;
+            SymbolTableEntry e = GetVariableInfo(varName);
+
+            return e.Offset + "";
+        }
+
+        private string ResolveSizeof(Match m)
+        {
+            string varName = m.Groups[1].Value;
+            string typename = m.Groups[2].Value;
+
+            if (!string.IsNullOrWhiteSpace(typename))
+            {
+                // Get size of type
+                if (!typeMap.TryGetValue(typename, out TypeInfo info))
+                {
+                    string msg = string.Format("Invalid type '{0}'", typename);
+                    throw new TemplateException(msg);
+                }
+
+                return info.Size + "";
+            }
+
+            // Get size of variable value
+            SymbolTableEntry e = GetVariableInfo(varName);
+            if (e.TypeInfo == null)
+            {
+                string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
+                throw new TemplateException(msg);
+            }
+
+            return e.TypeInfo.Size + "";
         }
 
         private SymbolTableEntry GetVariableInfo(string varName)
