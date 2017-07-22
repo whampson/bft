@@ -29,9 +29,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
-using WHampson.Bft.Types;
+using WHampson.Cascara.Types;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
     internal sealed class BftStruct
     {

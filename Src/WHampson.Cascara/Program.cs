@@ -27,11 +27,11 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
-using WHampson.Bft.Types;
+using WHampson.Cascara.Types;
 
-using Int32 = WHampson.Bft.Types.Int32;
+using Int32 = WHampson.Cascara.Types.Int32;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
     public class Vect3D
     {

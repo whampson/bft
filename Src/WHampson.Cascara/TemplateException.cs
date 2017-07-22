@@ -26,7 +26,7 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
     public class TemplateException : Exception
     {

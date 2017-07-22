@@ -23,7 +23,7 @@
 
 using System;
 
-namespace WHampson.Bft.Types
+namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// Represents a 32-bit (single-precision) floating-point number.

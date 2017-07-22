@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
     internal sealed class TypeInfo
     {

@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{BA7EE64B-D06B-4907-9DC9-09C4DC0ECE77}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>WHampson.Bft</RootNamespace>
-    <AssemblyName>WHampson.Bft</AssemblyName>
+    <RootNamespace>WHampson.Cascara</RootNamespace>
+    <AssemblyName>WHampson.Cascara</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -79,7 +79,7 @@
     <Compile Include="TemplateFile.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="WHampson.Bft.licenseheader" />
+    <None Include="WHampson.Cascara.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">

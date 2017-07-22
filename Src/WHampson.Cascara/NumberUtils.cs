@@ -30,7 +30,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
     internal static class NumberUtils
     {

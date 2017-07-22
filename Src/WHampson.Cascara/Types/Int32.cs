@@ -24,7 +24,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace WHampson.Bft.Types
+namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// Represents a 32-bit signed integer.

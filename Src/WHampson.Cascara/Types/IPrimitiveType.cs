@@ -23,7 +23,7 @@
 
 using System;
 
-namespace WHampson.Bft.Types
+namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// Defines a primitive data type; that is, a fixed-size collection of

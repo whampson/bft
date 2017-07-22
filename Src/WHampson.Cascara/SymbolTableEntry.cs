@@ -21,47 +21,64 @@
  */
 #endregion
 
-using System.Xml;
-using System.Xml.Linq;
+using System;
 
-namespace WHampson.Bft
+namespace WHampson.Cascara
 {
-    public sealed class TemplateFile
+    internal sealed class SymbolTableEntry
     {
-        private static XDocument OpenXmlFile(string path)
+        private TypeInfo type;
+        private bool isTypeSet;
+
+        public SymbolTableEntry(TypeInfo typeInfo, int offset, SymbolTable child)
         {
-            try
-            {
-                return XDocument.Load(path, LoadOptions.SetLineInfo);
-            }
-            catch (XmlException e)
-            {
-                throw new TemplateException(e.Message, e);
-            }
+            TypeInfo = typeInfo;
+            Offset = offset;
+            Child = child;
         }
 
-        private XDocument doc;
-
-        public TemplateFile(string path)
+        public TypeInfo TypeInfo
         {
-            doc = OpenXmlFile(path);
-        }
-
-        public T Process<T>(string filePath) where T : new()
-        {
-            TemplateProcessor processor = new TemplateProcessor(doc);
-
-            return processor.Process<T>(filePath);
-        }
-
-        public string this[string key]
-        {
-            // Get template metadata (Root element attribute values)
             get
             {
-                XAttribute attr = doc.Root.Attribute(key);
-                return (attr != null) ? attr.Value : null;
+                return type;
             }
+
+            set
+            {
+                // Ensure type is set exactly once
+                if (!isTypeSet)
+                {
+                    type = value;
+                    if (value != null)
+                    {
+                        isTypeSet = true;
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Cannot set Type as it has already been set.");
+                }
+            }
+        }
+
+        public int Offset
+        {
+            get;
+        }
+
+        public SymbolTable Child
+        {
+            get;
+        }
+
+        public override string ToString()
+        {
+            string s = "{";
+            s += string.Format("{0}: {1:X8}", TypeInfo.Type.Name, Offset);
+            s += "}";
+
+            return s;
         }
     }
 }

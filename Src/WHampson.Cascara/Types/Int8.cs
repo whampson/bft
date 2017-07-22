@@ -23,7 +23,7 @@
 
 using System;
 
-namespace WHampson.Bft.Types
+namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// Represents an 8-bit signed integer.
