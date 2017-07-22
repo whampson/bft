@@ -24,22 +24,17 @@
     
     <int32 name="size"/>
     <ZeroOffset name="zArr" count="${size} / $(type ZeroOffset)"/>
-    <align count="${__FILESIZE__} - ${__OFFSET__}"/>
    
-    <!-- Idea: local variables (not attached to the underlying file) -->
-    <!-- <local name="skipSize" value="${__FILESIZE__} - ${__OFFSET__}"/> -->
-    <!-- <echo message="Skipping ${skipSize} bytes..."/> -->
-    <!-- <align count="${skipSize}"/> -->
+    <local name="skipSize" value="${__FILESIZE__} - ${__OFFSET__}"/>
+    <echo message="Skipping ${skipSize} bytes..."/>
+    <align count="${skipSize}"/>
     
     <echo message="${zArr[0].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[0].neg}"/>
-
     <echo message="${zArr[1].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[1].neg}"/>
-
     <echo message="${zArr[2].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[2].neg}"/>
-
     <echo message="${zArr[3].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[3].neg}"/>
 </bft>
