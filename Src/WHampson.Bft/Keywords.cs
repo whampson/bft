@@ -75,6 +75,7 @@ namespace WHampson.Bft
         // Directives
         public const string Align = "align";
         public const string Echo = "echo";
+        public const string Local = "local";
         public const string Typedef = "typedef";
 
         // Modifiers
@@ -126,6 +127,7 @@ namespace WHampson.Bft
             // Directives
             Align,
             Echo,
+            Local,
             Typedef,
 
             // Special Variables
