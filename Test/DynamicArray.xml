@@ -23,7 +23,7 @@
     </typedef>
     
     <int32 name="size"/>
-    <ZeroOffset name="zArr" count="${size} / $(type(ZeroOffset))"/>
+    <ZeroOffset name="zArr" count="${size} / $(type ZeroOffset)"/>
     <align count="${__FILESIZE__} - ${__OFFSET__}"/>
    
     <!-- Idea: local variables (not attached to the underlying file) -->
