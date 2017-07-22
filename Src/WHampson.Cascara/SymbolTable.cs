@@ -26,15 +26,33 @@ using System.Text.RegularExpressions;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Associates identifiers with a type, offset and child
+    /// <see cref="SymbolTable"/> for nested identifiers.
+    /// </summary>
     internal sealed class SymbolTable
     {
         private Dictionary<string, SymbolTableEntry> entries;
 
+        /// <summary>
+        /// Creates a new nameless, parentless <see cref="SymbolTable"/>.
+        /// Use this for creating the root table.
+        /// </summary>
         public SymbolTable()
             : this(null, null)
         {
         }
 
+        /// <summary>
+        /// Creates a new named <see cref="SymbolTable"/> that is the
+        /// child of an existing table.
+        /// </summary>
+        /// <param name="name">
+        /// The name associated with the symbol table.
+        /// </param>
+        /// <param name="parent">
+        /// The <see cref="SymbolTable"/> from which this table stems.
+        /// </param>
         public SymbolTable(string name, SymbolTable parent)
         {
             Name = name;
@@ -42,11 +60,17 @@ namespace WHampson.Cascara
             entries = new Dictionary<string, SymbolTableEntry>();
         }
 
+        /// <summary>
+        /// Gets locally scoped name of this table.
+        /// </summary>
         public string Name
         {
             get;
         }
 
+        /// <summary>
+        /// Gets the globally scoped name of this variable.
+        /// </summary>
         public string FullyQualifiedName
         {
             get
@@ -66,11 +90,28 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Gets the parent table.
+        /// Returns <code>null</code> if this is the root table.
+        /// </summary>
         public SymbolTable Parent
         {
             get;
         }
 
+        /// <summary>
+        /// Adds the provided <see cref="SymbolTableEntry"/> to the table and
+        /// associates it with the provided name.
+        /// </summary>
+        /// <param name="name">
+        /// The name to be given to the table entry.
+        /// </param>
+        /// <param name="e">
+        /// The <see cref="SymbolTableEntry"/> to add to the table.
+        /// </param>
+        /// <returns>
+        /// <code>False</code> if the given name already exists in the table.
+        /// </returns>
         public bool AddEntry(string name, SymbolTableEntry e)
         {
             string symbol = CreateSymbol(name);
@@ -80,9 +121,15 @@ namespace WHampson.Cascara
             }
 
             entries.Add(symbol, e);
+
             return true;
         }
 
+        /// <summary>
+        /// Gets an entry from the table 
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public SymbolTableEntry GetEntry(string name)
         {
             string[] splitname = name.Split('.');
@@ -129,11 +176,21 @@ namespace WHampson.Cascara
             return s;
         }
 
-        public static string CreateSymbol(string name)
+        /// <summary>
+        /// Creates a unique symbol for the given identifier by appending
+        /// an array index to the end (if not already present).
+        /// </summary>
+        /// <param name="name">
+        /// The identifier to turn into a symbol.
+        /// </param>
+        /// <returns>
+        /// The newly-created symbol.
+        /// </returns>
+        private static string CreateSymbol(string name)
         {
-            Regex arrayNotation = new Regex(@"^.*\[\d+\]$");
+            const string ArrayNotationPattern = @"^.*\[\d+\]$";
 
-            if (!arrayNotation.IsMatch(name))
+            if (!Regex.IsMatch(name, ArrayNotationPattern))
             {
                 name = name + "[0]";
             }
@@ -141,6 +198,19 @@ namespace WHampson.Cascara
             return name;
         }
 
+        /// <summary>
+        /// Searches the parent tables for the given symbol.
+        /// </summary>
+        /// <param name="tabl">
+        /// The table to begin the search from.
+        /// </param>
+        /// <param name="symbolName">
+        /// The symbol to search for.
+        /// </param>
+        /// <returns>
+        /// The <see cref="SymbolTableEntry"/> corresponding to the symbol if found,
+        /// <code>null</code> if not found.
+        /// </returns>
         private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
         {
             if (tabl == null)
