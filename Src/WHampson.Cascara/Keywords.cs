@@ -25,6 +25,10 @@ using System.Collections.Generic;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Convenience class that contains all valid keywords for the template
+    /// processor.
+    /// </summary>
     internal static class Keywords
     {
         // boolN    -> uintN
@@ -93,6 +97,12 @@ namespace WHampson.Cascara
         public const string Filesize = "__FILESIZE__";
         public const string Offset = "__OFFSET__";
 
+        /// <summary>
+        /// The list of reserved words for the template processor.
+        /// </summary>
+        /// <remarks>
+        /// Reserved words are words that cannot be used as variable names.
+        /// </remarks>
         public static readonly IEnumerable<string> ReservedWords = new List<string>()
         {
             // Root element

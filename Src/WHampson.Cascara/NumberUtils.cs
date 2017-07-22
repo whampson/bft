@@ -27,12 +27,30 @@ using System.Text.RegularExpressions;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Convenience class for various general-purpose tasks related to numbers.
+    /// </summary>
     internal static class NumberUtils
     {
         private const string MathExprPattern = @"^[-+*/().\d ]+$";
-
         private static readonly Regex MathExprRegex = new Regex(MathExprPattern);
 
+        /// <summary>
+        /// Computes the result of a mathematical expression string.
+        /// </summary>
+        /// <param name="expr">
+        /// The expression to evaluate.
+        /// </param>
+        /// <returns>
+        /// The value of the expression as a <see cref="double"/>, if the
+        /// expression is syntactically valid.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown if the expression is not syntactically correct.
+        /// </exception>
+        /// <exception cref="ArithmeticException">
+        /// Caused if the expression evaluates to infinity.
+        /// </exception>
         public static double EvaluateExpression(string expr)
         {
             if (!MathExprRegex.IsMatch(expr))
@@ -52,6 +70,16 @@ namespace WHampson.Cascara
             return val;
         }
 
+        /// <summary>
+        /// Checks whether a <see cref="double"/> value is exactly an integer.
+        /// </summary>
+        /// <param name="d">
+        /// The <see cref="double"/> to be checked.
+        /// </param>
+        /// <returns>
+        /// A value indicating whether the given <see cref="double"/> value
+        /// is an integer.
+        /// </returns>
         public static bool IsInteger(double d)
         {
             return Math.Abs(d % 1) <= (Double.Epsilon * 100);
