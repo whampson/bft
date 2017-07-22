@@ -529,8 +529,8 @@ namespace WHampson.Bft
                 double val = NumberUtils.EvaluateExpression(valStr);
                 if (val < 0 || !NumberUtils.IsInteger(val))
                 {
-                    string msg = "Value must be a non-negative integer.";
-                    throw TemplateException.Create(attr, msg);
+                    string msg = "Value '{0}' is not a non-negative integer.";
+                    throw TemplateException.Create(attr, msg, val);
                 }
 
                 return Convert.ToInt32(val);
