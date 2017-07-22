@@ -60,6 +60,7 @@ namespace WHampson.Bft
         private Dictionary<string, TypeInfo> typeMap;
         private Dictionary<string, DirectiveProcessAction> directiveActionMap;
         private Dictionary<string, Delegate> attributeActionMap;
+        private Dictionary<string, double> localsMap;
 
         private SymbolTable symbolTable;
         private Stack<SymbolTable> symTablStack;
@@ -81,6 +82,7 @@ namespace WHampson.Bft
             typeMap = new Dictionary<string, TypeInfo>();
             directiveActionMap = new Dictionary<string, DirectiveProcessAction>();
             attributeActionMap = new Dictionary<string, Delegate>();
+            localsMap = new Dictionary<string, double>();
 
             symbolTable = new SymbolTable();
             symTablStack = new Stack<SymbolTable>();
@@ -228,7 +230,7 @@ namespace WHampson.Bft
                     // Create symbol table entry for this struct in the current table
                     // Type reamins 'null' because we haven't processed the struct yet
                     entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
-                    if (!curSymTabl.AddEntry(varName, entry))
+                    if (localsMap.ContainsKey(varName) || !curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
                         throw TemplateException.Create(elem, fmt, name);
@@ -302,7 +304,7 @@ namespace WHampson.Bft
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
                         SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
-                        if (!symTablStack.Peek().AddEntry(varName, e))
+                        if (localsMap.ContainsKey(varName) || !symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
                             throw TemplateException.Create(elem, fmt, name);
@@ -356,10 +358,24 @@ namespace WHampson.Bft
             bool hasNewline = GetAttributeValue<bool>(elem, Keywords.Newline, false, true);
             bool isRaw = GetAttributeValue<bool>(elem, Keywords.Raw, false, false);
 
+            XAttribute messageAttr = elem.Attribute(Keywords.Message);
+
             if (!isRaw)
             {
-                message = ResolveVariables(message);
-                message = ResolveEscapeSequences(message);
+                try
+                {
+                    message = ResolveVariables(message);
+                    message = ResolveEscapeSequences(message);
+                }
+                catch (Exception e)
+                {
+                    if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
+                    {
+                        throw TemplateException.Create(e, messageAttr, e.Message);
+                    }
+
+                    throw;
+                }
             }
 
             if (hasNewline)
@@ -370,6 +386,34 @@ namespace WHampson.Bft
             {
                 echoWriter.Write(message);
             }
+
+            return 0;
+        }
+
+        private int ProcessLocalDirective(XElement elem)
+        {
+            if (isEvalutingTypedef)
+            {
+                return 0;
+            }
+            if (HasChildren(elem))
+            {
+                string fmt = "Directive '{0}' cannot contain child elements.";
+                throw TemplateException.Create(elem, fmt, Keywords.Echo);
+            }
+
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Name, Keywords.Value);
+
+            string name = GetAttributeValue<string>(elem, Keywords.Name, true, null);
+            double value = GetAttributeValue<double>(elem, Keywords.Value, true, 0);
+
+            if (symbolTable.GetEntry(name) != null)
+            {
+                string fmt = "Variable '{0}' already exists as a non-local variable.";
+                throw TemplateException.Create(elem, fmt, name);
+            }
+
+            localsMap[name] = value;
 
             return 0;
         }
@@ -564,6 +608,24 @@ namespace WHampson.Bft
             return ProcessBooleanAttribute(attr);
         }
 
+        private double ProcessValueAttribute(XAttribute attr)
+        {
+            try
+            {
+                string valStr = ResolveVariables(attr.Value);
+                return NumberUtils.EvaluateExpression(valStr);
+            }
+            catch (Exception e)
+            {
+                if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
+                {
+                    throw TemplateException.Create(e, attr, e.Message);
+                }
+
+                throw;
+            }
+        }
+
         private bool ProcessBooleanAttribute(XAttribute attr)
         {
             if (!bool.TryParse(attr.Value, out bool val))
@@ -630,6 +692,11 @@ namespace WHampson.Bft
                     return dataOffset + "";
             }
 
+            if (localsMap.TryGetValue(varName, out double localVal))
+            {
+                return localVal + "";
+            }
+
             SymbolTableEntry e = GetVariableInfo(varName);
             if (e.TypeInfo == null)
             {
@@ -657,6 +724,13 @@ namespace WHampson.Bft
             }
 
             string varName = m.Groups[1].Value;
+
+            if (localsMap.ContainsKey(varName))
+            {
+                string msg = "Offset not defined for local variables.";
+                throw new TemplateException(msg);
+            }
+
             SymbolTableEntry e = GetVariableInfo(varName);
 
             return e.Offset + "";
@@ -670,6 +744,12 @@ namespace WHampson.Bft
             }
 
             string varName = m.Groups[1].Value;
+
+            if (localsMap.ContainsKey(varName))
+            {
+                string msg = "Size not defined for local variables.";
+                throw new TemplateException(msg);
+            }
 
             string typeName = null;
             Match m2 = Regex.Match(varName, TypeOpPattern);
@@ -739,6 +819,7 @@ namespace WHampson.Bft
         {
             directiveActionMap[Keywords.Align] = ProcessAlignDirective;
             directiveActionMap[Keywords.Echo] = ProcessEchoDirective;
+            directiveActionMap[Keywords.Local] = ProcessLocalDirective;
             directiveActionMap[Keywords.Typedef] = ProcessTypedefDirective;
         }
 
@@ -750,6 +831,7 @@ namespace WHampson.Bft
             attributeActionMap[Keywords.Name] = (AttributeProcessAction<string>) ProcessNameAttribute;
             attributeActionMap[Keywords.Newline] = (AttributeProcessAction<bool>) ProcessNewlineAttribute;
             attributeActionMap[Keywords.Raw] = (AttributeProcessAction<bool>) ProcessRawAttribute;
+            attributeActionMap[Keywords.Value] = (AttributeProcessAction<double>) ProcessValueAttribute;
         }
 
         private static byte[] LoadFile(string filePath)
