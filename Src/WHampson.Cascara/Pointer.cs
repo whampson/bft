@@ -25,8 +25,6 @@ using System;
 using System.Runtime.InteropServices;
 using WHampson.Cascara.Types;
 
-using Int32 = WHampson.Cascara.Types.Int32;
-
 namespace WHampson.Cascara
 {
     /// <summary>
@@ -73,9 +71,6 @@ namespace WHampson.Cascara
         /// A new instance of <see cref="T"/> containing the data at the
         /// specified memory location.
         /// </returns>
-        /// <exception cref="Exception">
-        /// If <see cref="T"/> is unable to be dereferenced.
-        /// </exception>
         private static unsafe T Dereference(IntPtr addr)
         {
             if (addr == IntPtr.Zero)
@@ -90,7 +85,7 @@ namespace WHampson.Cascara
             // but it'll do for what we need it to.
             switch (t.Name)
             {
-                // TODO: finish for all defined types
+                // TODO: DON'T FOEGET to finish for all defined types
                 case "Float":
                     Float* pF = (Float*) addr;
                     inst = *pF;
@@ -102,12 +97,14 @@ namespace WHampson.Cascara
                     break;
 
                 case "Int32":
-                    Int32* pI32 = (Int32*) addr;
+                    Types.Int32* pI32 = (Types.Int32*) addr;
                     inst = *pI32;
                     break;
                 
                 default:
-                    throw new Exception();  // TODO: create specialized exception
+                    // Should never happen as long as I remember
+                    // to list all types ;)
+                    throw new InvalidOperationException();
             }
 
             return (T) inst;
@@ -124,22 +121,44 @@ namespace WHampson.Cascara
         {
         }
 
+        /// <summary>
+        /// Creates a new array instance of the <see cref="Pointer{T}"/> class using
+        /// the provided memory address and number of array elements.
+        /// </summary>
+        /// <param name="addr">
+        /// The memory location of the data being pointed to.
+        /// </param>
+        /// <param name="count">
+        /// The number of items present in the data set that the data represent.
+        /// </param>
         public Pointer(IntPtr addr, int count)
         {
             if (addr == IntPtr.Zero)
             {
-                throw new ArgumentException("Null pointer not allowed.");
+                throw new ArgumentException("Null pointer not allowed.", "addr");
             }
 
             if (count < 1)
             {
-                throw new ArgumentException("Count must be a positive integer.");
+                throw new ArgumentException("Count must be a positive integer.", "count");
             }
 
             Address = addr;
             Count = count;
         }
 
+        /// <summary>
+        /// Gets the ith element in the array being pointed to.
+        /// </summary>
+        /// <param name="i">
+        /// The index of the element to get.
+        /// </param>
+        /// <returns>
+        /// The value of the ith element.
+        /// </returns>
+        /// <exception cref="IndexOutOfRangeException"/>
+        /// Thrown if the specified element index is out of the bounds of the array.
+        /// </exception>
         public T this[int i]
         {
             get
@@ -180,6 +199,9 @@ namespace WHampson.Cascara
             get;
         }
 
+        /// <summary>
+        /// The number of elements in the data set.
+        /// </summary>
         public int Count
         {
             get;
@@ -187,21 +209,17 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets or sets the data that this pointer points to.
+        /// If the pointer is an array, the 0th value is returned.
         /// </summary>
         public T Value
         {
             get
             {
-                //// Create instance of T using data at address
-                //return Dereference(Address);
                 return this[0];
             }
 
             set
             {
-                //// Get bytes of new value, copy bytes to address
-                //byte[] data = value.GetBytes();
-                //Marshal.Copy(data, 0, Address, data.Length);
                 this[0] = value;
             }
         }
