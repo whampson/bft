@@ -41,9 +41,10 @@ namespace WHampson.Bft
     internal sealed class TemplateProcessor
     {
         private const string IdentifierPattern = @"^[a-zA-Z_][\da-zA-Z_]*$";
-        private const string ValueofPattern = @"\${(.+?)}";
-        private const string OffsetofPattern = @"\$\[([\[\]\S]+)\]";
-        private const string SizeofPattern = @"\$\(([^\s]+?|type\s(.*?))\)";
+        private const string ValueofOpPattern = @"\${(.+?)}";
+        private const string OffsetofOpPattern = @"\$\[([\[\]\S]+)\]";
+        private const string SizeofOpPattern = @"\$\((.+?)\)";
+        private const string TypeOpPattern = @"type[ ]+(.+)";
 
         private static readonly Type GenericPointerType = typeof(Pointer<>);
 
@@ -589,9 +590,9 @@ namespace WHampson.Bft
         private string ResolveVariables(string s)
         {
             // Resolve values
-            s = Regex.Replace(s, ValueofPattern, ResolveValueof);
-            s = Regex.Replace(s, OffsetofPattern, ResolveOffsetof);
-            s = Regex.Replace(s, SizeofPattern, ResolveSizeof);
+            s = Regex.Replace(s, ValueofOpPattern, ResolveValueof);
+            s = Regex.Replace(s, OffsetofOpPattern, ResolveOffsetof);
+            s = Regex.Replace(s, SizeofOpPattern, ResolveSizeof);
 
             return s;
         }
@@ -669,14 +670,20 @@ namespace WHampson.Bft
             }
 
             string varName = m.Groups[1].Value;
-            string typename = m.Groups[2].Value;
 
-            if (!string.IsNullOrWhiteSpace(typename))
+            string typeName = null;
+            Match m2 = Regex.Match(varName, TypeOpPattern);
+            if (m2.Success)
+            {
+                typeName = m2.Groups[1].Value;
+            }
+
+            if (!string.IsNullOrWhiteSpace(typeName))
             {
                 // Get size of type
-                if (!typeMap.TryGetValue(typename, out TypeInfo info))
+                if (!typeMap.TryGetValue(typeName, out TypeInfo info))
                 {
-                    string msg = string.Format("Invalid type '{0}'", typename);
+                    string msg = string.Format("Invalid type '{0}'", typeName);
                     throw new TemplateException(msg);
                 }
 
