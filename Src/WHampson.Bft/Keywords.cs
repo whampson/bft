@@ -87,6 +87,7 @@ namespace WHampson.Bft
         public const string Newline = "newline";
         public const string Raw = "raw";
         //public const string Typename = "typename";
+        public const string Value = "value";
 
         // Special variables
         public const string Filesize = "__FILESIZE__";
