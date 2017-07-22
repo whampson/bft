@@ -223,6 +223,12 @@ namespace WHampson.Bft
                 SymbolTableEntry entry = null;
                 if (!isConductingDryRun && name != null)
                 {
+                    if (localsMap.ContainsKey(name))
+                    {
+                        string fmt = "Variable '{0}' already defined as a local.";
+                        throw TemplateException.Create(elem, fmt, name);
+                    }
+
                     // Create new symbol table and make current table its parent
                     SymbolTable curSymTabl = symTablStack.Peek();
                     SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
@@ -230,7 +236,7 @@ namespace WHampson.Bft
                     // Create symbol table entry for this struct in the current table
                     // Type reamins 'null' because we haven't processed the struct yet
                     entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
-                    if (localsMap.ContainsKey(varName) || !curSymTabl.AddEntry(varName, entry))
+                    if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
                         throw TemplateException.Create(elem, fmt, name);
@@ -301,10 +307,16 @@ namespace WHampson.Bft
                 {
                     if (name != null)
                     {
+                        if (localsMap.ContainsKey(name))
+                        {
+                            string fmt = "Variable '{0}' already defined as a local.";
+                            throw TemplateException.Create(elem, fmt, name);
+                        }
+
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
                         SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
-                        if (localsMap.ContainsKey(varName) || !symTablStack.Peek().AddEntry(varName, e))
+                        if (!symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
                             throw TemplateException.Create(elem, fmt, name);
