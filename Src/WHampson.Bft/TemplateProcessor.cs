@@ -41,9 +41,9 @@ namespace WHampson.Bft
     internal sealed class TemplateProcessor
     {
         private const string IdentifierPattern = @"^[a-zA-Z_][\da-zA-Z_]*$";
-        private const string ValueofPattern = @"\${([^()]+?|expr\((.*?)\))}";
-        private const string OffsetofPattern = @"\$\[([\[\]\S]*)\]";
-        private const string SizeofPattern = @"\$\(([^()]+?|type\(([^\s]*?)\))\)";
+        private const string ValueofPattern = @"\${(.+?)}";
+        private const string OffsetofPattern = @"\$\[([\[\]\S]+)\]";
+        private const string SizeofPattern = @"\$\(([^\s]+?|type\s(.*?))\)";
 
         private static readonly Type GenericPointerType = typeof(Pointer<>);
 
@@ -604,21 +604,20 @@ namespace WHampson.Bft
             }
 
             string varName = m.Groups[1].Value;
-            string expr = m.Groups[2].Value;
 
-            // Evaluate expression
-            if (!string.IsNullOrWhiteSpace(expr))
-            {
-                expr = ResolveVariables(expr);
-                try
-                {
-                    return NumberUtils.EvaluateExpression(expr) + "";
-                }
-                catch (FormatException ex)
-                {
-                    throw new TemplateException(ex.Message, ex);
-                }
-            }
+            //// Evaluate expression
+            //if (!string.IsNullOrWhiteSpace(expr))
+            //{
+            //    expr = ResolveVariables(expr);
+            //    try
+            //    {
+            //        return NumberUtils.EvaluateExpression(expr) + "";
+            //    }
+            //    catch (FormatException ex)
+            //    {
+            //        throw new TemplateException(ex.Message, ex);
+            //    }
+            //}
 
             // Handle special variables
             switch (varName)
