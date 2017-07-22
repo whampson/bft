@@ -74,66 +74,8 @@ namespace WHampson.Cascara
             //Console.WriteLine(test.PLYR.Armor.Value);
             //Console.WriteLine(test.PLYR.Location2);
 
-            //SymbolTableTest();
-
-
-            // TODO: handle arrays in symbol table
-
             // Pause
             Console.ReadKey();
-        }
-
-        static void SymbolTableTest()
-        {
-            /* {
-             *     struct {
-             *         int32 baz;
-             *     } foo;
-             *     
-             *     struct {
-             *         int32 biz;
-             *         struct {
-             *             int32 b;
-             *             int32 c;
-             *         } a;
-             *     } bar;
-             * } tabl
-             * 
-             */
-        //    SymbolTableEntry foo = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 4), 0);
-        //    SymbolTableEntry baz = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int32)), 0);
-        //    SymbolTableEntry bar = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 12), 4);
-        //    SymbolTableEntry biz = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int32)), 4);
-        //    SymbolTableEntry a = new SymbolTableEntry(TypeInfo.CreateStruct(new List<XElement>(), 8), 8);
-        //    SymbolTableEntry b = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int32)), 8);
-        //    SymbolTableEntry c = new SymbolTableEntry(TypeInfo.CreatePrimitive(typeof(Int32)), 12);
-
-        //    SymbolTable tabl = new SymbolTable();
-        //    tabl.Entries.Add("foo", foo);
-        //    tabl.Entries.Add("bar", bar);
-        //    SymbolTable fooTabl = new SymbolTable("foo", tabl);
-        //    foo.Child = fooTabl;
-        //    fooTabl.Entries.Add("baz", baz);
-        //    SymbolTable barTabl = new SymbolTable("bar", tabl);
-        //    bar.Child = barTabl;
-        //    barTabl.Entries.Add("biz", biz);
-        //    barTabl.Entries.Add("a", a);
-        //    SymbolTable aTabl = new SymbolTable("a", barTabl);
-        //    a.Child = aTabl;
-        //    aTabl.Entries.Add("b", b);
-        //    aTabl.Entries.Add("c", c);
-
-        //    Console.WriteLine(aTabl);
-
-        //    SymbolTableEntry e = tabl.GetEntry("bar");
-        //    if (e == null)
-        //    {
-        //        Console.WriteLine("null");
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine(e);
-        //    }
         }
     }
 }
