@@ -25,18 +25,45 @@ using System;
 
 namespace WHampson.Cascara
 {
-    internal sealed class SymbolTableEntry
+    /// <summary>
+    /// Contains type, location, and child information about a variable
+    /// identifier.
+    /// </summary>
+    internal sealed class SymbolInfo
     {
         private TypeInfo type;
         private bool isTypeSet;
 
-        public SymbolTableEntry(TypeInfo typeInfo, int offset, SymbolTable child)
+        /// <summary>
+        /// Creates a new <see cref="SymbolInfo"/> object with the given type
+        /// information, location in the binary data, and child symbol
+        /// information.
+        /// </summary>
+        /// <param name="typeInfo">
+        /// Information about the data the symbol represents.
+        /// </param>
+        /// <param name="offset">
+        /// The position in the binary data of the first byte of this type's value.
+        /// </param>
+        /// <param name="child">
+        /// </param>
+        public SymbolInfo(TypeInfo typeInfo, int offset, SymbolTable child)
         {
             TypeInfo = typeInfo;
             Offset = offset;
             Child = child;
         }
 
+        /// <summary>
+        /// Gets or sets the type information.
+        /// </summary>
+        /// <remarks>
+        /// NOTE: the setter can only be used ONCE!
+        /// This is to allow for entries to be added to symbol tables
+        /// before their types are analyzed. This allows the symbol's offset
+        /// to be referenced while it's children are being populated.
+        /// This type should otherwise be immutable.
+        /// </remarks>
         public TypeInfo TypeInfo
         {
             get
@@ -57,16 +84,23 @@ namespace WHampson.Cascara
                 }
                 else
                 {
-                    throw new ArgumentException("Cannot set Type as it has already been set.");
+                    string msg = "Cannot set Type as it has already been set.";
+                    throw new InvalidOperationException(msg);
                 }
             }
         }
 
+        /// <summary>
+        /// Gets the position in the binary data of the first byte of this type's value.
+        /// </summary>
         public int Offset
         {
             get;
         }
 
+        /// <summary>
+        /// Gets the <see cref="SymbolTable"/> containing all child symbols.
+        /// </summary>
         public SymbolTable Child
         {
             get;
