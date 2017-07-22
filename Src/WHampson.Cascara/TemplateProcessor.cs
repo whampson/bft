@@ -220,7 +220,7 @@ namespace WHampson.Cascara
                 // Tack on array index to var name so it's unique
                 varName = name + "[" + i + "]";
 
-                SymbolTableEntry entry = null;
+                SymbolInfo entry = null;
                 if (!isConductingDryRun && name != null)
                 {
                     if (localsMap.ContainsKey(name))
@@ -235,7 +235,7 @@ namespace WHampson.Cascara
 
                     // Create symbol table entry for this struct in the current table
                     // Type reamins 'null' because we haven't processed the struct yet
-                    entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
+                    entry = new SymbolInfo(null, dataOffset, newSymTabl);
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
@@ -315,7 +315,7 @@ namespace WHampson.Cascara
 
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
-                        SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
+                        SymbolInfo e = new SymbolInfo(t, dataOffset, null);
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
@@ -709,7 +709,7 @@ namespace WHampson.Cascara
                 return localVal + "";
             }
 
-            SymbolTableEntry e = GetVariableInfo(varName);
+            SymbolInfo e = GetVariableInfo(varName);
             if (e.TypeInfo == null)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
@@ -743,7 +743,7 @@ namespace WHampson.Cascara
                 throw new TemplateException(msg);
             }
 
-            SymbolTableEntry e = GetVariableInfo(varName);
+            SymbolInfo e = GetVariableInfo(varName);
 
             return e.Offset + "";
         }
@@ -783,7 +783,7 @@ namespace WHampson.Cascara
             }
 
             // Get size of variable value
-            SymbolTableEntry e = GetVariableInfo(varName);
+            SymbolInfo e = GetVariableInfo(varName);
             if (e.TypeInfo == null)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
@@ -793,9 +793,9 @@ namespace WHampson.Cascara
             return e.TypeInfo.Size + "";
         }
 
-        private SymbolTableEntry GetVariableInfo(string varName)
+        private SymbolInfo GetVariableInfo(string varName)
         {
-            SymbolTableEntry e = symTablStack.Peek().GetEntry(varName);
+            SymbolInfo e = symTablStack.Peek().GetEntry(varName);
             if (e == null)
             {
                 string msg = string.Format("Variable '{0}' not defined.", varName);

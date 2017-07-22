@@ -32,7 +32,7 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTable
     {
-        private Dictionary<string, SymbolTableEntry> entries;
+        private Dictionary<string, SymbolInfo> entries;
 
         /// <summary>
         /// Creates a new nameless, parentless <see cref="SymbolTable"/>.
@@ -57,7 +57,7 @@ namespace WHampson.Cascara
         {
             Name = name;
             Parent = parent;
-            entries = new Dictionary<string, SymbolTableEntry>();
+            entries = new Dictionary<string, SymbolInfo>();
         }
 
         /// <summary>
@@ -100,19 +100,19 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Adds the provided <see cref="SymbolTableEntry"/> to the table and
+        /// Adds the provided <see cref="SymbolInfo"/> to the table and
         /// associates it with the provided name.
         /// </summary>
         /// <param name="name">
         /// The name to be given to the table entry.
         /// </param>
         /// <param name="e">
-        /// The <see cref="SymbolTableEntry"/> to add to the table.
+        /// The <see cref="SymbolInfo"/> to add to the table.
         /// </param>
         /// <returns>
         /// <code>False</code> if the given name already exists in the table.
         /// </returns>
-        public bool AddEntry(string name, SymbolTableEntry e)
+        public bool AddEntry(string name, SymbolInfo e)
         {
             string symbol = CreateSymbol(name);
             if (entries.ContainsKey(symbol))
@@ -130,17 +130,17 @@ namespace WHampson.Cascara
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public SymbolTableEntry GetEntry(string name)
+        public SymbolInfo GetEntry(string name)
         {
             string[] splitname = name.Split('.');
 
-            SymbolTableEntry top = SearchUp(this, CreateSymbol(splitname[0]));
+            SymbolInfo top = SearchUp(this, CreateSymbol(splitname[0]));
             if (top == null)
             {
                 return null;
             }
 
-            SymbolTableEntry result = top;
+            SymbolInfo result = top;
             SymbolTable tabl = result.Child;
             string sym;
 
@@ -161,7 +161,7 @@ namespace WHampson.Cascara
         {
             string baseName = FullyQualifiedName;
             string s = "";
-            foreach (KeyValuePair<string, SymbolTableEntry> kvp in entries)
+            foreach (KeyValuePair<string, SymbolInfo> kvp in entries)
             {
                 s += baseName;
                 s += (baseName == "") ? "" : ".";
@@ -208,17 +208,17 @@ namespace WHampson.Cascara
         /// The symbol to search for.
         /// </param>
         /// <returns>
-        /// The <see cref="SymbolTableEntry"/> corresponding to the symbol if found,
+        /// The <see cref="SymbolInfo"/> corresponding to the symbol if found,
         /// <code>null</code> if not found.
         /// </returns>
-        private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
+        private static SymbolInfo SearchUp(SymbolTable tabl, string symbolName)
         {
             if (tabl == null)
             {
                 return null;
             }
 
-            if (tabl.entries.TryGetValue(symbolName, out SymbolTableEntry entry))
+            if (tabl.entries.TryGetValue(symbolName, out SymbolInfo entry))
             {
                 return entry;
             }
