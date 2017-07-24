@@ -8,8 +8,7 @@
             $(...)          ->  'sizeof' operator
 
         Special Operators
-            ${expr(...)}    ->  valueof math expression
-            $(type(...))    ->  sizeof type
+            $(type ...)    ->  sizeof type
         
         Special 'valueof' Variables
             __FILESIZE__    ->  the size in bytes of the file being processed
