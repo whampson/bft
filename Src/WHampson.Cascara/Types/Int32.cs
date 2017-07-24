@@ -86,11 +86,10 @@ namespace WHampson.Cascara.Types
 
         public static bool TryParse(string valStr, out Int32 val)
         {
-            long v;
             bool success;
-            if (success = NumberUtils.TryParseInteger(valStr, out v))
+            if (success = int.TryParse(valStr, out int v))
             {
-                val = (Int32)v;
+                val = v;
             }
 
             return success;
