@@ -33,10 +33,10 @@ namespace WHampson.Cascara.Types
     /// 'Cas' perfix added to avoid collision with <see cref="System.Int32"/>.
     /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct CasInt32 : ICascaraType,
+    public struct CasInt32 : ICascaraType,
         IComparable, IComparable<CasInt32>, IEquatable<CasInt32>
     {
-        const int Size = 4;
+        private const int Size = 4;
 
         private int m_value;
 
@@ -105,6 +105,11 @@ namespace WHampson.Cascara.Types
         public override int GetHashCode()
         {
             return m_value;
+        }
+
+        public override string ToString()
+        {
+            return m_value.ToString();
         }
 
         public static implicit operator CasInt32(int value)
