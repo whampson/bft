@@ -28,13 +28,39 @@ using System.Xml.Linq;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Contains information about types used during the processing of a template.
+    /// </summary>
     internal sealed class TypeInfo
     {
+        /// <summary>
+        /// Creates a <see cref="TypeInfo"/> object representing a primitive
+        /// data type that is equivalent to the provided .NET <see cref="Type"/>.
+        /// </summary>
+        /// <param name="t">
+        /// The .NET type that this primitive represents.
+        /// </param>
+        /// <returns>
+        /// The newly-created <see cref="TypeInfo"/> object.
+        /// </returns>
         public static TypeInfo CreatePrimitive(Type t)
         {
             return new TypeInfo(t, new List<XElement>(), Marshal.SizeOf(t));
         }
 
+        /// <summary>
+        /// Creates a new <see cref="TypeInfo"/> object that represents a
+        /// composite data type.
+        /// </summary>
+        /// <param name="members">
+        /// The <see cref="XElement"/>s that describe the composite type.
+        /// </param>
+        /// <param name="size">
+        /// The size in bytes of the data type.
+        /// </param>
+        /// <returns>
+        /// The newly-created <see cref="TypeInfo"/> object.
+        /// </returns>
         public static TypeInfo CreateStruct(IEnumerable<XElement> members, int size) 
         {
             if (members == null)
@@ -57,16 +83,25 @@ namespace WHampson.Cascara
             Size = size;
         }
 
+        /// <summary>
+        /// Gets the .NET <see cref="Type"/> represented.
+        /// </summary>
         public Type Type
         {
             get;
         }
 
+        /// <summary>
+        /// Gets the collection of <see cref="XElement"/>s that define this type.
+        /// </summary>
         public IEnumerable<XElement> Members
         {
             get;
         }
 
+        /// <summary>
+        /// Gets the size in bytes of the data represented by this type.
+        /// </summary>
         public int Size
         {
             get;

@@ -28,25 +28,45 @@ using System.Xml.Linq;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// The exception that is thrown for errors that occur during template
+    /// processing.
+    /// </summary>
     public class TemplateException : Exception
     {
+        /// <summary>
+        /// Creates a new instance of the <see cref="TemplateException"/> class.
+        /// </summary>
         public TemplateException()
             : base()
         {
         }
 
+        /// <summary>
+        /// Creates a new instance of the <see cref="TemplateException"/> class
+        /// with the specified error message.
+        /// <param name="message">
+        /// A message associated with the error that caused the exception.
+        /// </param>
+        /// </summary>
         public TemplateException(string message)
             : base(message)
         {
         }
 
+        /// <summary>
+        /// Creates a new instance of the <see cref="TemplateException"/> class
+        /// with the specified error message and exception that caused this
+        /// exception.
+        /// <param name="message">
+        /// A message associated with the error that caused the exception.
+        /// </param>
+        /// <param name="innerException">
+        /// The exception that caused this exception to be thrown.
+        /// </param>
+        /// </summary>
         public TemplateException(string message, Exception innerException)
             : base(message, innerException)
-        {
-        }
-
-        protected TemplateException(SerializationInfo info, StreamingContext context)
-            : base(info, context)
         {
         }
 
