@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
-<bft>
+<cascaraBinaryTemplate>
     <!--
         Operators
             ${...}          ->  'valueof' operator
@@ -37,4 +37,4 @@
     <echo message="${zArr[2].neg}"/>
     <echo message="${zArr[3].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[3].neg}"/>
-</bft>
+</cascaraBinaryTemplate>

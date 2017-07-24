@@ -40,7 +40,7 @@ namespace WHampson.Cascara
 
 
         // Root element
-        public const string BftRoot = "bft";
+        public const string BftRoot = "cascaraBinaryTemplate";
 
         // Data types
         public const string Bool = "bool";
