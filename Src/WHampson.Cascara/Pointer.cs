@@ -1,16 +1,16 @@
 ﻿#region License
 /* Copyright (c) 2017 Wes Hampson
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -41,7 +41,7 @@ namespace WHampson.Cascara
         /// to <see cref="IntPtr"/>.
         /// </summary>
         /// <param name="p">
-        /// The <see cref="Pointer{T}"/> to convert to <see cref="IntPtr"/>. 
+        /// The <see cref="Pointer{T}"/> to convert to <see cref="IntPtr"/>.
         /// </param>
         public static implicit operator IntPtr(Pointer<T> p)
         {
@@ -53,7 +53,7 @@ namespace WHampson.Cascara
         /// to <see cref="Pointer{T}"/>.
         /// </summary>
         /// <param name="p">
-        /// The <see cref="IntPtr"/> to convert to <see cref="Pointer{T}"/>. 
+        /// The <see cref="IntPtr"/> to convert to <see cref="Pointer{T}"/>.
         /// </param>
         public static implicit operator Pointer<T>(IntPtr p)
         {
@@ -100,7 +100,7 @@ namespace WHampson.Cascara
                     Types.Int32* pI32 = (Types.Int32*) addr;
                     inst = *pI32;
                     break;
-                
+
                 default:
                     // Should never happen as long as I remember
                     // to list all types ;)
