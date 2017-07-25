@@ -27,25 +27,22 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// 
+    /// A 32-bit signed integer.
     /// </summary>
-    /// <remarks>
-    /// 'Cas' perfix added to avoid collision with <see cref="System.Int32"/>.
-    /// </remarks>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CasInt32 : ICascaraType,
-        IComparable, IComparable<CasInt32>, IEquatable<CasInt32>
+    public struct CascaraInt32 : ICascaraType,
+        IComparable, IComparable<CascaraInt32>, IEquatable<CascaraInt32>
     {
         private const int Size = 4;
 
         private int m_value;
 
-        private CasInt32(int value)
+        private CascaraInt32(int value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CasInt32 other)
+        public int CompareTo(CascaraInt32 other)
         {
             if (m_value < other.m_value)
             {
@@ -59,7 +56,7 @@ namespace WHampson.Cascara.Types
             return 0;
         }
 
-        public bool Equals(CasInt32 other)
+        public bool Equals(CascaraInt32 other)
         {
             return m_value == other.m_value;
         }
@@ -71,7 +68,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CasInt32))
+            if (!(obj is CascaraInt32))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -79,7 +76,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CasInt32) obj);
+            return CompareTo((CascaraInt32) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -94,12 +91,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CasInt32))
+            if (!(obj is CascaraInt32))
             {
                 return false;
             }
 
-            return Equals((CasInt32) obj);
+            return Equals((CascaraInt32) obj);
         }
 
         public override int GetHashCode()
@@ -112,12 +109,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CasInt32(int value)
+        public static implicit operator CascaraInt32(int value)
         {
-            return new CasInt32(value);
+            return new CascaraInt32(value);
         }
 
-        public static explicit operator int(CasInt32 value)
+        public static explicit operator int(CascaraInt32 value)
         {
             return value.m_value;
         }

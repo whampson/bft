@@ -26,15 +26,18 @@ using System.Runtime.InteropServices;
 
 namespace WHampson.Cascara.Types
 {
+    /// <summary>
+    /// A 32-bit true/false value.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CasBool32 : ICascaraType,
-        IComparable, IComparable<CasBool32>, IEquatable<CasBool32>
+    public struct CascaraBool32 : ICascaraType,
+        IComparable, IComparable<CascaraBool32>, IEquatable<CascaraBool32>
     {
         private const int Size = 4;
 
-        private CasInt32 m_value;
+        private CascaraInt32 m_value;
 
-        private CasBool32(bool value)
+        private CascaraBool32(bool value)
         {
             m_value = (value) ? 1 : 0;
         }
@@ -44,7 +47,7 @@ namespace WHampson.Cascara.Types
             get { return (int) m_value != 0; }
         }
 
-        public int CompareTo(CasBool32 other)
+        public int CompareTo(CascaraBool32 other)
         {
             if (BoolValue == other.BoolValue)
             {
@@ -58,7 +61,7 @@ namespace WHampson.Cascara.Types
             return 1;
         }
 
-        public bool Equals(CasBool32 other)
+        public bool Equals(CascaraBool32 other)
         {
             return BoolValue == other.BoolValue;
         }
@@ -70,7 +73,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CasBool32))
+            if (!(obj is CascaraBool32))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -78,7 +81,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CasBool32) obj);
+            return CompareTo((CascaraBool32) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -93,12 +96,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CasBool32))
+            if (!(obj is CascaraBool32))
             {
                 return false;
             }
 
-            return Equals((CasBool32) obj);
+            return Equals((CascaraBool32) obj);
         }
 
         public override int GetHashCode()
@@ -111,12 +114,12 @@ namespace WHampson.Cascara.Types
             return BoolValue.ToString();
         }
 
-        public static implicit operator CasBool32(bool value)
+        public static implicit operator CascaraBool32(bool value)
         {
-            return new CasBool32(value);
+            return new CascaraBool32(value);
         }
 
-        public static explicit operator bool(CasBool32 value)
+        public static explicit operator bool(CascaraBool32 value)
         {
             return value.BoolValue;
         }

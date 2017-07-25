@@ -26,20 +26,23 @@ using System.Runtime.InteropServices;
 
 namespace WHampson.Cascara.Types
 {
+    /// <summary>
+    /// An 8-bit signed integer.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CasInt8 : ICascaraType,
-        IComparable, IComparable<CasInt8>, IEquatable<CasInt8>
+    public struct CascaraInt8 : ICascaraType,
+        IComparable, IComparable<CascaraInt8>, IEquatable<CascaraInt8>
     {
         private const int Size = 1;
 
         private sbyte m_value;
 
-        private CasInt8(sbyte value)
+        private CascaraInt8(sbyte value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CasInt8 other)
+        public int CompareTo(CascaraInt8 other)
         {
             if (m_value < other.m_value)
             {
@@ -53,7 +56,7 @@ namespace WHampson.Cascara.Types
             return 0;
         }
 
-        public bool Equals(CasInt8 other)
+        public bool Equals(CascaraInt8 other)
         {
             return m_value == other.m_value;
         }
@@ -65,7 +68,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CasInt8))
+            if (!(obj is CascaraInt8))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -73,7 +76,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CasInt8) obj);
+            return CompareTo((CascaraInt8) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -101,12 +104,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CasInt8(sbyte value)
+        public static implicit operator CascaraInt8(sbyte value)
         {
-            return new CasInt8(value);
+            return new CascaraInt8(value);
         }
 
-        public static explicit operator sbyte(CasInt8 value)
+        public static explicit operator sbyte(CascaraInt8 value)
         {
             return value.m_value;
         }
