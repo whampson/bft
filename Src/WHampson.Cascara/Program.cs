@@ -48,8 +48,14 @@ namespace WHampson.Cascara
 
             //Marshal.FreeHGlobal(ptr);
 
-            TemplateFile tf = new TemplateFile("../../../../Test/DynamicArray.xml");
-            tf.Process<object>("../../../../Test/DynamicArray.bin");
+            //TemplateFile tf = new TemplateFile("../../../../Test/DynamicArray.xml");
+            //tf.Process<object>("../../../../Test/DynamicArray.bin");
+
+            using (BinaryFile bFile = BinaryFile.Open("../../../../Test/DynamicArray.bin"))
+            {
+                Console.WriteLine(bFile.Length);
+                bFile.ApplyTemplate("../../../../Test/DynamicArray.xml");
+            }
 
             // Pause
             Console.ReadKey();
