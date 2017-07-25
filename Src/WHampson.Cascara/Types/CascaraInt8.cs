@@ -96,7 +96,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return ((int) m_value ^ ((int) m_value << 8));
+            return ((byte) m_value) | (m_value << 8);
         }
 
         public override string ToString()

@@ -101,7 +101,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return m_value;
+            return ((ushort) m_value) | (m_value << 16);
         }
 
         public override string ToString()
