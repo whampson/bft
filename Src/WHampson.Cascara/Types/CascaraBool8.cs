@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 16-bit true/false value.
+    /// An 8-bit true/false value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct CascaraBool8 : ICascaraType,
