@@ -44,18 +44,7 @@ namespace WHampson.Cascara.Types
 
         public int CompareTo(CascaraInt32 other)
         {
-            // Need to use compare because subtraction
-            // will wrap-around for large negative numbers
-            if (m_value < other.m_value)
-            {
-                return -1;
-            }
-            else if (m_value > other.m_value)
-            {
-                return 1;
-            }
-
-            return 0;
+            return m_value.CompareTo(other.m_value);
         }
 
         public bool Equals(CascaraInt32 other)
@@ -103,7 +92,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return m_value;
+            return m_value.GetHashCode();
         }
 
         public override string ToString()
