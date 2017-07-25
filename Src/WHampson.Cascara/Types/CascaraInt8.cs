@@ -82,7 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            return base.Equals(obj);
+            if (!(obj is CascaraInt8))
+            {
+                return false;
+            }
+
+            return Equals((CascaraInt8) obj);
         }
 
         public override int GetHashCode()
