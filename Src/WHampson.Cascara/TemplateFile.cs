@@ -1,67 +1,67 @@
-﻿#region License
-/* Copyright (c) 2017 Wes Hampson
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-#endregion
+﻿//#region License
+///* Copyright (c) 2017 Wes Hampson
+// *
+// * Permission is hereby granted, free of charge, to any person obtaining a copy
+// * of this software and associated documentation files (the "Software"), to deal
+// * in the Software without restriction, including without limitation the rights
+// * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// * copies of the Software, and to permit persons to whom the Software is
+// * furnished to do so, subject to the following conditions:
+// *
+// * The above copyright notice and this permission notice shall be included in all
+// * copies or substantial portions of the Software.
+// *
+// * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// * SOFTWARE.
+// */
+//#endregion
 
-using System.Xml;
-using System.Xml.Linq;
+//using System.Xml;
+//using System.Xml.Linq;
 
-namespace WHampson.Cascara
-{
-    public sealed class TemplateFile
-    {
-        private static XDocument OpenXmlFile(string path)
-        {
-            try
-            {
-                return XDocument.Load(path, LoadOptions.SetLineInfo);
-            }
-            catch (XmlException e)
-            {
-                throw new TemplateException(e.Message, e);
-            }
-        }
+//namespace WHampson.Cascara
+//{
+//    public sealed class templatefile
+//    {
+//        private static xdocument openxmlfile(string path)
+//        {
+//            try
+//            {
+//                return xdocument.load(path, loadoptions.setlineinfo);
+//            }
+//            catch (xmlexception e)
+//            {
+//                throw new templateexception(e.message, e);
+//            }
+//        }
 
-        private XDocument doc;
+//        private xdocument doc;
 
-        public TemplateFile(string path)
-        {
-            doc = OpenXmlFile(path);
-        }
+//        public templatefile(string path)
+//        {
+//            doc = openxmlfile(path);
+//        }
 
-        public T Process<T>(string filePath) where T : new()
-        {
-            TemplateProcessor processor = new TemplateProcessor(doc);
+//        public t process<t>(string filepath) where t : new()
+//        {
+//            templateprocessor processor = new templateprocessor(doc);
 
-            return processor.Process<T>(filePath);
-        }
+//            return processor.process<t>(filepath);
+//        }
 
-        public string this[string key]
-        {
-            // Get template metadata (Root element attribute values)
-            get
-            {
-                XAttribute attr = doc.Root.Attribute(key);
-                return (attr != null) ? attr.Value : null;
-            }
-        }
-    }
-}
+//        public string this[string key]
+//        {
+//            // get template metadata (root element attribute values)
+//            get
+//            {
+//                xattribute attr = doc.root.attribute(key);
+//                return (attr != null) ? attr.value : null;
+//            }
+//        }
+//    }
+//}
