@@ -22,10 +22,6 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using System.IO;
 
@@ -60,12 +56,16 @@ namespace WHampson.Cascara
         private IntPtr dataPtr;
         private int dataLen;
 
+        private SymbolTable symTabl;
+
         private bool hasBeenDisposed;
 
         private BinaryFile(IntPtr addr, int len)
         {
             dataPtr = addr;
             dataLen = len;
+            symTabl = new SymbolTable();
+
             hasBeenDisposed = false;
         }
 
@@ -80,6 +80,21 @@ namespace WHampson.Cascara
 
                 return dataLen;
             }
+        }
+
+        // TODO: Add function to get value by name
+        // TODO: Add function to get pointer to value by name
+        // TODO: Add function to get list (or dictionary) of all values
+        // TODO: Add function to get list (or dictionary) of all pointers to values
+        // TODO: Add function to extract all variables by setting properties of a provided object
+        // TODO: Add function to extract all pointers to variables by setting properties of a provided object
+
+        public void ApplyTemplate(string templateFilePath)
+        {
+            TemplateProcessor proc = new TemplateProcessor(templateFilePath);
+            symTabl = proc.Process(dataPtr, dataLen);
+
+            Console.WriteLine(symTabl);
         }
 
         public void Close()
