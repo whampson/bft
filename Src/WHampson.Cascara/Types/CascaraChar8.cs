@@ -101,7 +101,7 @@ namespace WHampson.Cascara.Types
 
         public override string ToString()
         {
-            return m_value.ToString();
+            return ((char) m_value).ToString();
         }
 
         public static implicit operator CascaraChar8(char value)
