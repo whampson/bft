@@ -44,6 +44,8 @@ namespace WHampson.Cascara.Types
 
         public int CompareTo(CascaraInt32 other)
         {
+            // Need to use compare because subtraction
+            // will wrap-around for large negative numbers
             if (m_value < other.m_value)
             {
                 return -1;

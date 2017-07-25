@@ -44,16 +44,7 @@ namespace WHampson.Cascara.Types
 
         public int CompareTo(CascaraChar16 other)
         {
-            if (m_value < other.m_value)
-            {
-                return -1;
-            }
-            else if (m_value > other.m_value)
-            {
-                return 1;
-            }
-
-            return 0;
+            return m_value - other.m_value;
         }
 
         public bool Equals(CascaraChar16 other)
