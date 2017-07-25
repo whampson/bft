@@ -680,20 +680,6 @@ namespace WHampson.Cascara
 
             string varName = m.Groups[1].Value;
 
-            //// Evaluate expression
-            //if (!string.IsNullOrWhiteSpace(expr))
-            //{
-            //    expr = ResolveVariables(expr);
-            //    try
-            //    {
-            //        return NumberUtils.EvaluateExpression(expr) + "";
-            //    }
-            //    catch (FormatException ex)
-            //    {
-            //        throw new TemplateException(ex.Message, ex);
-            //    }
-            //}
-
             // Handle special variables
             switch (varName)
             {
@@ -822,9 +808,32 @@ namespace WHampson.Cascara
 
         private void BuildTypeMap()
         {
-            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(Float));
-            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(Int8));
-            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(Types.Int32));
+            typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(CascaraBool8));
+            typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(CascaraBool8));
+            typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(CascaraBool16));
+            typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(CascaraBool32));
+            typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(CascaraBool64));
+            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(CascaraUInt8));
+            typeMap[Keywords.Char] = TypeInfo.CreatePrimitive(typeof(CascaraChar8));
+            typeMap[Keywords.Char8] = TypeInfo.CreatePrimitive(typeof(CascaraChar8));
+            typeMap[Keywords.Char16] = TypeInfo.CreatePrimitive(typeof(CascaraChar16));
+            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(CascaraDouble));
+            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(CascaraFloat));
+            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(CascaraInt32));
+            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(CascaraInt8));
+            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(CascaraInt16));
+            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(CascaraInt32));
+            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(CascaraInt64));
+            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(CascaraInt64));
+            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(CascaraInt16));
+            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(CascaraFloat));
+            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(CascaraUInt32));
+            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(CascaraUInt8));
+            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(CascaraUInt16));
+            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(CascaraUInt32));
+            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(CascaraUInt64));
+            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(CascaraUInt64));
+            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(CascaraUInt16));
         }
 
         private void BuildDirectiveActionMap()

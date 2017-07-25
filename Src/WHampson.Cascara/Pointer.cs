@@ -34,7 +34,7 @@ namespace WHampson.Cascara
     /// The type describing the data being pointed to.
     /// </typeparam>
     public class Pointer<T>
-        where T : struct, IPrimitiveType
+        where T : struct, ICascaraType
     {
         /// <summary>
         /// Handles implicit conversion from <see cref="Pointer{T}"/>
@@ -79,35 +79,80 @@ namespace WHampson.Cascara
             }
 
             Type t = typeof(T);
-            IPrimitiveType inst = null;
+            object o;
 
-            // This likely isn't the safest way to do this,
-            // but it'll do for what we need it to.
-            switch (t.Name)
+            if (t == typeof(CascaraBool8))
             {
-                // TODO: DON'T FOEGET to finish for all defined types
-                case "Float":
-                    Float* pF = (Float*) addr;
-                    inst = *pF;
-                    break;
-
-                case "Int8":
-                    Int8* pI8 = (Int8*) addr;
-                    inst = *pI8;
-                    break;
-
-                case "Int32":
-                    Types.Int32* pI32 = (Types.Int32*) addr;
-                    inst = *pI32;
-                    break;
-
-                default:
-                    // Should never happen as long as I remember
-                    // to list all types ;)
-                    throw new InvalidOperationException();
+                o = *(CascaraBool8*) addr;
+            }
+            else if (t == typeof(CascaraBool16))
+            {
+                o = *(CascaraBool16*) addr;
+            }
+            else if (t == typeof(CascaraBool32))
+            {
+                o = *(CascaraBool32*) addr;
+            }
+            else if (t == typeof(CascaraBool64))
+            {
+                o = *(CascaraBool64*) addr;
+            }
+            else if (t == typeof(CascaraChar8))
+            {
+                o = *(CascaraChar8*) addr;
+            }
+            else if (t == typeof(CascaraChar16))
+            {
+                o = *(CascaraChar16*) addr;
+            }
+            else if (t == typeof(CascaraDouble))
+            {
+                o = *(CascaraDouble*) addr;
+            }
+            else if (t == typeof(CascaraFloat))
+            {
+                o = *(CascaraFloat*) addr;
+            }
+            else if (t == typeof(CascaraInt8))
+            {
+                o = *(CascaraInt8*) addr;
+            }
+            else if (t == typeof(CascaraInt16))
+            {
+                o = *(CascaraInt16*) addr;
+            }
+            else if (t == typeof(CascaraInt32))
+            {
+                o = *(CascaraInt32*) addr;
+            }
+            else if (t == typeof(CascaraInt64))
+            {
+                o = *(CascaraInt64*) addr;
+            }
+            else if (t == typeof(CascaraUInt8))
+            {
+                o = *(CascaraUInt8*) addr;
+            }
+            else if (t == typeof(CascaraUInt16))
+            {
+                o = *(CascaraUInt16*) addr;
+            }
+            else if (t == typeof(CascaraUInt32))
+            {
+                o = *(CascaraUInt32*) addr;
+            }
+            else if (t == typeof(CascaraUInt64))
+            {
+                o = *(CascaraUInt64*) addr;
+            }
+            else
+            {
+                // Should never happen as long as I remember
+                // to list all types ;)
+                throw new InvalidOperationException("You forgot to list this type!");
             }
 
-            return (T) inst;
+            return (T) o;
         }
 
         /// <summary>
