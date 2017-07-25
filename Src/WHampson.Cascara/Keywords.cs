@@ -66,6 +66,7 @@ namespace WHampson.Cascara
         public const string Long = "long";
         //public const string QWord = "qword";
         public const string Short = "short";
+        public const string Single = "single";
         public const string Struct = "struct";
         public const string UInt = "uint";
         public const string UInt8 = "uint8";
