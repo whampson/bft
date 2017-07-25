@@ -62,6 +62,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryFile.cs" />
     <Compile Include="Keywords.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="SymbolTable.cs" />
