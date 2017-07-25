@@ -28,6 +28,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using WHampson.Cascara.Types;
 
@@ -71,6 +72,11 @@ namespace WHampson.Cascara
 
         private TextWriter echoWriter;
 
+        public TemplateProcessor(string templateFilePath)
+            : this(OpenXmlFile(templateFilePath))
+        {
+        }
+
         public TemplateProcessor(XDocument doc)
         {
             templateDoc = doc ?? throw new ArgumentNullException("doc");
@@ -104,15 +110,11 @@ namespace WHampson.Cascara
             echoWriter = w ?? throw new ArgumentNullException("w");
         }
 
-        public T Process<T>(string filePath) where T : new()
+        public SymbolTable Process(IntPtr dataPtr, int dataLen)
         {
-            Process(filePath, out T obj);
+            this.dataPtr = dataPtr;
+            this.dataLen = dataLen;
 
-            return obj;
-        }
-
-        public int Process<T>(string filePath, out T obj) where T : new()
-        {
             isEvalutingTypedef = false;
             isConductingDryRun = false;
             dryRunRecursionDepth = 0;
@@ -128,28 +130,61 @@ namespace WHampson.Cascara
                 throw new TemplateException("Empty binary file template.");
             }
 
-            // Load binary file
-            byte[] data = LoadFile(filePath);
-            dataLen = data.Length;
-
-            // Copy file data to unmanaged memory
-            dataPtr = Marshal.AllocHGlobal(data.Length);
-            Marshal.Copy(data, 0, dataPtr, data.Length);
-
             // Process the template with respect to the file data
             dataOffset = 0;
             int bytesProcessed = ProcessStructMembers(templateDoc.Root);
 
-            // Free unmanaged memory
-            // (This will change in the future depending on how we want to manipulate the file data)
-            //Marshal.FreeHGlobal(dataPtr);
-
             Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
-            //Console.WriteLine(symbolTable);
 
-            obj = new T();
-            return bytesProcessed;
+            return symbolTable;
         }
+
+        //public T Process<T>(string filePath) where T : new()
+        //{
+        //    Process(filePath, out T obj);
+
+        //    return obj;
+        //}
+
+        //public int Process<T>(string filePath, out T obj) where T : new()
+        //{
+        //    isEvalutingTypedef = false;
+        //    isConductingDryRun = false;
+        //    dryRunRecursionDepth = 0;
+
+        //    // Validate root element
+        //    if (templateDoc.Root.Name.LocalName != Keywords.BftRoot)
+        //    {
+        //        string fmt = "Template must have a root element named '{0}'.";
+        //        throw TemplateException.Create(templateDoc.Root, fmt, Keywords.BftRoot);
+        //    }
+        //    if (!HasChildren(templateDoc.Root))
+        //    {
+        //        throw new TemplateException("Empty binary file template.");
+        //    }
+
+        //    // Load binary file
+        //    byte[] data = LoadFile(filePath);
+        //    dataLen = data.Length;
+
+        //    // Copy file data to unmanaged memory
+        //    dataPtr = Marshal.AllocHGlobal(data.Length);
+        //    Marshal.Copy(data, 0, dataPtr, data.Length);
+
+        //    // Process the template with respect to the file data
+        //    dataOffset = 0;
+        //    int bytesProcessed = ProcessStructMembers(templateDoc.Root);
+
+        //    // Free unmanaged memory
+        //    // (This will change in the future depending on how we want to manipulate the file data)
+        //    //Marshal.FreeHGlobal(dataPtr);
+
+        //    Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
+        //    //Console.WriteLine(symbolTable);
+
+        //    obj = new T();
+        //    return bytesProcessed;
+        //}
 
         private int ProcessElement(XElement elem)
         {
@@ -874,6 +909,18 @@ namespace WHampson.Cascara
             }
 
             return data;
+        }
+
+        private static XDocument OpenXmlFile(string path)
+        {
+            try
+            {
+                return XDocument.Load(path, LoadOptions.SetLineInfo);
+            }
+            catch (XmlException e)
+            {
+                throw new TemplateException(e.Message, e);
+            }
         }
 
         /// <summary>
