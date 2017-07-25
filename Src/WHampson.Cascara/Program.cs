@@ -22,57 +22,34 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
 using WHampson.Cascara.Types;
-
-using Int32 = WHampson.Cascara.Types.Int32;
 
 namespace WHampson.Cascara
 {
-    public class Vect3D
-    {
-        public Pointer<Float> X { get; set; }
-        public Pointer<Float> Y { get; set; }
-        public Pointer<Float> Z { get; set; }
-
-        public override string ToString()
-        {
-            return "{ " + string.Format("X: {0}, Y: {1}, Z: {2}", X[0], Y[0], Z[0]) + " }";
-        }
-    }
-
-    public class PlayerInfo
-    {
-        public Vect3D Location { get; set; }
-        public Pointer<Int32> Money { get; set; }
-        public Pointer<Int32> NumKills { get; set; }
-        public Pointer<Int8> Health { get; set; }
-        public Pointer<Int8> Armor { get; set; }
-        public Vect3D Location2 { get; set; }
-    }
-
-    public class TestClass
-    {
-        public PlayerInfo PLYR { get; set; }
-    }
-
     class Program
     {
         static void Main(string[] args)
         {
-            // Read template and map to object instance
-            TemplateFile template = new TemplateFile("../../../../Test/DynamicArray.xml");
-            TestClass test = template.Process<TestClass>("../../../../Test/DynamicArray.bin");
-            //Console.WriteLine(test.PLYR.Location);
-            //Console.WriteLine(test.PLYR.Money.Value);
-            //Console.WriteLine(test.PLYR.NumKills.Value);
-            //Console.WriteLine(test.PLYR.Health.Value);
-            //Console.WriteLine(test.PLYR.Armor.Value);
-            //Console.WriteLine(test.PLYR.Location2);
+            //IntPtr ptr = Marshal.AllocHGlobal(64);
+            //Marshal.Copy(new byte[] { 0x00, 0x00, 0xFF, 0x7F }, 0, ptr, 4);
+
+            //unsafe
+            //{
+            //    CascaraBool8* b8 = (CascaraBool8*) ptr;
+            //    CascaraBool16* b16 = (CascaraBool16*) ptr + 2;
+            //    CascaraBool32* b32 = (CascaraBool32*) ptr;
+
+            //    Console.WriteLine(*b8);
+            //    Console.WriteLine(*b16);
+            //    Console.WriteLine(*b32);
+            //}
+
+            //Marshal.FreeHGlobal(ptr);
+
+            TemplateFile tf = new TemplateFile("../../../../Test/DynamicArray.xml");
+            tf.Process<object>("../../../../Test/DynamicArray.bin");
 
             // Pause
             Console.ReadKey();
