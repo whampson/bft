@@ -87,7 +87,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return m_value | (m_value << 8);
+            return m_value | (m_value << 16);
         }
 
         public override string ToString()
