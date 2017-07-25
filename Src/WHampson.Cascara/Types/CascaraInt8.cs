@@ -72,7 +72,7 @@ namespace WHampson.Cascara.Types
 
         byte[] ICascaraType.GetBytes()
         {
-            return BitConverter.GetBytes(m_value);
+            return new byte[] { (byte) m_value };
         }
 
         int ICascaraType.GetSize()
