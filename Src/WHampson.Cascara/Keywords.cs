@@ -57,7 +57,6 @@ namespace WHampson.Cascara
         public const string Double = "double";
         //public const string DWord = "dword";
         public const string Float = "float";
-        public const string Half = "half";
         public const string Int = "int";
         public const string Int8 = "int8";
         public const string Int16 = "int16";
@@ -121,7 +120,6 @@ namespace WHampson.Cascara
             Char16,
             Double,
             Float,
-            Half,
             Int,
             Int8,
             Int16,
