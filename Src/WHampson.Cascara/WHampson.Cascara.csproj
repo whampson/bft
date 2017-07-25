@@ -68,7 +68,11 @@
     <Compile Include="SymbolInfo.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="TypeInfo.cs" />
+    <Compile Include="Types\CasBool32.cs" />
+    <Compile Include="Types\CasInt32.cs" />
+    <Compile Include="Types\CasInt8.cs" />
     <Compile Include="Types\Float.cs" />
+    <Compile Include="Types\ICascaraType.cs" />
     <Compile Include="Types\Int32.cs" />
     <Compile Include="Types\Int8.cs" />
     <Compile Include="Types\IPrimitiveType.cs" />
