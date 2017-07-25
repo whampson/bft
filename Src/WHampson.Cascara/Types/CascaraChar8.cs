@@ -44,12 +44,12 @@ namespace WHampson.Cascara.Types
 
         public int CompareTo(CascaraChar8 other)
         {
-            return m_value - other.m_value;
+            return ((char) m_value).CompareTo((char) other.m_value);
         }
 
         public bool Equals(CascaraChar8 other)
         {
-            return m_value == other.m_value;
+            return ((char) m_value) == ((char) other.m_value);
         }
 
         int IComparable.CompareTo(object obj)
@@ -92,7 +92,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return m_value | (m_value << 8);
+            return ((char) m_value).GetHashCode();
         }
 
         public override string ToString()
