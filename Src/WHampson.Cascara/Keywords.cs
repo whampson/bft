@@ -50,8 +50,8 @@ namespace WHampson.Cascara
         public const string Bool64 = "bool64";
         public const string Byte = "byte";
         public const string Char = "char";
-        //public const string Char8 = "char8";
-        //public const string Char16dentifier = "char16";
+        public const string Char8 = "char8";
+        public const string Char16 = "char16";
         //public const string Char32 = "char32";
         //public const string Char64 = "char64";
         public const string Double = "double";
