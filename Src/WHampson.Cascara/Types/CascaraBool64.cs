@@ -53,16 +53,7 @@ namespace WHampson.Cascara.Types
 
         public int CompareTo(CascaraBool64 other)
         {
-            if (BoolValue == other.BoolValue)
-            {
-                return 0;
-            }
-            else if (BoolValue == false)
-            {
-                return -1;
-            }
-
-            return 1;
+            return BoolValue.CompareTo(other.BoolValue);
         }
 
         public bool Equals(CascaraBool64 other)
@@ -110,7 +101,7 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return (BoolValue) ? 1 : 0;
+            return BoolValue.GetHashCode();
         }
 
         public override string ToString()
