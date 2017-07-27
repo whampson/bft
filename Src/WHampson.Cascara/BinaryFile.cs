@@ -24,6 +24,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.IO;
+using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
@@ -82,12 +83,99 @@ namespace WHampson.Cascara
             }
         }
 
-        // TODO: Add function to get value by name
-        // TODO: Add function to get pointer to value by name
-        // TODO: Add function to get list (or dictionary) of all values
-        // TODO: Add function to get list (or dictionary) of all pointers to values
-        // TODO: Add function to extract all variables by setting properties of a provided object
-        // TODO: Add function to extract all pointers to variables by setting properties of a provided object
+        public bool Exists(string name)
+        {
+            return symTabl.GetEntry(name) != null;
+        }
+
+        public bool IsPrimitive(string name)
+        {
+            SymbolInfo info = symTabl.GetEntry(name);
+
+            return info != null && info.TypeInfo.Type != typeof(BftStruct);
+        }
+
+        public Pointer GetPointer(int offset)
+        {
+            if (offset < 0 || offset > dataLen - 1)
+            {
+                throw new ArgumentOutOfRangeException("offset");
+            }
+
+            return new Pointer(dataPtr + offset);
+        }
+
+        public Pointer<T> GetPointer<T>(int offset)
+            where T : struct, ICascaraType
+        {
+            if (offset < 0 || offset > dataLen - 1)
+            {
+                throw new ArgumentOutOfRangeException("offset");
+            }
+
+            return new Pointer<T>(dataPtr + offset);
+        }
+
+        public Pointer GetPointer(string name)
+        {
+            SymbolInfo info = symTabl.GetEntry(name);
+            if (info == null)
+            {
+                string fmt = "Symbol not found '{0}'";
+                throw new ArgumentException(string.Format(fmt, name));
+            }
+
+            return new Pointer(dataPtr + info.Offset);
+        }
+
+        public Pointer<T> GetPointer<T>(string name)
+            where T : struct, ICascaraType
+        {
+            SymbolInfo info = symTabl.GetEntry(name);
+            if (info == null)
+            {
+                string fmt = "Symbol not found '{0}'";
+                throw new ArgumentException(string.Format(fmt, name));
+            }
+
+            if (info.TypeInfo.Type == typeof(BftStruct))
+            {
+                string fmt = "Cannot get a pointer to struct '{0}' using type '{1}'.";
+                throw new NotSupportedException(string.Format(fmt, name, typeof(T).Name));
+            }
+
+            return new Pointer<T>(dataPtr + info.Offset);
+        }
+
+        public T GetValue<T>(int offset)
+            where T : struct, ICascaraType
+        {
+            Pointer<T> pValue = GetPointer<T>(offset);
+
+            return pValue.Value;
+        }
+
+        public T GetValue<T>(string name)
+            where T : struct, ICascaraType
+        {
+            Pointer<T> pValue = GetPointer<T>(name);
+
+            return pValue.Value;
+        }
+
+        public void SetValue<T>(int offset, T value)
+            where T : struct, ICascaraType
+        {
+            Pointer<T> pValue = GetPointer<T>(offset);
+            pValue.Value = value;
+        }
+
+        public void SetValue<T>(string name, T value)
+            where T : struct, ICascaraType
+        {
+            Pointer<T> pValue = GetPointer<T>(name);
+            pValue.Value = value;
+        }
 
         public void ApplyTemplate(string templateFilePath)
         {
