@@ -25,13 +25,30 @@ using System;
 
 namespace WHampson.Cascara.Types
 {
+    /// <summary>
+    /// Provides a framework for creating a pointer to an <see cref="ICascaraType"/>.
+    /// </summary>
     public interface ICascaraPointer
     {
+        /// <summary>
+        /// Gets the absolute memory address pointed to.
+        /// </summary>
         IntPtr Address
         {
             get;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this pointer is zero.
+        /// </summary>
+        /// <remarks>
+        /// A pointer that is not <code>null</code> does not necessarily
+        /// mean that is usable.
+        /// </remarks>
+        /// <returns>
+        /// <code>True</code> if the pointer points to zero,
+        /// <code>False</code> othwewise.
+        /// </returns>
         bool IsNull();
     }
 }
