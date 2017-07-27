@@ -27,27 +27,27 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 64-bit, double-precision, IEEE-754 floating-point value.
+    /// A 32-bit signed integer.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraDouble : ICascaraType,
-        IComparable, IComparable<CascaraDouble>, IEquatable<CascaraDouble>
+    public struct Int32 : ICascaraType,
+        IComparable, IComparable<Int32>, IEquatable<Int32>
     {
-        private const int Size = 8;
+        private const int Size = 4;
 
-        private double m_value;
+        private int m_value;
 
-        private CascaraDouble(double value)
+        private Int32(int value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraDouble other)
+        public int CompareTo(Int32 other)
         {
             return m_value.CompareTo(other.m_value);
         }
 
-        public bool Equals(CascaraDouble other)
+        public bool Equals(Int32 other)
         {
             return m_value == other.m_value;
         }
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraDouble))
+            if (!(obj is Int32))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,7 +67,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraDouble) obj);
+            return CompareTo((Int32) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -82,12 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraDouble))
+            if (!(obj is Int32))
             {
                 return false;
             }
 
-            return Equals((CascaraDouble) obj);
+            return Equals((Int32) obj);
         }
 
         public override int GetHashCode()
@@ -100,12 +100,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CascaraDouble(double value)
+        public static implicit operator Int32(int value)
         {
-            return new CascaraDouble(value);
+            return new Int32(value);
         }
 
-        public static explicit operator double(CascaraDouble value)
+        public static explicit operator int(Int32 value)
         {
             return value.m_value;
         }

@@ -27,29 +27,29 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 64-bit signed integer.
+    /// An 8-bit character value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraInt64 : ICascaraType,
-        IComparable, IComparable<CascaraInt64>, IEquatable<CascaraInt64>
+    public struct Char8 : ICascaraType,
+        IComparable, IComparable<Char8>, IEquatable<Char8>
     {
-        private const int Size = 8;
+        private const int Size = 1;
 
-        private long m_value;
+        private byte m_value;
 
-        private CascaraInt64(long value)
+        private Char8(char value)
         {
-            m_value = value;
+            m_value = (byte) value;
         }
 
-        public int CompareTo(CascaraInt64 other)
+        public int CompareTo(Char8 other)
         {
-            return m_value.CompareTo(other.m_value);
+            return ((char) m_value).CompareTo((char) other.m_value);
         }
 
-        public bool Equals(CascaraInt64 other)
+        public bool Equals(Char8 other)
         {
-            return m_value == other.m_value;
+            return ((char) m_value) == ((char) other.m_value);
         }
 
         int IComparable.CompareTo(object obj)
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraInt64))
+            if (!(obj is Char8))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,12 +67,12 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraInt64) obj);
+            return CompareTo((Char8) obj);
         }
 
         byte[] ICascaraType.GetBytes()
         {
-            return BitConverter.GetBytes(m_value);
+            return new byte[] { m_value };
         }
 
         int ICascaraType.GetSize()
@@ -82,32 +82,32 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraInt64))
+            if (!(obj is Char8))
             {
                 return false;
             }
 
-            return Equals((CascaraInt64) obj);
+            return Equals((Char8) obj);
         }
 
         public override int GetHashCode()
         {
-            return m_value.GetHashCode();
+            return ((char) m_value).GetHashCode();
         }
 
         public override string ToString()
         {
-            return m_value.ToString();
+            return ((char) m_value).ToString();
         }
 
-        public static implicit operator CascaraInt64(long value)
+        public static implicit operator Char8(char value)
         {
-            return new CascaraInt64(value);
+            return new Char8(value);
         }
 
-        public static explicit operator long(CascaraInt64 value)
+        public static explicit operator char(Char8 value)
         {
-            return value.m_value;
+            return (char) value.m_value;
         }
     }
 }

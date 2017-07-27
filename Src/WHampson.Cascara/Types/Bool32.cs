@@ -27,29 +27,34 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 16-bit unsigned integer.
+    /// A 32-bit true/false value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraUInt16 : ICascaraType,
-        IComparable, IComparable<CascaraUInt16>, IEquatable<CascaraUInt16>
+    public struct Bool32 : ICascaraType,
+        IComparable, IComparable<Bool32>, IEquatable<Bool32>
     {
-        private const int Size = 2;
+        private const int Size = 4;
 
-        private ushort m_value;
+        private Int32 m_value;
 
-        private CascaraUInt16(ushort value)
+        private Bool32(bool value)
         {
-            m_value = value;
+            m_value = (value) ? 1 : 0;
         }
 
-        public int CompareTo(CascaraUInt16 other)
+        private bool BoolValue
         {
-            return m_value.CompareTo(other.m_value);
+            get { return (int) m_value != 0; }
         }
 
-        public bool Equals(CascaraUInt16 other)
+        public int CompareTo(Bool32 other)
         {
-            return m_value == other.m_value;
+            return BoolValue.CompareTo(other.BoolValue);
+        }
+
+        public bool Equals(Bool32 other)
+        {
+            return BoolValue == other.BoolValue;
         }
 
         int IComparable.CompareTo(object obj)
@@ -59,7 +64,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraUInt16))
+            if (!(obj is Bool32))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,12 +72,12 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraUInt16) obj);
+            return CompareTo((Bool32) obj);
         }
 
         byte[] ICascaraType.GetBytes()
         {
-            return BitConverter.GetBytes(m_value);
+            return ((ICascaraType) m_value).GetBytes();
         }
 
         int ICascaraType.GetSize()
@@ -82,32 +87,32 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraUInt16))
+            if (!(obj is Bool32))
             {
                 return false;
             }
 
-            return Equals((CascaraUInt16) obj);
+            return Equals((Bool32) obj);
         }
 
         public override int GetHashCode()
         {
-            return m_value.GetHashCode();
+            return BoolValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return m_value.ToString();
+            return BoolValue.ToString();
         }
 
-        public static implicit operator CascaraUInt16(ushort value)
+        public static implicit operator Bool32(bool value)
         {
-            return new CascaraUInt16(value);
+            return new Bool32(value);
         }
 
-        public static explicit operator ushort(CascaraUInt16 value)
+        public static explicit operator bool(Bool32 value)
         {
-            return value.m_value;
+            return value.BoolValue;
         }
     }
 }

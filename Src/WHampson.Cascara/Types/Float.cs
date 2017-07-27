@@ -27,27 +27,27 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 32-bit signed integer.
+    /// A 32-bit, single-precision, IEEE-754 floating-point value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraInt32 : ICascaraType,
-        IComparable, IComparable<CascaraInt32>, IEquatable<CascaraInt32>
+    public struct Float : ICascaraType,
+        IComparable, IComparable<Float>, IEquatable<Float>
     {
         private const int Size = 4;
 
-        private int m_value;
+        private float m_value;
 
-        private CascaraInt32(int value)
+        private Float(float value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraInt32 other)
+        public int CompareTo(Float other)
         {
             return m_value.CompareTo(other.m_value);
         }
 
-        public bool Equals(CascaraInt32 other)
+        public bool Equals(Float other)
         {
             return m_value == other.m_value;
         }
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraInt32))
+            if (!(obj is Float))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,7 +67,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraInt32) obj);
+            return CompareTo((Float) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -82,12 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraInt32))
+            if (!(obj is Float))
             {
                 return false;
             }
 
-            return Equals((CascaraInt32) obj);
+            return Equals((Float) obj);
         }
 
         public override int GetHashCode()
@@ -100,12 +100,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CascaraInt32(int value)
+        public static implicit operator Float(float value)
         {
-            return new CascaraInt32(value);
+            return new Float(value);
         }
 
-        public static explicit operator int(CascaraInt32 value)
+        public static explicit operator float(Float value)
         {
             return value.m_value;
         }

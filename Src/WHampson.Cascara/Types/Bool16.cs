@@ -30,14 +30,14 @@ namespace WHampson.Cascara.Types
     /// A 16-bit true/false value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraBool16 : ICascaraType,
-        IComparable, IComparable<CascaraBool16>, IEquatable<CascaraBool16>
+    public struct Bool16 : ICascaraType,
+        IComparable, IComparable<Bool16>, IEquatable<Bool16>
     {
         private const int Size = 2;
 
-        private CascaraInt16 m_value;
+        private Int16 m_value;
 
-        private CascaraBool16(bool value)
+        private Bool16(bool value)
         {
             m_value = (short) ((value) ? 1 : 0);
         }
@@ -47,12 +47,12 @@ namespace WHampson.Cascara.Types
             get { return (int) m_value != 0; }
         }
 
-        public int CompareTo(CascaraBool16 other)
+        public int CompareTo(Bool16 other)
         {
             return BoolValue.CompareTo(other.BoolValue);
         }
 
-        public bool Equals(CascaraBool16 other)
+        public bool Equals(Bool16 other)
         {
             return BoolValue == other.BoolValue;
         }
@@ -64,7 +64,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraBool16))
+            if (!(obj is Bool16))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -72,7 +72,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraBool16) obj);
+            return CompareTo((Bool16) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -87,12 +87,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraBool16))
+            if (!(obj is Bool16))
             {
                 return false;
             }
 
-            return Equals((CascaraBool16) obj);
+            return Equals((Bool16) obj);
         }
 
         public override int GetHashCode()
@@ -105,12 +105,12 @@ namespace WHampson.Cascara.Types
             return BoolValue.ToString();
         }
 
-        public static implicit operator CascaraBool16(bool value)
+        public static implicit operator Bool16(bool value)
         {
-            return new CascaraBool16(value);
+            return new Bool16(value);
         }
 
-        public static explicit operator bool(CascaraBool16 value)
+        public static explicit operator bool(Bool16 value)
         {
             return value.BoolValue;
         }

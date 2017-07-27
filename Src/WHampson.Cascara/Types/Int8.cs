@@ -27,27 +27,27 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 64-bit unsigned integer.
+    /// An 8-bit signed integer.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraUInt64 : ICascaraType,
-        IComparable, IComparable<CascaraUInt64>, IEquatable<CascaraUInt64>
+    public struct Int8 : ICascaraType,
+        IComparable, IComparable<Int8>, IEquatable<Int8>
     {
-        private const int Size = 8;
+        private const int Size = 1;
 
-        private ulong m_value;
+        private sbyte m_value;
 
-        private CascaraUInt64(ulong value)
+        private Int8(sbyte value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraUInt64 other)
+        public int CompareTo(Int8 other)
         {
-            return m_value.CompareTo(other.m_value);
+            return m_value.CompareTo(other);
         }
 
-        public bool Equals(CascaraUInt64 other)
+        public bool Equals(Int8 other)
         {
             return m_value == other.m_value;
         }
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraUInt64))
+            if (!(obj is Int8))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,12 +67,12 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraUInt64) obj);
+            return CompareTo((Int8) obj);
         }
 
         byte[] ICascaraType.GetBytes()
         {
-            return BitConverter.GetBytes(m_value);
+            return new byte[] { (byte) m_value };
         }
 
         int ICascaraType.GetSize()
@@ -82,12 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraUInt64))
+            if (!(obj is Int8))
             {
                 return false;
             }
 
-            return Equals((CascaraUInt64) obj);
+            return Equals((Int8) obj);
         }
 
         public override int GetHashCode()
@@ -100,12 +100,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CascaraUInt64(ulong value)
+        public static implicit operator Int8(sbyte value)
         {
-            return new CascaraUInt64(value);
+            return new Int8(value);
         }
 
-        public static explicit operator ulong(CascaraUInt64 value)
+        public static explicit operator sbyte(Int8 value)
         {
             return value.m_value;
         }

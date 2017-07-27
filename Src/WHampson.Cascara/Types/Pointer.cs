@@ -144,69 +144,69 @@ namespace WHampson.Cascara.Types
             Type t = typeof(T);
             object o;
 
-            if (t == typeof(CascaraBool8))
+            if (t == typeof(Bool8))
             {
-                o = *(CascaraBool8*) addr;
+                o = *(Bool8*) addr;
             }
-            else if (t == typeof(CascaraBool16))
+            else if (t == typeof(Bool16))
             {
-                o = *(CascaraBool16*) addr;
+                o = *(Bool16*) addr;
             }
-            else if (t == typeof(CascaraBool32))
+            else if (t == typeof(Bool32))
             {
-                o = *(CascaraBool32*) addr;
+                o = *(Bool32*) addr;
             }
-            else if (t == typeof(CascaraBool64))
+            else if (t == typeof(Bool64))
             {
-                o = *(CascaraBool64*) addr;
+                o = *(Bool64*) addr;
             }
-            else if (t == typeof(CascaraChar8))
+            else if (t == typeof(Char8))
             {
-                o = *(CascaraChar8*) addr;
+                o = *(Char8*) addr;
             }
-            else if (t == typeof(CascaraChar16))
+            else if (t == typeof(Char16))
             {
-                o = *(CascaraChar16*) addr;
+                o = *(Char16*) addr;
             }
-            else if (t == typeof(CascaraDouble))
+            else if (t == typeof(Double))
             {
-                o = *(CascaraDouble*) addr;
+                o = *(Double*) addr;
             }
-            else if (t == typeof(CascaraFloat))
+            else if (t == typeof(Float))
             {
-                o = *(CascaraFloat*) addr;
+                o = *(Float*) addr;
             }
-            else if (t == typeof(CascaraInt8))
+            else if (t == typeof(Int8))
             {
-                o = *(CascaraInt8*) addr;
+                o = *(Int8*) addr;
             }
-            else if (t == typeof(CascaraInt16))
+            else if (t == typeof(Int16))
             {
-                o = *(CascaraInt16*) addr;
+                o = *(Int16*) addr;
             }
-            else if (t == typeof(CascaraInt32))
+            else if (t == typeof(Int32))
             {
-                o = *(CascaraInt32*) addr;
+                o = *(Int32*) addr;
             }
-            else if (t == typeof(CascaraInt64))
+            else if (t == typeof(Int64))
             {
-                o = *(CascaraInt64*) addr;
+                o = *(Int64*) addr;
             }
-            else if (t == typeof(CascaraUInt8))
+            else if (t == typeof(UInt8))
             {
-                o = *(CascaraUInt8*) addr;
+                o = *(UInt8*) addr;
             }
-            else if (t == typeof(CascaraUInt16))
+            else if (t == typeof(UInt16))
             {
-                o = *(CascaraUInt16*) addr;
+                o = *(UInt16*) addr;
             }
-            else if (t == typeof(CascaraUInt32))
+            else if (t == typeof(UInt32))
             {
-                o = *(CascaraUInt32*) addr;
+                o = *(UInt32*) addr;
             }
-            else if (t == typeof(CascaraUInt64))
+            else if (t == typeof(UInt64))
             {
-                o = *(CascaraUInt64*) addr;
+                o = *(UInt64*) addr;
             }
             else
             {

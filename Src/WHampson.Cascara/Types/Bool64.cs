@@ -22,24 +22,28 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// An 8-bit true/false value.
+    /// A 64-bit true/false value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraBool8 : ICascaraType,
-        IComparable, IComparable<CascaraBool8>, IEquatable<CascaraBool8>
+    public struct Bool64 : ICascaraType,
+        IComparable, IComparable<Bool64>, IEquatable<Bool64>
     {
-        private const int Size = 1;
+        private const int Size = 8;
 
-        private CascaraInt8 m_value;
+        private Int64 m_value;
 
-        private CascaraBool8(bool value)
+        private Bool64(bool value)
         {
-            m_value = (sbyte) ((value) ? 1 : 0);
+            m_value = (value) ? 1 : 0;
         }
 
         private bool BoolValue
@@ -47,12 +51,12 @@ namespace WHampson.Cascara.Types
             get { return (int) m_value != 0; }
         }
 
-        public int CompareTo(CascaraBool8 other)
+        public int CompareTo(Bool64 other)
         {
             return BoolValue.CompareTo(other.BoolValue);
         }
 
-        public bool Equals(CascaraBool8 other)
+        public bool Equals(Bool64 other)
         {
             return BoolValue == other.BoolValue;
         }
@@ -64,7 +68,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraBool8))
+            if (!(obj is Bool64))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -72,7 +76,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraBool8) obj);
+            return CompareTo((Bool64) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -87,12 +91,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraBool8))
+            if (!(obj is Bool64))
             {
                 return false;
             }
 
-            return Equals((CascaraBool8) obj);
+            return Equals((Bool64) obj);
         }
 
         public override int GetHashCode()
@@ -105,12 +109,12 @@ namespace WHampson.Cascara.Types
             return BoolValue.ToString();
         }
 
-        public static implicit operator CascaraBool8(bool value)
+        public static implicit operator Bool64(bool value)
         {
-            return new CascaraBool8(value);
+            return new Bool64(value);
         }
 
-        public static explicit operator bool(CascaraBool8 value)
+        public static explicit operator bool(Bool64 value)
         {
             return value.BoolValue;
         }

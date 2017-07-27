@@ -27,27 +27,27 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// An 8-bit unsigned integer.
+    /// A 16-bit signed integer.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraUInt8 : ICascaraType,
-        IComparable, IComparable<CascaraUInt8>, IEquatable<CascaraUInt8>
+    public struct Int16 : ICascaraType,
+        IComparable, IComparable<Int16>, IEquatable<Int16>
     {
-        private const int Size = 1;
+        private const int Size = 2;
 
-        private byte m_value;
+        private short m_value;
 
-        private CascaraUInt8(byte value)
+        private Int16(short value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraUInt8 other)
+        public int CompareTo(Int16 other)
         {
-            return m_value.CompareTo(other);
+            return m_value.CompareTo(other.m_value);
         }
 
-        public bool Equals(CascaraUInt8 other)
+        public bool Equals(Int16 other)
         {
             return m_value == other.m_value;
         }
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraUInt8))
+            if (!(obj is Int16))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,12 +67,12 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraUInt8) obj);
+            return CompareTo((Int16) obj);
         }
 
         byte[] ICascaraType.GetBytes()
         {
-            return new byte[] { (byte) m_value };
+            return BitConverter.GetBytes(m_value);
         }
 
         int ICascaraType.GetSize()
@@ -82,12 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraUInt8))
+            if (!(obj is Int16))
             {
                 return false;
             }
 
-            return Equals((CascaraUInt8) obj);
+            return Equals((Int16) obj);
         }
 
         public override int GetHashCode()
@@ -100,12 +100,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CascaraUInt8(byte value)
+        public static implicit operator Int16(short value)
         {
-            return new CascaraUInt8(value);
+            return new Int16(value);
         }
 
-        public static explicit operator byte(CascaraUInt8 value)
+        public static explicit operator short(Int16 value)
         {
             return value.m_value;
         }

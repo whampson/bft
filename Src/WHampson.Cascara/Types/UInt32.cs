@@ -27,29 +27,29 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 16-bit character value.
+    /// A 32-bit unsigned integer.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraChar16 : ICascaraType,
-        IComparable, IComparable<CascaraChar16>, IEquatable<CascaraChar16>
+    public struct UInt32 : ICascaraType,
+        IComparable, IComparable<UInt32>, IEquatable<UInt32>
     {
-        private const int Size = 2;
+        private const int Size = 4;
 
-        private ushort m_value;
+        private uint m_value;
 
-        private CascaraChar16(char value)
+        private UInt32(uint value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraChar16 other)
+        public int CompareTo(UInt32 other)
         {
-            return ((char) m_value).CompareTo((char) other.m_value);
+            return m_value.CompareTo(other.m_value);
         }
 
-        public bool Equals(CascaraChar16 other)
+        public bool Equals(UInt32 other)
         {
-            return ((char) m_value) == ((char) other.m_value);
+            return m_value == other.m_value;
         }
 
         int IComparable.CompareTo(object obj)
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraChar16))
+            if (!(obj is UInt32))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,7 +67,7 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraChar16) obj);
+            return CompareTo((UInt32) obj);
         }
 
         byte[] ICascaraType.GetBytes()
@@ -82,32 +82,32 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraChar16))
+            if (!(obj is UInt32))
             {
                 return false;
             }
 
-            return Equals((CascaraChar16) obj);
+            return Equals((UInt32) obj);
         }
 
         public override int GetHashCode()
         {
-            return ((char) m_value).GetHashCode();
+            return m_value.GetHashCode();
         }
 
         public override string ToString()
         {
-            return ((char) m_value).ToString();
+            return m_value.ToString();
         }
 
-        public static implicit operator CascaraChar16(char value)
+        public static implicit operator UInt32(uint value)
         {
-            return new CascaraChar16(value);
+            return new UInt32(value);
         }
 
-        public static explicit operator char(CascaraChar16 value)
+        public static explicit operator uint(UInt32 value)
         {
-            return (char) value.m_value;
+            return value.m_value;
         }
     }
 }

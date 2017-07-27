@@ -27,27 +27,27 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A 32-bit, single-precision, IEEE-754 floating-point value.
+    /// An 8-bit unsigned integer.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct CascaraFloat : ICascaraType,
-        IComparable, IComparable<CascaraFloat>, IEquatable<CascaraFloat>
+    public struct UInt8 : ICascaraType,
+        IComparable, IComparable<UInt8>, IEquatable<UInt8>
     {
-        private const int Size = 4;
+        private const int Size = 1;
 
-        private float m_value;
+        private byte m_value;
 
-        private CascaraFloat(float value)
+        private UInt8(byte value)
         {
             m_value = value;
         }
 
-        public int CompareTo(CascaraFloat other)
+        public int CompareTo(UInt8 other)
         {
-            return m_value.CompareTo(other.m_value);
+            return m_value.CompareTo(other);
         }
 
-        public bool Equals(CascaraFloat other)
+        public bool Equals(UInt8 other)
         {
             return m_value == other.m_value;
         }
@@ -59,7 +59,7 @@ namespace WHampson.Cascara.Types
                 return 1;
             }
 
-            if (!(obj is CascaraFloat))
+            if (!(obj is UInt8))
             {
                 string fmt = "Object is not an instance of {0}.";
                 string msg = string.Format(fmt, GetType().Name);
@@ -67,12 +67,12 @@ namespace WHampson.Cascara.Types
                 throw new ArgumentException(msg, "obj");
             }
 
-            return CompareTo((CascaraFloat) obj);
+            return CompareTo((UInt8) obj);
         }
 
         byte[] ICascaraType.GetBytes()
         {
-            return BitConverter.GetBytes(m_value);
+            return new byte[] { (byte) m_value };
         }
 
         int ICascaraType.GetSize()
@@ -82,12 +82,12 @@ namespace WHampson.Cascara.Types
 
         public override bool Equals(object obj)
         {
-            if (!(obj is CascaraFloat))
+            if (!(obj is UInt8))
             {
                 return false;
             }
 
-            return Equals((CascaraFloat) obj);
+            return Equals((UInt8) obj);
         }
 
         public override int GetHashCode()
@@ -100,12 +100,12 @@ namespace WHampson.Cascara.Types
             return m_value.ToString();
         }
 
-        public static implicit operator CascaraFloat(float value)
+        public static implicit operator UInt8(byte value)
         {
-            return new CascaraFloat(value);
+            return new UInt8(value);
         }
 
-        public static explicit operator float(CascaraFloat value)
+        public static explicit operator byte(UInt8 value)
         {
             return value.m_value;
         }
