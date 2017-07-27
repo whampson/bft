@@ -32,21 +32,25 @@ namespace WHampson.Cascara
     {
         static void Main(string[] args)
         {
-            //IntPtr ptr = Marshal.AllocHGlobal(64);
-            //Marshal.Copy(new byte[] { 0x00, 0x00, 0xFF, 0x7F }, 0, ptr, 4);
+            IntPtr ptr = Marshal.AllocHGlobal(64);
+            Marshal.Copy(new byte[] { 0x01, 0x00, 0xFF, 0xFF }, 0, ptr, 4);
 
-            //unsafe
-            //{
-            //    CascaraBool8* b8 = (CascaraBool8*) ptr;
-            //    CascaraBool16* b16 = (CascaraBool16*) ptr + 2;
-            //    CascaraBool32* b32 = (CascaraBool32*) ptr;
+            Types.Pointer p = (ptr + 2);
+            Types.Pointer<CascaraUInt16> a = (Types.Pointer<CascaraUInt16>) p;
+            Types.Pointer<CascaraInt16> b = (Types.Pointer<CascaraInt16>) p;
+            Types.Pointer<CascaraBool16> c = (Types.Pointer<CascaraBool16>) (Types.Pointer) b;
+            Types.Pointer<CascaraInt16> d = ptr;
 
-            //    Console.WriteLine(*b8);
-            //    Console.WriteLine(*b16);
-            //    Console.WriteLine(*b32);
-            //}
+            Console.WriteLine(p.Address);
+            Console.WriteLine(a.Address);
+            Console.WriteLine(b.Address);
+            Console.WriteLine(c.Address);
+            Console.WriteLine((p + 1).Address);
+            Console.WriteLine((a + 1).Address);
+            Console.WriteLine((b + 1).Address);
+            Console.WriteLine((c + 1).Address);
 
-            //Marshal.FreeHGlobal(ptr);
+            Marshal.FreeHGlobal(ptr);
 
             //TemplateFile tf = new TemplateFile("../../../../Test/DynamicArray.xml");
             //tf.Process<object>("../../../../Test/DynamicArray.bin");
