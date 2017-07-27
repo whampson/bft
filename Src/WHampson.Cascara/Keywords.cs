@@ -31,16 +31,8 @@ namespace WHampson.Cascara
     /// </summary>
     internal static class Keywords
     {
-        // boolN    -> uintN
-        // byte     -> uint8
-        // char     -> uint16
-        // (u)int   -> (u)int32
-        // (u)long  -> (u)int64
-        // (u)short -> (u)int16
-
-
         // Root element
-        public const string BftRoot = "cascaraBinaryTemplate";
+        public const string TemplateRoot = "cascaraBinaryTemplate";
 
         // Data types
         public const string Bool = "bool";
@@ -106,7 +98,7 @@ namespace WHampson.Cascara
         public static readonly IEnumerable<string> ReservedWords = new List<string>()
         {
             // Root element
-            BftRoot,
+            TemplateRoot,
 
             // Data types
             Bool,

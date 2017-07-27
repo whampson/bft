@@ -120,10 +120,10 @@ namespace WHampson.Cascara
             dryRunRecursionDepth = 0;
 
             // Validate root element
-            if (templateDoc.Root.Name.LocalName != Keywords.BftRoot)
+            if (templateDoc.Root.Name.LocalName != Keywords.TemplateRoot)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                throw TemplateException.Create(templateDoc.Root, fmt, Keywords.BftRoot);
+                throw TemplateException.Create(templateDoc.Root, fmt, Keywords.TemplateRoot);
             }
             if (!HasChildren(templateDoc.Root))
             {
