@@ -90,7 +90,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TemplateException.cs" />
-    <Compile Include="TemplateFile.cs" />
     <Compile Include="Types\Pointer.cs" />
   </ItemGroup>
   <ItemGroup>
