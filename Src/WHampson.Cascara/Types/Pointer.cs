@@ -141,9 +141,24 @@ namespace WHampson.Cascara.Types
         /// </summary>
         public T Value
         {
+            get { return this[0]; }
+            set { this[0] = value; }
+        }
+
+        /// <summary>
+        /// Increments the address pointed to by <paramref name="i"/> units,
+        /// then dereferences the value at that address so it can be get or set.
+        /// </summary>
+        /// <param name="i">
+        /// The offset in units of the type <see cref="T"/>.
+        /// </param>
+        public T this[int i]
+        {
             get
             {
-                return Dereference(Address);
+                int siz = Marshal.SizeOf(typeof(T));
+
+                return Dereference(Address + (i * siz));
             }
 
             set
@@ -151,7 +166,7 @@ namespace WHampson.Cascara.Types
                 int siz = Marshal.SizeOf(typeof(T));
                 byte[] data = value.GetBytes();
 
-                Marshal.Copy(data, 0, Address, data.Length);
+                Marshal.Copy(data, 0, Address + (i * siz), data.Length);
             }
         }
 
