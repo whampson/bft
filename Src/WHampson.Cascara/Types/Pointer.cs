@@ -180,11 +180,23 @@ namespace WHampson.Cascara.Types
             return Address == IntPtr.Zero;
         }
 
+        /// <summary>
+        /// Converts a .NET <see cref="IntPtr"/> type into a <see cref="Pointer{T}"/>.
+        /// </summary>
+        /// <param name="ptr">
+        /// The <see cref="IntPtr"/> to convert.
+        /// </param>
         public static implicit operator Pointer<T>(IntPtr ptr)
         {
             return new Pointer<T>(ptr);
         }
 
+        /// <summary>
+        /// Converts a <see cref="Pointer{T}"/> into a .NET <see cref="IntPtr"/> type.
+        /// </summary>
+        /// <param name="ptr">
+        /// The <see cref="Pointer{T}"/> to convert.
+        /// </param>
         public static implicit operator IntPtr(Pointer<T> ptr)
         {
             return ptr.Address;
