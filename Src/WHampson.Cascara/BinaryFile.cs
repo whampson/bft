@@ -28,32 +28,11 @@ using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Represents a non-text file.
+    /// </summary>
     public class BinaryFile : IDisposable
     {
-        public static BinaryFile Open(string filePath)
-        {
-            const int OneGibiByte = 1 << 30;
-
-            FileInfo fInfo = new FileInfo(filePath);
-            if (fInfo.Length > OneGibiByte)
-            {
-                throw new IOException("File size must be less than 1 GiB.");
-            }
-
-            int len = (int) fInfo.Length;
-            byte[] data = new byte[len];
-
-            using (FileStream fs = new FileStream(filePath, FileMode.Open))
-            {
-                fs.Read(data, 0, len);
-            }
-
-            IntPtr dataPtr = Marshal.AllocHGlobal(len);
-            Marshal.Copy(data, 0, dataPtr, len);
-
-            return new BinaryFile(dataPtr, len);
-        }
-
         private IntPtr dataPtr;
         private int dataLen;
 
@@ -70,6 +49,9 @@ namespace WHampson.Cascara
             hasBeenDisposed = false;
         }
 
+        /// <summary>
+        /// Gets the number of bytes in the binary file.
+        /// </summary>
         public int Length
         {
             get
@@ -83,11 +65,41 @@ namespace WHampson.Cascara
             }
         }
 
-        public bool Exists(string name)
+        /// <summary>
+        /// Gets a value indicating whether this file is no longer available for use.
+        /// </summary>
+        public bool IsClosed
+        {
+            get { return hasBeenDisposed; }
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the given variable identifier
+        /// exists in the file's symbol table.
+        /// </summary>
+        /// <param name="name">
+        /// The identifier to check for.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if <paramref name="name"/> is a valid identitifer,
+        /// <code>False</code> otherwise.
+        /// </returns>
+        public bool IdentifierExists(string name)
         {
             return symTabl.GetEntry(name) != null;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the given variable identifier
+        /// represents a primitive type (i.e. non-struct).
+        /// </summary>
+        /// <param name="name">
+        /// The identifier to check for.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if <paramref name="name"/> represents a primitive type
+        /// <code>False</code> otherwise.
+        /// </returns>
         public bool IsPrimitive(string name)
         {
             SymbolInfo info = symTabl.GetEntry(name);
@@ -95,9 +107,20 @@ namespace WHampson.Cascara
             return info != null && info.TypeInfo.Type != typeof(BftStruct);
         }
 
+        /// <summary>
+        /// Gets a typeless pointer that points to a position in the binary file.
+        /// </summary>
+        /// <param name="offset">
+        /// The position in the binary file data to point to,
+        /// measured as the number of bytes from the start of
+        /// the file.
+        /// </param>
+        /// <returns>
+        /// A typeless pointer to the desired offset.
+        /// </returns>
         public Pointer GetPointer(int offset)
         {
-            if (offset < 0 || offset > dataLen - 1)
+            if (!RangeCheck(offset))
             {
                 throw new ArgumentOutOfRangeException("offset");
             }
@@ -105,10 +128,25 @@ namespace WHampson.Cascara
             return new Pointer(dataPtr + offset);
         }
 
+        /// <summary>
+        /// Gets a pointer to an <see cref="ICascaraType"/> at the given position
+        /// in the binary file.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type to get a pointer to.
+        /// </typeparam>
+        /// <param name="offset">
+        /// The position in the binary file data to point to,
+        /// measured as the number of bytes from the start of
+        /// the file.
+        /// </param>
+        /// <returns>
+        /// A pointer to a type <see cref="T"/> at the desired offset.
+        /// </returns>
         public Pointer<T> GetPointer<T>(int offset)
             where T : struct, ICascaraType
         {
-            if (offset < 0 || offset > dataLen - 1)
+            if (!RangeCheck(offset))
             {
                 throw new ArgumentOutOfRangeException("offset");
             }
@@ -185,16 +223,12 @@ namespace WHampson.Cascara
             Console.WriteLine(symTabl);
         }
 
-        public void Close()
-        {
-            if (hasBeenDisposed)
-            {
-                throw new ObjectDisposedException(GetType().FullName);
-            }
-
-            Dispose();
-        }
-
+        /// <summary>
+        /// Store the current state of the file data at the specified location.
+        /// </summary>
+        /// <param name="filePath">
+        /// The path to write the file data.
+        /// </param>
         public void Write(string filePath)
         {
             if (hasBeenDisposed)
@@ -211,6 +245,25 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Closes out the file by releasing all umanaged resources.
+        /// </summary>
+        public void Close()
+        {
+            if (hasBeenDisposed)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+
+            Dispose();
+        }
+
+        private bool RangeCheck(int offset)
+        {
+            return offset > -1 && offset < dataLen;
+        }
+
+        #region Disposal
         protected virtual void Dispose(bool disposing)
         {
             if (!hasBeenDisposed)
@@ -240,6 +293,31 @@ namespace WHampson.Cascara
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+        #endregion
+
+        public static BinaryFile Open(string filePath)
+        {
+            const int OneGibiByte = 1 << 30;
+
+            FileInfo fInfo = new FileInfo(filePath);
+            if (fInfo.Length > OneGibiByte)
+            {
+                throw new IOException("File size must be less than 1 GiB.");
+            }
+
+            int len = (int) fInfo.Length;
+            byte[] data = new byte[len];
+
+            using (FileStream fs = new FileStream(filePath, FileMode.Open))
+            {
+                fs.Read(data, 0, len);
+            }
+
+            IntPtr dataPtr = Marshal.AllocHGlobal(len);
+            Marshal.Copy(data, 0, dataPtr, len);
+
+            return new BinaryFile(dataPtr, len);
         }
     }
 }
