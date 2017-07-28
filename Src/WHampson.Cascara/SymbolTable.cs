@@ -32,7 +32,7 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTable
     {
-        private Dictionary<string, SymbolInfo> entries;
+        internal Dictionary<string, SymbolInfo> entries;
 
         /// <summary>
         /// Creates a new nameless, parentless <see cref="SymbolTable"/>.
