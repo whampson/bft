@@ -65,6 +65,7 @@
     <Compile Include="BinaryFile.cs" />
     <Compile Include="Keywords.cs" />
     <Compile Include="NumberUtils.cs" />
+    <Compile Include="Types\PointerT.cs" />
     <Compile Include="SymbolTable.cs" />
     <Compile Include="SymbolInfo.cs" />
     <Compile Include="TemplateProcessor.cs" />
