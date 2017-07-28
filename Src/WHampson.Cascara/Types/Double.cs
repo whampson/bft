@@ -31,7 +31,7 @@ namespace WHampson.Cascara.Types
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct Double : ICascaraType,
-        IComparable, IComparable<Double>, IEquatable<Double>
+        IComparable<Double>, IEquatable<Double>
     {
         private const int Size = 8;
 
@@ -109,5 +109,95 @@ namespace WHampson.Cascara.Types
         {
             return value.m_value;
         }
+
+        #region IConvertible
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Double;
+        }
+
+        public bool ToBoolean(IFormatProvider provider)
+        {
+            return Convert.ToBoolean(m_value);
+        }
+
+        public char ToChar(IFormatProvider provider)
+        {
+            return Convert.ToChar(m_value);
+        }
+
+        public sbyte ToSByte(IFormatProvider provider)
+        {
+            return Convert.ToSByte(m_value);
+        }
+
+        public byte ToByte(IFormatProvider provider)
+        {
+            return Convert.ToByte(m_value);
+        }
+
+        public short ToInt16(IFormatProvider provider)
+        {
+            return Convert.ToInt16(m_value);
+        }
+
+        public ushort ToUInt16(IFormatProvider provider)
+        {
+            return Convert.ToUInt16(m_value);
+        }
+
+        public int ToInt32(IFormatProvider provider)
+        {
+            return Convert.ToInt32(m_value);
+        }
+
+        public uint ToUInt32(IFormatProvider provider)
+        {
+            return Convert.ToUInt32(m_value);
+        }
+
+        public long ToInt64(IFormatProvider provider)
+        {
+            return Convert.ToInt64(m_value);
+        }
+
+        public ulong ToUInt64(IFormatProvider provider)
+        {
+            return Convert.ToUInt64(m_value);
+        }
+
+        public float ToSingle(IFormatProvider provider)
+        {
+            return Convert.ToSingle(m_value);
+        }
+
+        public double ToDouble(IFormatProvider provider)
+        {
+            return Convert.ToDouble(m_value);
+        }
+
+        public decimal ToDecimal(IFormatProvider provider)
+        {
+            return Convert.ToDecimal(m_value);
+        }
+
+        public DateTime ToDateTime(IFormatProvider provider)
+        {
+            return Convert.ToDateTime(m_value);
+        }
+
+        public string ToString(IFormatProvider provider)
+        {
+            return Convert.ToString(m_value);
+        }
+
+        public object ToType(Type conversionType, IFormatProvider provider)
+        {
+            string fmt = "Cannot convert {0} to {1}.";
+            string msg = string.Format(fmt, GetType().Name, conversionType.Name);
+
+            throw new InvalidCastException(msg);
+        }
+        #endregion
     }
 }

@@ -32,7 +32,7 @@ namespace WHampson.Cascara.Types
     /// <remarks>
     /// To dereference this pointer, it must first be cast to <see cref="Pointer{T}"/>.
     /// </remarks>
-    public class Pointer : ICascaraPointer, IConvertible
+    public class Pointer : ICascaraPointer
     {
         /// <summary>
         /// Creates a new typeless pointer to the specified address.

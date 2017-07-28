@@ -21,12 +21,14 @@
  */
 #endregion
 
+using System;
+
 namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// Provides a framework for data types used by Cascara.
     /// </summary>
-    public interface ICascaraType
+    public interface ICascaraType : IConvertible, IComparable
     {
         /// <summary>
         /// Gets a copy of the bytes that make up the data this type represents.

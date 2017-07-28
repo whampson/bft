@@ -32,7 +32,7 @@ namespace WHampson.Cascara.Types
     /// <typeparam name="T">
     /// The type represented by the data pointed to.
     /// </typeparam>
-    public class Pointer<T> : ICascaraPointer, IConvertible
+    public class Pointer<T> : ICascaraPointer
         where T : struct, ICascaraType
     {
         /// <summary>

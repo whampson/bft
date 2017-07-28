@@ -28,7 +28,7 @@ namespace WHampson.Cascara.Types
     /// <summary>
     /// Provides a framework for creating a pointer to an <see cref="ICascaraType"/>.
     /// </summary>
-    public interface ICascaraPointer
+    public interface ICascaraPointer : IConvertible
     {
         /// <summary>
         /// Gets the absolute memory address pointed to.

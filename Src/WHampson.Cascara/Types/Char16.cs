@@ -31,7 +31,7 @@ namespace WHampson.Cascara.Types
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct Char16 : ICascaraType,
-        IComparable, IComparable<Char16>, IEquatable<Char16>
+        IComparable<Char16>, IEquatable<Char16>
     {
         private const int Size = 2;
 
@@ -42,14 +42,19 @@ namespace WHampson.Cascara.Types
             m_value = value;
         }
 
+        private char CharValue
+        {
+            get { return (char) m_value; }
+        }
+
         public int CompareTo(Char16 other)
         {
-            return ((char) m_value).CompareTo((char) other.m_value);
+            return CharValue.CompareTo(other.CharValue);
         }
 
         public bool Equals(Char16 other)
         {
-            return ((char) m_value) == ((char) other.m_value);
+            return CharValue == other.CharValue;
         }
 
         int IComparable.CompareTo(object obj)
@@ -92,12 +97,12 @@ namespace WHampson.Cascara.Types
 
         public override int GetHashCode()
         {
-            return ((char) m_value).GetHashCode();
+            return CharValue.GetHashCode();
         }
 
         public override string ToString()
         {
-            return ((char) m_value).ToString();
+            return CharValue.ToString();
         }
 
         public static implicit operator Char16(char value)
@@ -107,7 +112,97 @@ namespace WHampson.Cascara.Types
 
         public static explicit operator char(Char16 value)
         {
-            return (char) value.m_value;
+            return value.CharValue;
         }
+
+        #region IConvertible
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Char;
+        }
+
+        public bool ToBoolean(IFormatProvider provider)
+        {
+            return Convert.ToBoolean(CharValue);
+        }
+
+        public char ToChar(IFormatProvider provider)
+        {
+            return Convert.ToChar(CharValue);
+        }
+
+        public sbyte ToSByte(IFormatProvider provider)
+        {
+            return Convert.ToSByte(CharValue);
+        }
+
+        public byte ToByte(IFormatProvider provider)
+        {
+            return Convert.ToByte(CharValue);
+        }
+
+        public short ToInt16(IFormatProvider provider)
+        {
+            return Convert.ToInt16(CharValue);
+        }
+
+        public ushort ToUInt16(IFormatProvider provider)
+        {
+            return Convert.ToUInt16(CharValue);
+        }
+
+        public int ToInt32(IFormatProvider provider)
+        {
+            return Convert.ToInt32(CharValue);
+        }
+
+        public uint ToUInt32(IFormatProvider provider)
+        {
+            return Convert.ToUInt32(CharValue);
+        }
+
+        public long ToInt64(IFormatProvider provider)
+        {
+            return Convert.ToInt64(CharValue);
+        }
+
+        public ulong ToUInt64(IFormatProvider provider)
+        {
+            return Convert.ToUInt64(CharValue);
+        }
+
+        public float ToSingle(IFormatProvider provider)
+        {
+            return Convert.ToSingle(CharValue);
+        }
+
+        public double ToDouble(IFormatProvider provider)
+        {
+            return Convert.ToDouble(CharValue);
+        }
+
+        public decimal ToDecimal(IFormatProvider provider)
+        {
+            return Convert.ToDecimal(CharValue);
+        }
+
+        public DateTime ToDateTime(IFormatProvider provider)
+        {
+            return Convert.ToDateTime(CharValue);
+        }
+
+        public string ToString(IFormatProvider provider)
+        {
+            return Convert.ToString(CharValue);
+        }
+
+        public object ToType(Type conversionType, IFormatProvider provider)
+        {
+            string fmt = "Cannot convert {0} to {1}.";
+            string msg = string.Format(fmt, GetType().Name, conversionType.Name);
+
+            throw new InvalidCastException(msg);
+        }
+        #endregion
     }
 }
