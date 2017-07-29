@@ -25,6 +25,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
+using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
@@ -73,7 +74,7 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.");
             }
 
-            return new TypeInfo(typeof(BftStruct), members, size);
+            return new TypeInfo(typeof(ICascaraStruct), members, size);
         }
 
         private TypeInfo(Type t, IEnumerable<XElement> members, int size)
