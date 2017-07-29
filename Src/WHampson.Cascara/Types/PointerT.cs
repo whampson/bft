@@ -33,7 +33,7 @@ namespace WHampson.Cascara.Types
     /// The type represented by the data pointed to.
     /// </typeparam>
     public class Pointer<T> : ICascaraPointer
-        where T : struct, ICascaraType
+        where T : struct
     {
         /// <summary>
         /// Creates a new pointer to the specified address.
@@ -59,42 +59,18 @@ namespace WHampson.Cascara.Types
         {
             get
             {
-                bool isChar8 = typeof(T) == typeof(Char8);
-                bool isChar16 = typeof(T) == typeof(Char16);
-                if (!(isChar8 || isChar16))
-                {
-                    return "";
-                }
-
                 string s = "";
                 int i = 0;
                 char c;
                 do
                 {
-                    T t = this[i];
-                    c = Convert.ToChar(t);
+                    c = Convert.ToChar(this[i]);
                     s += c;
                     i++;
                 } while (c != '\0');
 
                 return s;
             }
-
-            //set
-            //{
-            //    bool isChar8 = typeof(T) == typeof(Char8);
-            //    bool isChar16 = typeof(T) == typeof(Char16);
-            //    if (!(isChar8 || isChar16))
-            //    {
-            //        return;
-            //    }
-
-            //    for (int i = 0; i < value.Length; i++)
-            //    {
-            //        this[i] = (T) Convert.ChangeType(value[i], typeof(T));
-            //    }
-            //    this[value.Length] = (T) (object) '\0';
-            //}
         }
 
         /// <summary>
@@ -109,15 +85,13 @@ namespace WHampson.Cascara.Types
             get
             {
                 int siz = Marshal.SizeOf(typeof(T));
-
-                return Dereference(Address + (i * siz));
+                return Marshal.PtrToStructure<T>(Address + (i * siz));
             }
 
             set
             {
                 int siz = Marshal.SizeOf(typeof(T));
-                byte[] data = value.GetBytes();
-
+                byte[] data = BitConverter.GetBytes((dynamic) value);
                 Marshal.Copy(data, 0, Address + (i * siz), data.Length);
             }
         }
@@ -218,91 +192,6 @@ namespace WHampson.Cascara.Types
             return new Pointer<T>(ptr.Address - (siz * off));
         }
 
-        private static unsafe T Dereference(IntPtr addr)
-        {
-            if (addr == IntPtr.Zero)
-            {
-                throw new ArgumentException("Cannot dereference null pointer.");
-            }
-
-            Type t = typeof(T);
-            object o;
-
-            // Prepare for the ugliness!
-            if (t == typeof(Bool8))
-            {
-                o = *(Bool8*) addr;
-            }
-            else if (t == typeof(Bool16))
-            {
-                o = *(Bool16*) addr;
-            }
-            else if (t == typeof(Bool32))
-            {
-                o = *(Bool32*) addr;
-            }
-            else if (t == typeof(Bool64))
-            {
-                o = *(Bool64*) addr;
-            }
-            else if (t == typeof(Char8))
-            {
-                o = *(Char8*) addr;
-            }
-            else if (t == typeof(Char16))
-            {
-                o = *(Char16*) addr;
-            }
-            else if (t == typeof(Double))
-            {
-                o = *(Double*) addr;
-            }
-            else if (t == typeof(Float))
-            {
-                o = *(Float*) addr;
-            }
-            else if (t == typeof(Int8))
-            {
-                o = *(Int8*) addr;
-            }
-            else if (t == typeof(Int16))
-            {
-                o = *(Int16*) addr;
-            }
-            else if (t == typeof(Int32))
-            {
-                o = *(Int32*) addr;
-            }
-            else if (t == typeof(Int64))
-            {
-                o = *(Int64*) addr;
-            }
-            else if (t == typeof(UInt8))
-            {
-                o = *(UInt8*) addr;
-            }
-            else if (t == typeof(UInt16))
-            {
-                o = *(UInt16*) addr;
-            }
-            else if (t == typeof(UInt32))
-            {
-                o = *(UInt32*) addr;
-            }
-            else if (t == typeof(UInt64))
-            {
-                o = *(UInt64*) addr;
-            }
-            else
-            {
-                // Should never happen as long as I remember to list all types ;)
-                string fmt = "{0} cannot be dereferenced.";
-                throw new InvalidOperationException(string.Format(fmt, t.Name));
-            }
-
-            return (T) o;
-        }
-
         #region IConvertable
         public TypeCode GetTypeCode()
         {
@@ -386,75 +275,75 @@ namespace WHampson.Cascara.Types
 
         public object ToType(Type conversionType, IFormatProvider provider)
         {
-            // Convert to other pointer types
-            if (conversionType == typeof(Pointer))
-            {
-                return (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool8>))
-            {
-                return (Pointer<Bool8>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool16>))
-            {
-                return (Pointer<Bool16>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool32>))
-            {
-                return (Pointer<Bool32>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool64>))
-            {
-                return (Pointer<Bool64>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Char8>))
-            {
-                return (Pointer<Char8>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Char16>))
-            {
-                return (Pointer<Char16>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Double>))
-            {
-                return (Pointer<Double>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Float>))
-            {
-                return (Pointer<Float>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Int8>))
-            {
-                return (Pointer<Int8>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Int16>))
-            {
-                return (Pointer<Int16>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Int32>))
-            {
-                return (Pointer<Int32>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<Int64>))
-            {
-                return (Pointer<Int64>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt8>))
-            {
-                return (Pointer<UInt8>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt16>))
-            {
-                return (Pointer<UInt16>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt32>))
-            {
-                return (Pointer<UInt32>) (Pointer) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt64>))
-            {
-                return (Pointer<UInt64>) (Pointer) this;
-            }
+            //// Convert to other pointer types
+            //if (conversionType == typeof(Pointer))
+            //{
+            //    return (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool8>))
+            //{
+            //    return (Pointer<Bool8>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool16>))
+            //{
+            //    return (Pointer<Bool16>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool32>))
+            //{
+            //    return (Pointer<Bool32>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool64>))
+            //{
+            //    return (Pointer<Bool64>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Char8>))
+            //{
+            //    return (Pointer<Char8>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Char16>))
+            //{
+            //    return (Pointer<Char16>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Double>))
+            //{
+            //    return (Pointer<Double>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Float>))
+            //{
+            //    return (Pointer<Float>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int8>))
+            //{
+            //    return (Pointer<Int8>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int16>))
+            //{
+            //    return (Pointer<Int16>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int32>))
+            //{
+            //    return (Pointer<Int32>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int64>))
+            //{
+            //    return (Pointer<Int64>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt8>))
+            //{
+            //    return (Pointer<UInt8>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt16>))
+            //{
+            //    return (Pointer<UInt16>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt32>))
+            //{
+            //    return (Pointer<UInt32>) (Pointer) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt64>))
+            //{
+            //    return (Pointer<UInt64>) (Pointer) this;
+            //}
 
             throw new InvalidCastException();
         }

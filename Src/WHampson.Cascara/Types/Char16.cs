@@ -30,8 +30,7 @@ namespace WHampson.Cascara.Types
     /// A 16-bit character value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct Char16 : ICascaraType,
-        IComparable<Char16>, IEquatable<Char16>
+    public struct Char16 : IConvertible, IComparable, IComparable<Char16>, IEquatable<Char16>
     {
         private const int Size = 2;
 
@@ -73,16 +72,6 @@ namespace WHampson.Cascara.Types
             }
 
             return CompareTo((Char16) obj);
-        }
-
-        byte[] ICascaraType.GetBytes()
-        {
-            return BitConverter.GetBytes(m_value);
-        }
-
-        int ICascaraType.GetSize()
-        {
-            return Size;
         }
 
         public override bool Equals(object obj)

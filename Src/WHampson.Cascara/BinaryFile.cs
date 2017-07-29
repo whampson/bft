@@ -28,13 +28,6 @@ using WHampson.Cascara.Types;
 using System.Text.RegularExpressions;
 using System.Reflection;
 
-using Double = WHampson.Cascara.Types.Double;
-using Int16 = WHampson.Cascara.Types.Int16;
-using Int32 = WHampson.Cascara.Types.Int32;
-using Int64 = WHampson.Cascara.Types.Int64;
-using UInt16 = WHampson.Cascara.Types.UInt16;
-using UInt32 = WHampson.Cascara.Types.UInt32;
-using UInt64 = WHampson.Cascara.Types.UInt64;
 using Pointer = WHampson.Cascara.Types.Pointer;
 
 namespace WHampson.Cascara
@@ -161,7 +154,7 @@ namespace WHampson.Cascara
         /// A pointer to a type <see cref="T"/> at the desired offset.
         /// </returns>
         public Pointer<T> GetPointer<T>(int offset)
-            where T : struct, ICascaraType
+            where T : struct
         {
             if (!RangeCheck(offset))
             {
@@ -184,7 +177,7 @@ namespace WHampson.Cascara
         }
 
         public Pointer<T> GetPointer<T>(string name)
-            where T : struct, ICascaraType
+            where T : struct
         {
             SymbolInfo info = symTabl.GetEntry(name);
             if (info == null)
@@ -203,7 +196,7 @@ namespace WHampson.Cascara
         }
 
         public ArrayPointer<T> GetArrayPointer<T>(int offset, int count)
-            where T : struct, ICascaraType
+            where T : struct
         {
             if (!RangeCheck(offset))
             {
@@ -214,7 +207,7 @@ namespace WHampson.Cascara
         }
 
         public T GetValue<T>(int offset)
-            where T : struct, ICascaraType
+            where T : struct
         {
             Pointer<T> pValue = GetPointer<T>(offset);
 
@@ -222,7 +215,7 @@ namespace WHampson.Cascara
         }
 
         public T GetValue<T>(string name)
-            where T : struct, ICascaraType
+            where T : struct
         {
             Pointer<T> pValue = GetPointer<T>(name);
 
@@ -230,14 +223,14 @@ namespace WHampson.Cascara
         }
 
         public void SetValue<T>(int offset, T value)
-            where T : struct, ICascaraType
+            where T : struct
         {
             Pointer<T> pValue = GetPointer<T>(offset);
             pValue.Value = value;
         }
 
         public void SetValue<T>(string name, T value)
-            where T : struct, ICascaraType
+            where T : struct
         {
             Pointer<T> pValue = GetPointer<T>(name);
             pValue.Value = value;
@@ -261,12 +254,12 @@ namespace WHampson.Cascara
                     continue;
                 }
 
-                bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
+                //bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
                 bool isStruct = sInfo.TypeInfo.Type == typeof(ICascaraStruct);
                 bool isArrayPointer = IsPropertyArrayPointer(p);
 
-                if (isCascaraPrimitive || p.PropertyType.IsPrimitive)
+                if (p.PropertyType.IsPrimitive)
                 {
                     SetPrimitiveValue(p, o, sInfo);
                 }

@@ -837,32 +837,32 @@ namespace WHampson.Cascara
 
         private void BuildTypeMap()
         {
-            typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(Bool8));
-            typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(Bool8));
-            typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(Bool16));
-            typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(Bool32));
-            typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(Bool64));
-            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(UInt8));
+            //typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(Bool8));
+            //typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(Bool8));
+            //typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(Bool16));
+            //typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(Bool32));
+            //typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(Bool64));
+            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(byte));
             typeMap[Keywords.Char] = TypeInfo.CreatePrimitive(typeof(Char8));
             typeMap[Keywords.Char8] = TypeInfo.CreatePrimitive(typeof(Char8));
             typeMap[Keywords.Char16] = TypeInfo.CreatePrimitive(typeof(Char16));
-            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(Types.Double));
-            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(Float));
-            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(Types.Int32));
-            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(Int8));
-            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(Types.Int16));
-            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(Types.Int32));
-            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(Types.Int64));
-            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(Types.Int64));
-            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(Types.Int16));
-            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(Float));
-            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(Types.UInt32));
-            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(UInt8));
-            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(Types.UInt16));
-            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(Types.UInt32));
-            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(Types.UInt64));
-            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(Types.UInt64));
-            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(Types.UInt16));
+            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(double));
+            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(float));
+            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(int));
+            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(sbyte));
+            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(short));
+            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(int));
+            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(long));
+            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(long));
+            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(short));
+            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(float));
+            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(uint));
+            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(byte));
+            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(ushort));
+            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(uint));
+            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(ulong));
+            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(ulong));
+            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(ushort));
         }
 
         private void BuildDirectiveActionMap()

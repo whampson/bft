@@ -27,7 +27,7 @@ using System.Collections;
 namespace WHampson.Cascara.Types
 {
     public class ArrayPointer<T> : Pointer<T>, IEnumerable
-        where T : struct, ICascaraType
+        where T : struct
     {
         public ArrayPointer(IntPtr addr, int count)
             : base(addr)
@@ -44,13 +44,6 @@ namespace WHampson.Cascara.Types
         {
             get
             {
-                bool isChar8 = typeof(T) == typeof(Char8);
-                bool isChar16 = typeof(T) == typeof(Char16);
-                if (!(isChar8 || isChar16))
-                {
-                    return "";
-                }
-
                 string s = "";
                 for (int i = 0; i < Count; i++)
                 {
@@ -72,7 +65,7 @@ namespace WHampson.Cascara.Types
         }
 
         private class ArrayPointerEnumerator<U> : IEnumerator
-            where U : struct, ICascaraType
+            where U : struct
         {
             private ArrayPointer<U> arr;
             private int position;

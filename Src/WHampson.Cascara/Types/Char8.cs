@@ -30,8 +30,7 @@ namespace WHampson.Cascara.Types
     /// An 8-bit character value.
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
-    public struct Char8 : ICascaraType,
-        IComparable<Char8>, IEquatable<Char8>
+    public struct Char8 : IConvertible, IComparable, IComparable<Char8>, IEquatable<Char8>
     {
         private const int Size = 1;
 
@@ -73,16 +72,6 @@ namespace WHampson.Cascara.Types
             }
 
             return CompareTo((Char8) obj);
-        }
-
-        byte[] ICascaraType.GetBytes()
-        {
-            return new byte[] { m_value };
-        }
-
-        int ICascaraType.GetSize()
-        {
-            return Size;
         }
 
         public override bool Equals(object obj)

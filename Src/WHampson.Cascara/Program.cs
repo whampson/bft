@@ -26,9 +26,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using WHampson.Cascara.Types;
 
-using Int32 = WHampson.Cascara.Types.Int32;
 using Pointer = WHampson.Cascara.Types.Pointer;
-using UInt32 = WHampson.Cascara.Types.UInt32;
 
 namespace WHampson.Cascara
 {

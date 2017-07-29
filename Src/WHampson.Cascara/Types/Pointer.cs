@@ -196,71 +196,78 @@ namespace WHampson.Cascara.Types
 
         public object ToType(Type conversionType, IFormatProvider provider)
         {
-            // Convert to non typeless pointers
-            if (conversionType == typeof(Pointer<Bool8>))
-            {
-                return (Pointer<Bool8>) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool16>))
-            {
-                return (Pointer<Bool16>) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool32>))
-            {
-                return (Pointer<Bool32>) this;
-            }
-            else if (conversionType == typeof(Pointer<Bool64>))
-            {
-                return (Pointer<Bool64>) this;
-            }
-            else if (conversionType == typeof(Pointer<Char8>))
-            {
-                return (Pointer<Char8>) this;
-            }
-            else if (conversionType == typeof(Pointer<Char16>))
+            //// Convert to non typeless pointers
+            //if (conversionType == typeof(Pointer<Bool8>))
+            //{
+            //    return (Pointer<Bool8>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool16>))
+            //{
+            //    return (Pointer<Bool16>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool32>))
+            //{
+            //    return (Pointer<Bool32>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Bool64>))
+            //{
+            //    return (Pointer<Bool64>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Char8>))
+            //{
+            //    return (Pointer<Char8>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Char16>))
+            //{
+            //    return (Pointer<Char16>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Double>))
+            //{
+            //    return (Pointer<Double>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Float>))
+            //{
+            //    return (Pointer<Float>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int8>))
+            //{
+            //    return (Pointer<Int8>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int16>))
+            //{
+            //    return (Pointer<Int16>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int32>))
+            //{
+            //    return (Pointer<Int32>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<Int64>))
+            //{
+            //    return (Pointer<Int64>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt8>))
+            //{
+            //    return (Pointer<UInt8>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt16>))
+            //{
+            //    return (Pointer<UInt16>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt32>))
+            //{
+            //    return (Pointer<UInt32>) this;
+            //}
+            //else if (conversionType == typeof(Pointer<UInt64>))
+            //{
+            //    return (Pointer<UInt64>) this;
+            //}
+
+            if (conversionType == typeof(Pointer<Char16>))
             {
                 return (Pointer<Char16>) this;
             }
-            else if (conversionType == typeof(Pointer<Double>))
-            {
-                return (Pointer<Double>) this;
-            }
-            else if (conversionType == typeof(Pointer<Float>))
-            {
-                return (Pointer<Float>) this;
-            }
-            else if (conversionType == typeof(Pointer<Int8>))
-            {
-                return (Pointer<Int8>) this;
-            }
-            else if (conversionType == typeof(Pointer<Int16>))
-            {
-                return (Pointer<Int16>) this;
-            }
-            else if (conversionType == typeof(Pointer<Int32>))
-            {
-                return (Pointer<Int32>) this;
-            }
-            else if (conversionType == typeof(Pointer<Int64>))
-            {
-                return (Pointer<Int64>) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt8>))
-            {
-                return (Pointer<UInt8>) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt16>))
-            {
-                return (Pointer<UInt16>) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt32>))
-            {
-                return (Pointer<UInt32>) this;
-            }
-            else if (conversionType == typeof(Pointer<UInt64>))
-            {
-                return (Pointer<UInt64>) this;
-            }
+
+
 
             throw new InvalidCastException();
         }
