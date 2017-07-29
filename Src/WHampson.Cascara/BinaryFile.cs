@@ -202,6 +202,17 @@ namespace WHampson.Cascara
             return new Pointer<T>(dataPtr + info.Offset);
         }
 
+        public ArrayPointer<T> GetArrayPointer<T>(int offset, int count)
+            where T : struct, ICascaraType
+        {
+            if (!RangeCheck(offset))
+            {
+                throw new ArgumentOutOfRangeException("offset");
+            }
+
+            return new ArrayPointer<T>(dataPtr + offset, count);
+        }
+
         public T GetValue<T>(int offset)
             where T : struct, ICascaraType
         {
