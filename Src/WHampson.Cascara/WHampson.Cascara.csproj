@@ -66,6 +66,7 @@
     <Compile Include="Keywords.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="Types\ArrayPointer.cs" />
+    <Compile Include="Types\ICascaraStruct.cs" />
     <Compile Include="Types\PointerT.cs" />
     <Compile Include="SymbolTable.cs" />
     <Compile Include="SymbolInfo.cs" />
