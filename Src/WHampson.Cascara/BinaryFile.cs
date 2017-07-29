@@ -250,50 +250,68 @@ namespace WHampson.Cascara
                     continue;
                 }
 
-                bool isCascaraPrimitive = p.GetValue(o) is ICascaraType;
+                bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
+                bool isStruct = sInfo.TypeInfo.Type == typeof(ICascaraStruct);
+                bool isArrayPointer = IsPropertyArrayPointer(p);
+
                 if (isCascaraPrimitive || p.PropertyType.IsPrimitive)
                 {
                     SetPrimitiveValue(p, o, sInfo);
                 }
                 else if (isCascaraPointer)
                 {
-                    SetPointerValue(p, o, sInfo);
+                    if (isArrayPointer)
+                    {
+                        int elemCount = tabl.CountElems(p.Name);
+                        SetArrayPointerValue(p, o, sInfo, elemCount);
+                    }
+                    else
+                    {
+                        SetPointerValue(p, o, sInfo);
+                    }
                 }
-                else if (sInfo.TypeInfo.Type == typeof(ICascaraStruct) && sInfo.Child != null)
+                else if (isStruct)
                 {
                     if (p.PropertyType.IsArray)
                     {
-                        SetArrayValues(p, o, tabl);
-                        continue;
+                        SetStructArrayElements(p, o, tabl);
                     }
-
-                    object memb = Extract(sInfo.Child, p.PropertyType);
-                    p.SetValue(o, memb);
+                    else
+                    {
+                        object memb = Extract(sInfo.Child, p.PropertyType);
+                        p.SetValue(o, memb);
+                    }
                 }
-                
-                // TODO: handle arrays
+                else
+                {
+                    // temp
+                    throw new InvalidOperationException("Operation not allowed.");
+                }
             }
 
             return o;
         }
 
-        private void SetArrayValues(PropertyInfo p, object o, SymbolTable tabl)
+        private void SetStructArrayElements(PropertyInfo p, object o, SymbolTable tabl)
         {
             Type propType = p.PropertyType;
-            if (propType.IsGenericType)
-            {
-                Type propGenType = propType.GetElementType().GetGenericTypeDefinition();
-                Type ptrType = typeof(Pointer<>);
-                if (propGenType == ptrType)
-                {
-                    // TODO: better exception message
-                    throw new InvalidCastException(p.Name + " is Pointer<> array!");
-                }
-            }
-
             Type elemType = propType.GetElementType();
-            int elemCount = CountElems(p.Name, tabl);
+
+            //// Check if property is a Pointer<T>[], which is not allowed
+            //if (propType.IsGenericType)
+            //{
+            //    Type propGenType = elemType.GetGenericTypeDefinition();
+            //    if (propGenType == typeof(Pointer<>))
+            //    {
+            //        // TODO: better exception message
+            //        string msg = "Arrays of the Pointer<> type are not allowed. "
+            //            + "Use the ArrayPointer<> class to create a pointer to an array.";
+            //        throw new InvalidCastException(msg);
+            //    }
+            //}
+
+            int elemCount = tabl.CountElems(p.Name);
             Array a = Array.CreateInstance(elemType, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
@@ -315,24 +333,16 @@ namespace WHampson.Cascara
 
         private void SetPointerValue(PropertyInfo p, object o, SymbolInfo sInfo)
         {
-            Type propType = p.PropertyType;
-            if (propType.IsGenericType)
-            {
-                Type propGenType = propType.GetGenericTypeDefinition();
-                Type arrayPtrType = typeof(ArrayPointer<>);
-                if (propGenType == arrayPtrType)
-                {
-                    int elemCount = CountElems(p.Name);
-                    object ptrVal = Activator.CreateInstance(propType, dataPtr + sInfo.Offset, elemCount);
-                    p.SetValue(o, ptrVal);
-                    return;
-                }
-            }
-
             Pointer ptr = GetPointer(sInfo.Offset);
             Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { sInfo.TypeInfo.Type });
 
             p.SetValue(o, Convert.ChangeType(ptr, ptrGeneric));
+        }
+
+        private void SetArrayPointerValue(PropertyInfo p, object o, SymbolInfo sInfo, int elemCount)
+        {
+            object ptrVal = Activator.CreateInstance(p.PropertyType, dataPtr + sInfo.Offset, elemCount);
+            p.SetValue(o, ptrVal);
         }
 
         public object GetValue(Type valType, int offset)
@@ -416,6 +426,21 @@ namespace WHampson.Cascara
             GC.SuppressFinalize(this);
         }
         #endregion
+
+        public static bool IsPropertyArrayPointer(PropertyInfo p)
+        {
+            Type propType = p.PropertyType;
+            if (propType.IsGenericType)
+            {
+                Type propGenType = propType.GetGenericTypeDefinition();
+                if (propGenType == typeof(ArrayPointer<>))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public static BinaryFile Open(string filePath)
         {
