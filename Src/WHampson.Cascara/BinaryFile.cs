@@ -25,6 +25,17 @@ using System;
 using System.Runtime.InteropServices;
 using System.IO;
 using WHampson.Cascara.Types;
+using System.Text.RegularExpressions;
+using System.Reflection;
+
+using Double = WHampson.Cascara.Types.Double;
+using Int16 = WHampson.Cascara.Types.Int16;
+using Int32 = WHampson.Cascara.Types.Int32;
+using Int64 = WHampson.Cascara.Types.Int64;
+using UInt16 = WHampson.Cascara.Types.UInt16;
+using UInt32 = WHampson.Cascara.Types.UInt32;
+using UInt64 = WHampson.Cascara.Types.UInt64;
+using Pointer = WHampson.Cascara.Types.Pointer;
 
 namespace WHampson.Cascara
 {
@@ -215,12 +226,162 @@ namespace WHampson.Cascara
             pValue.Value = value;
         }
 
+        public T Extract<T>() where T : new()
+        {
+            //PrintSymbols(symTabl);
+
+            return (T) Extract(symTabl, typeof(T));
+            //return (T) new object();
+        }
+
+        private object Extract(SymbolTable tabl, Type t)
+        {
+            object o = Activator.CreateInstance(t);
+            PropertyInfo[] props = t.GetProperties();
+            foreach (PropertyInfo p in props)
+            {
+                SymbolInfo sInfo = tabl.GetEntry(p.Name);
+                if (sInfo == null)
+                {
+                    continue;
+                }
+
+                bool isCascaraPrimitive = p.GetValue(o) is ICascaraType;
+                bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
+                if (isCascaraPrimitive || p.PropertyType.IsPrimitive)
+                {
+                    SetPrimitiveValue(p, o, sInfo);
+                }
+                else if (isCascaraPointer)
+                {
+                    SetPointerValue(p, o, sInfo);
+                }
+                else if (sInfo.TypeInfo.Type == typeof(BftStruct) && sInfo.Child != null)
+                {
+                    if (p.PropertyType.IsArray)
+                    {
+                        SetArrayValues(p, o, tabl);
+                        continue;
+                    }
+
+                    object memb = Extract(sInfo.Child, p.PropertyType);
+                    p.SetValue(o, memb);
+                }
+                
+                // TODO: handle arrays
+            }
+
+            return o;
+        }
+
+        private void SetArrayValues(PropertyInfo p, object o, SymbolTable tabl)
+        {
+            Type propType = p.PropertyType;
+            if (propType.IsGenericType)
+            {
+                Type propGenType = propType.GetElementType().GetGenericTypeDefinition();
+                Type ptrType = typeof(Pointer<>);
+                if (propGenType == ptrType)
+                {
+                    // TODO: better exception message
+                    throw new InvalidCastException(p.Name + " is Pointer<> array!");
+                }
+            }
+
+            Type elemType = propType.GetElementType();
+            int elemCount = CountElems(p.Name, tabl);
+            Array a = Array.CreateInstance(elemType, elemCount);
+            for (int i = 0; i < elemCount; i++)
+            {
+                string elemName = string.Format("{0}[{1}]", p.Name, i);
+                SymbolInfo sInfo = tabl.GetEntry(elemName);
+                // TODO: watch out for sInfo == null
+                object memb = Extract(sInfo.Child, elemType);
+                a.SetValue(memb, i);
+            }
+
+            p.SetValue(o, a);
+        }
+
+        public int CountElems(string name)
+        {
+            return CountElems(name, symTabl);
+        }
+
+        private int CountElems(string name, SymbolTable tabl)
+        {
+            name = Regex.Replace(name, @"\[\d+\]$", "");
+            int count = 0;
+            do
+            {
+                string elemName = name + string.Format("[{0}]", count);
+                SymbolInfo sInfo = tabl.GetEntry(elemName);
+                if (sInfo == null) break;
+                count++;
+            } while (true);
+
+            return count;
+        }
+
+        private void SetPrimitiveValue(PropertyInfo p, object o, SymbolInfo sInfo)
+        {
+            object val = GetValue(sInfo.TypeInfo.Type, sInfo.Offset);
+            p.SetValue(o, Convert.ChangeType(val, p.PropertyType));
+        }
+
+        private void SetPointerValue(PropertyInfo p, object o, SymbolInfo sInfo)
+        {
+            Type propType = p.PropertyType;
+            if (propType.IsGenericType)
+            {
+                Type propGenType = propType.GetGenericTypeDefinition();
+                Type arrayPtrType = typeof(ArrayPointer<>);
+                if (propGenType == arrayPtrType)
+                {
+                    int elemCount = CountElems(p.Name);
+                    object ptrVal = Activator.CreateInstance(propType, dataPtr + sInfo.Offset, elemCount);
+                    p.SetValue(o, ptrVal);
+                    return;
+                }
+            }
+
+            Pointer ptr = GetPointer(sInfo.Offset);
+            Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { sInfo.TypeInfo.Type });
+
+            p.SetValue(o, Convert.ChangeType(ptr, ptrGeneric));
+        }
+
+        public object GetValue(Type valType, int offset)
+        {
+            Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { valType });
+            object ptr = Activator.CreateInstance(ptrGeneric, dataPtr + offset);
+            PropertyInfo valProp = ptr.GetType().GetProperty("Value");
+
+            return valProp.GetValue(ptr);
+        }
+
+        private void PrintSymbols(SymbolTable tabl)
+        {
+            string baseName = (string.IsNullOrWhiteSpace(tabl.FullyQualifiedName))
+                ? ""
+                : tabl.FullyQualifiedName + ".";
+            foreach (var entry in tabl.entries)
+            {
+                Console.WriteLine(baseName + entry.Key);
+                SymbolInfo sInfo = entry.Value;
+                if (sInfo.TypeInfo.Type == typeof(BftStruct))
+                {
+                    PrintSymbols(sInfo.Child);
+                }
+            }
+        }
+
         public void ApplyTemplate(string templateFilePath)
         {
             TemplateProcessor proc = new TemplateProcessor(templateFilePath);
             symTabl = proc.Process(dataPtr, dataLen);
 
-            Console.WriteLine(symTabl);
+            //Console.WriteLine(symTabl);
         }
 
         /// <summary>
@@ -262,6 +423,78 @@ namespace WHampson.Cascara
         {
             return offset > -1 && offset < dataLen;
         }
+
+        //public Pointer GetPointer(Type t, string name)
+        //{
+        //    if (t == typeof(Bool8))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if(t == typeof(Bool16))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Bool32))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Bool64))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Char8))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Char16))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Double))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Float))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Int8))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Int16))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Int32))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(Int64))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(UInt8))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(UInt16))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(UInt32))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else if (t == typeof(UInt64))
+        //    {
+        //        return (Pointer) GetPointer<Bool8>(name);
+        //    }
+        //    else
+        //    {
+        //        throw new InvalidOperationException();
+        //    }
+        //}
 
         #region Disposal
         protected virtual void Dispose(bool disposing)
