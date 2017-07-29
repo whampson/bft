@@ -26,39 +26,47 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using WHampson.Cascara.Types;
 
+using Int32 = WHampson.Cascara.Types.Int32;
+using Pointer = WHampson.Cascara.Types.Pointer;
+using UInt32 = WHampson.Cascara.Types.UInt32;
+
 namespace WHampson.Cascara
 {
+    class Vect3D
+    {
+        public Pointer<Float> X { get; set; }
+        public Pointer<Float> Y { get; set; }
+        public Pointer<Float> Z { get; set; }
+
+        public override string ToString()
+        {
+            return string.Format("<{0}, {1}, {2}>", X.Value, Y.Value, Z.Value);
+        }
+    }
+
+    class TestClass
+    {
+        public Vect3D Location { get; set; }
+        public Pointer<Int32> Money { get; set; }
+        public Pointer<Int32> NumKills { get; set; }
+        public Pointer<UInt8> Health { get; set; }
+        public Pointer<UInt8> Armor { get; set; }
+        public ArrayPointer<Float> Misc { get; set; }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-            IntPtr ptr = Marshal.AllocHGlobal(64);
-            Marshal.Copy(new byte[] { 0x01, 0x00, 0xFF, 0xFF }, 0, ptr, 4);
-
-            Types.Pointer p = (ptr + 2);
-            Types.Pointer<CascaraUInt16> a = (Types.Pointer<CascaraUInt16>) p;
-            Types.Pointer<CascaraInt16> b = (Types.Pointer<CascaraInt16>) p;
-            Types.Pointer<CascaraBool16> c = (Types.Pointer<CascaraBool16>) (Types.Pointer) b;
-            Types.Pointer<CascaraInt16> d = ptr;
-
-            Console.WriteLine(p.Address);
-            Console.WriteLine(a.Address);
-            Console.WriteLine(b.Address);
-            Console.WriteLine(c.Address);
-            Console.WriteLine((p + 1).Address);
-            Console.WriteLine((a + 1).Address);
-            Console.WriteLine((b + 1).Address);
-            Console.WriteLine((c + 1).Address);
-
-            Marshal.FreeHGlobal(ptr);
-
-            //TemplateFile tf = new TemplateFile("../../../../Test/DynamicArray.xml");
-            //tf.Process<object>("../../../../Test/DynamicArray.bin");
-
-            using (BinaryFile bFile = BinaryFile.Open("../../../../Test/DynamicArray.bin"))
+            using (BinaryFile bFile = BinaryFile.Open("../../../../Test/Test.bin"))
             {
-                Console.WriteLine(bFile.Length);
-                bFile.ApplyTemplate("../../../../Test/DynamicArray.xml");
+                bFile.ApplyTemplate("../../../../Test/Test.xml");
+
+                TestClass tc = bFile.Extract<TestClass>();
+                foreach (Float f in tc.Misc)
+                {
+                    Console.WriteLine(f);
+                }
             }
 
             // Pause
