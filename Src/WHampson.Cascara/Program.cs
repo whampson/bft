@@ -32,45 +32,37 @@ using UInt32 = WHampson.Cascara.Types.UInt32;
 
 namespace WHampson.Cascara
 {
-    class Vect3D
-    {
-        public Pointer<Float> X { get; set; }
-        public Pointer<Float> Y { get; set; }
-        public Pointer<Float> Z { get; set; }
-
-        public override string ToString()
-        {
-            return string.Format("<{0}, {1}, {2}>", X.Value, Y.Value, Z.Value);
-        }
-    }
-
-    class TestClass
-    {
-        public Vect3D Location { get; set; }
-        public Pointer<Int32> Money { get; set; }
-        public Pointer<Int32> NumKills { get; set; }
-        public Pointer<UInt8> Health { get; set; }
-        public Pointer<UInt8> Armor { get; set; }
-        public ArrayPointer<Float> Misc { get; set; }
-    }
-
     class Program
     {
+        const string TestDir = "../../../../Test/Gta3Save";
+        const string BinDir = TestDir + "/Binaries";
+
         static void Main(string[] args)
         {
-            using (BinaryFile bFile = BinaryFile.Open("../../../../Test/Test.bin"))
-            {
-                bFile.ApplyTemplate("../../../../Test/Test.xml");
+            string xmlPath = TestDir + "/PCSave.xml";
+            string binPath = BinDir + "/PC/GTA3sf1.b";
 
-                TestClass tc = bFile.Extract<TestClass>();
-                foreach (Float f in tc.Misc)
-                {
-                    Console.WriteLine(f);
-                }
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                bFile.ApplyTemplate(xmlPath);
+                Gta3PCSave gameSave = bFile.Extract<Gta3PCSave>();
+                Console.WriteLine(gameSave.SimpleVars.SaveTitle.StringValue);
+
+                //bFile.Write(TestDir + "/out.b");
             }
 
             // Pause
             Console.ReadKey();
         }
+    }
+
+    class SimpleVars
+    {
+        public Pointer<Char16> SaveTitle { get; set; }
+    }
+
+    class Gta3PCSave
+    {
+        public SimpleVars SimpleVars { get; set; }
     }
 }
