@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cascaraBinaryTemplate>
+    <typedef name="BlockHeader" kind="struct">
+        <uint32 name="Size"/>
+    </typedef>
+    
+    <struct name="SimpleVars">
+        <BlockHeader name="Header"/>
+        <char16 name="SaveTitle" count="24"/>
+        <align count="${Header.Size} - (${__OFFSET__} - $[SaveTitle])"/>
+    </struct>
+    <echo message="Reached end of Block 0."/>
+    <local name="skipAmt" value="${__FILESIZE__} - ${__OFFSET__}"/>
+    <echo message="Skipping ${skipAmt} bytes..."/>
+    <align count="${skipAmt}"/>
+</cascaraBinaryTemplate>
