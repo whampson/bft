@@ -202,8 +202,13 @@ namespace WHampson.Cascara.Types
 
         public object ToType(Type conversionType, IFormatProvider provider)
         {
+            if (conversionType == GetType())
+            {
+                return this;
+            }
+
             string fmt = "Cannot convert {0} to {1}.";
-            string msg = string.Format(fmt, GetType().Name, conversionType.Name);
+            string msg = string.Format(fmt, GetType(), conversionType);
 
             throw new InvalidCastException(msg);
         }
