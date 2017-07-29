@@ -153,7 +153,7 @@ namespace WHampson.Cascara.Types
 
         public uint ToUInt32(IFormatProvider provider)
         {
-            return Convert.ToUInt32(m_value);
+            return m_value;
         }
 
         public long ToInt64(IFormatProvider provider)

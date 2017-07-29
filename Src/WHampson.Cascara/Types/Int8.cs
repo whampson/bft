@@ -128,7 +128,7 @@ namespace WHampson.Cascara.Types
 
         public sbyte ToSByte(IFormatProvider provider)
         {
-            return Convert.ToSByte(m_value);
+            return m_value;
         }
 
         public byte ToByte(IFormatProvider provider)

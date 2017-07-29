@@ -173,7 +173,7 @@ namespace WHampson.Cascara.Types
 
         public double ToDouble(IFormatProvider provider)
         {
-            return Convert.ToDouble(m_value);
+            return m_value;
         }
 
         public decimal ToDecimal(IFormatProvider provider)

@@ -143,7 +143,7 @@ namespace WHampson.Cascara.Types
 
         public ushort ToUInt16(IFormatProvider provider)
         {
-            return Convert.ToUInt16(m_value);
+            return m_value;
         }
 
         public int ToInt32(IFormatProvider provider)

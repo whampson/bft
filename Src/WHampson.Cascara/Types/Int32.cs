@@ -148,7 +148,7 @@ namespace WHampson.Cascara.Types
 
         public int ToInt32(IFormatProvider provider)
         {
-            return Convert.ToInt32(m_value);
+            return m_value;
         }
 
         public uint ToUInt32(IFormatProvider provider)

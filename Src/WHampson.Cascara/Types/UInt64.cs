@@ -163,7 +163,7 @@ namespace WHampson.Cascara.Types
 
         public ulong ToUInt64(IFormatProvider provider)
         {
-            return Convert.ToUInt64(m_value);
+            return m_value;
         }
 
         public float ToSingle(IFormatProvider provider)

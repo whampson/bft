@@ -133,7 +133,7 @@ namespace WHampson.Cascara.Types
 
         public byte ToByte(IFormatProvider provider)
         {
-            return Convert.ToByte(m_value);
+            return m_value;
         }
 
         public short ToInt16(IFormatProvider provider)

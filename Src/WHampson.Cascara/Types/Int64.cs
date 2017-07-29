@@ -158,7 +158,7 @@ namespace WHampson.Cascara.Types
 
         public long ToInt64(IFormatProvider provider)
         {
-            return Convert.ToInt64(m_value);
+            return m_value;
         }
 
         public ulong ToUInt64(IFormatProvider provider)

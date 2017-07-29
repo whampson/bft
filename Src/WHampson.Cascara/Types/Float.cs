@@ -168,7 +168,7 @@ namespace WHampson.Cascara.Types
 
         public float ToSingle(IFormatProvider provider)
         {
-            return Convert.ToSingle(m_value);
+            return m_value;
         }
 
         public double ToDouble(IFormatProvider provider)
