@@ -55,6 +55,48 @@ namespace WHampson.Cascara.Types
             set { this[0] = value; }
         }
 
+        public virtual string StringValue
+        {
+            get
+            {
+                bool isChar8 = typeof(T) == typeof(Char8);
+                bool isChar16 = typeof(T) == typeof(Char16);
+                if (!(isChar8 || isChar16))
+                {
+                    return "";
+                }
+
+                string s = "";
+                int i = 0;
+                char c;
+                do
+                {
+                    T t = this[i];
+                    c = Convert.ToChar(t);
+                    s += c;
+                    i++;
+                } while (c != '\0');
+
+                return s;
+            }
+
+            //set
+            //{
+            //    bool isChar8 = typeof(T) == typeof(Char8);
+            //    bool isChar16 = typeof(T) == typeof(Char16);
+            //    if (!(isChar8 || isChar16))
+            //    {
+            //        return;
+            //    }
+
+            //    for (int i = 0; i < value.Length; i++)
+            //    {
+            //        this[i] = (T) Convert.ChangeType(value[i], typeof(T));
+            //    }
+            //    this[value.Length] = (T) (object) '\0';
+            //}
+        }
+
         /// <summary>
         /// Increments the address pointed to by <paramref name="i"/> units,
         /// then dereferences the value at that address so it can be get or set.

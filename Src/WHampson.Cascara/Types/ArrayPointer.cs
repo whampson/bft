@@ -40,6 +40,32 @@ namespace WHampson.Cascara.Types
             get;
         }
 
+        public override string StringValue
+        {
+            get
+            {
+                bool isChar8 = typeof(T) == typeof(Char8);
+                bool isChar16 = typeof(T) == typeof(Char16);
+                if (!(isChar8 || isChar16))
+                {
+                    return "";
+                }
+
+                string s = "";
+                for (int i = 0; i < Count; i++)
+                {
+                    char c = Convert.ToChar(this[i]);
+                    if (c == '\0')
+                    {
+                        break;
+                    }
+                    s += c;
+                }
+
+                return s;
+            }
+        }
+
         public IEnumerator GetEnumerator()
         {
             return new ArrayPointerEnumerator<T>(this);
@@ -73,6 +99,11 @@ namespace WHampson.Cascara.Types
             {
                 position = -1;
             }
+        }
+
+        public override string ToString()
+        {
+            return base.ToString();
         }
     }
 }
