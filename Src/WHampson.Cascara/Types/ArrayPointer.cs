@@ -45,13 +45,13 @@ namespace WHampson.Cascara.Types
             return new ArrayPointerEnumerator<T>(this);
         }
 
-        private class ArrayPointerEnumerator<T> : IEnumerator
-            where T : struct, ICascaraType
+        private class ArrayPointerEnumerator<U> : IEnumerator
+            where U : struct, ICascaraType
         {
-            private ArrayPointer<T> arr;
+            private ArrayPointer<U> arr;
             private int position;
 
-            public ArrayPointerEnumerator(ArrayPointer<T> arr)
+            public ArrayPointerEnumerator(ArrayPointer<U> arr)
             {
                 this.arr = arr;
                 Reset();
