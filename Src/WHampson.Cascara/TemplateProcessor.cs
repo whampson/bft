@@ -26,7 +26,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
@@ -34,11 +33,6 @@ using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
-    internal sealed class BftStruct
-    {
-        // Dummy type to classify structs
-    }
-
     internal sealed class TemplateProcessor
     {
         private const string IdentifierPattern = @"^[a-zA-Z_][\da-zA-Z_]*$";
@@ -223,7 +217,7 @@ namespace WHampson.Cascara
                 throw TemplateException.Create(elem, fmt, elemName);
             }
 
-            if (tInfo.Type == typeof(BftStruct))
+            if (tInfo.Type == typeof(ICascaraStruct))
             {
                 // Process user-defined struct type
                 // "Copy and paste" members from type definition into current element
@@ -736,7 +730,7 @@ namespace WHampson.Cascara
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
-            else if (e.TypeInfo.Type == typeof(BftStruct))
+            else if (e.TypeInfo.Type == typeof(ICascaraStruct))
             {
                 throw new TemplateException("Cannot take the value of a struct.");
             }
