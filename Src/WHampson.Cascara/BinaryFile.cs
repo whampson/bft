@@ -115,7 +115,13 @@ namespace WHampson.Cascara
         {
             SymbolInfo info = symTabl.GetEntry(name);
 
-            return info != null && info.TypeInfo.Type != typeof(BftStruct);
+            return info != null && info.TypeInfo.Type != typeof(ICascaraStruct);
+        }
+
+        public void ApplyTemplate(string templateFilePath)
+        {
+            TemplateProcessor proc = new TemplateProcessor(templateFilePath);
+            symTabl = proc.Process(dataPtr, dataLen);
         }
 
         /// <summary>
@@ -187,7 +193,7 @@ namespace WHampson.Cascara
                 throw new ArgumentException(string.Format(fmt, name));
             }
 
-            if (info.TypeInfo.Type == typeof(BftStruct))
+            if (info.TypeInfo.Type == typeof(ICascaraStruct))
             {
                 string fmt = "Cannot get a pointer to struct '{0}' using type '{1}'.";
                 throw new NotSupportedException(string.Format(fmt, name, typeof(T).Name));
@@ -228,16 +234,14 @@ namespace WHampson.Cascara
 
         public T Extract<T>() where T : new()
         {
-            //PrintSymbols(symTabl);
-
             return (T) Extract(symTabl, typeof(T));
-            //return (T) new object();
         }
 
         private object Extract(SymbolTable tabl, Type t)
         {
             object o = Activator.CreateInstance(t);
             PropertyInfo[] props = t.GetProperties();
+
             foreach (PropertyInfo p in props)
             {
                 SymbolInfo sInfo = tabl.GetEntry(p.Name);
@@ -256,7 +260,7 @@ namespace WHampson.Cascara
                 {
                     SetPointerValue(p, o, sInfo);
                 }
-                else if (sInfo.TypeInfo.Type == typeof(BftStruct) && sInfo.Child != null)
+                else if (sInfo.TypeInfo.Type == typeof(ICascaraStruct) && sInfo.Child != null)
                 {
                     if (p.PropertyType.IsArray)
                     {
@@ -303,26 +307,6 @@ namespace WHampson.Cascara
             p.SetValue(o, a);
         }
 
-        public int CountElems(string name)
-        {
-            return CountElems(name, symTabl);
-        }
-
-        private int CountElems(string name, SymbolTable tabl)
-        {
-            name = Regex.Replace(name, @"\[\d+\]$", "");
-            int count = 0;
-            do
-            {
-                string elemName = name + string.Format("[{0}]", count);
-                SymbolInfo sInfo = tabl.GetEntry(elemName);
-                if (sInfo == null) break;
-                count++;
-            } while (true);
-
-            return count;
-        }
-
         private void SetPrimitiveValue(PropertyInfo p, object o, SymbolInfo sInfo)
         {
             object val = GetValue(sInfo.TypeInfo.Type, sInfo.Offset);
@@ -358,30 +342,6 @@ namespace WHampson.Cascara
             PropertyInfo valProp = ptr.GetType().GetProperty("Value");
 
             return valProp.GetValue(ptr);
-        }
-
-        private void PrintSymbols(SymbolTable tabl)
-        {
-            string baseName = (string.IsNullOrWhiteSpace(tabl.FullyQualifiedName))
-                ? ""
-                : tabl.FullyQualifiedName + ".";
-            foreach (var entry in tabl.entries)
-            {
-                Console.WriteLine(baseName + entry.Key);
-                SymbolInfo sInfo = entry.Value;
-                if (sInfo.TypeInfo.Type == typeof(BftStruct))
-                {
-                    PrintSymbols(sInfo.Child);
-                }
-            }
-        }
-
-        public void ApplyTemplate(string templateFilePath)
-        {
-            TemplateProcessor proc = new TemplateProcessor(templateFilePath);
-            symTabl = proc.Process(dataPtr, dataLen);
-
-            //Console.WriteLine(symTabl);
         }
 
         /// <summary>
@@ -423,78 +383,6 @@ namespace WHampson.Cascara
         {
             return offset > -1 && offset < dataLen;
         }
-
-        //public Pointer GetPointer(Type t, string name)
-        //{
-        //    if (t == typeof(Bool8))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if(t == typeof(Bool16))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Bool32))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Bool64))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Char8))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Char16))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Double))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Float))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Int8))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Int16))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Int32))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(Int64))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(UInt8))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(UInt16))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(UInt32))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else if (t == typeof(UInt64))
-        //    {
-        //        return (Pointer) GetPointer<Bool8>(name);
-        //    }
-        //    else
-        //    {
-        //        throw new InvalidOperationException();
-        //    }
-        //}
 
         #region Disposal
         protected virtual void Dispose(bool disposing)

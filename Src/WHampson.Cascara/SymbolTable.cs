@@ -157,6 +157,21 @@ namespace WHampson.Cascara
             return result;
         }
 
+        public int CountElems(string name)
+        {
+            name = Regex.Replace(name, @"\[\d+\]$", "");    // Remove any array brackets
+            int count = 0;
+            do
+            {
+                string elemName = name + string.Format("[{0}]", count);
+                SymbolInfo sInfo = GetEntry(elemName);
+                if (sInfo == null) break;
+                count++;
+            } while (true);
+
+            return count;
+        }
+
         public override string ToString()
         {
             string baseName = FullyQualifiedName;
