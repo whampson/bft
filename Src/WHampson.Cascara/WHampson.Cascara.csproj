@@ -76,7 +76,7 @@
     <Compile Include="Types\ICascaraStruct.cs" />
     <Compile Include="Types\PointerT.cs" />
     <Compile Include="SymbolTable.cs" />
-    <Compile Include="SymbolInfo.cs" />
+    <Compile Include="SymbolTableEntry.cs" />
     <Compile Include="TemplateProcessor.cs" />
     <Compile Include="TypeInfo.cs" />
     <Compile Include="Program.cs" />
