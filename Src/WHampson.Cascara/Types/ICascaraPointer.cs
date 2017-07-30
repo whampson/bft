@@ -26,33 +26,50 @@ using System;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// Provides a framework for creating a pointer to an <see cref="ICascaraType"/>.
+    /// Provides a framework for defining a pointer to some data type in memory.
     /// </summary>
     public interface ICascaraPointer : IConvertible
     {
         /// <summary>
         /// Gets the absolute memory address pointed to.
         /// </summary>
-        IntPtr Address
-        {
-            get;
-        }
+        IntPtr Address { get; }
 
         /// <summary>
-        /// Gets a value indicating whether this pointer is zero.
+        /// Gets a value indicating whether this pointer refers to a valid object.
         /// </summary>
         /// <remarks>
-        /// A pointer that is not <code>null</code> does not necessarily
-        /// mean that is usable.
+        /// It is possible for a pointer to not be null, but still not refer to a
+        /// valid object. Take care to ensure that the address pointed to is
+        /// usable by the current process.
         /// </remarks>
         /// <returns>
-        /// <code>True</code> if the pointer points to zero,
-        /// <code>False</code> othwewise.
+        /// <code>True</code> if the pointer is a null pointer,
+        /// <code>False</code> otherwise.
         /// </returns>
         bool IsNull();
 
+        /// <summary>
+        /// Gets the value that this pointer points to.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of the value to get.
+        /// </typeparam>
+        /// <returns>
+        /// The value that this pointer points to in terms of
+        /// the generic type <typeparamref name="T"/>.
+        /// </returns>
         T GetValue<T>() where T : struct;
 
+        /// <summary>
+        /// Sets the value that this pointer points to.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of the value to set.
+        /// </typeparam>
+        /// <param name="value">
+        /// The value to store at the address pointed to by this pointer.
+        /// </param>
         void SetValue<T>(T value) where T : struct;
     }
 }
