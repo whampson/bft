@@ -26,51 +26,56 @@ using System;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Contains type, location, and child information about a variable
-    /// identifier.
+    /// Represents an entry in a <see cref="SymbolTable"/>. It contains
+    /// a copy of the symbol name, the type information, location of the
+    /// data that the symbol refers to, and a child table.
     /// </summary>
-    internal sealed class SymbolInfo
+    internal sealed class SymbolTableEntry
     {
         private TypeInfo type;
         private bool isTypeSet;
 
         /// <summary>
-        /// Creates a new <see cref="SymbolInfo"/> object with the given type
-        /// information, location in the binary data, and child symbol
-        /// information.
+        /// Creates a new <see cref="SymbolTableEntry"/> object containing the
+        /// given symmbol, type, offset, and child table.
         /// </summary>
+        /// <param name="symbol">
+        /// The symbol associated with this entry.
+        /// </param>
         /// <param name="type">
-        /// Information about the data the symbol represents.
+        /// The type of data that the symbol refers to.
         /// </param>
         /// <param name="offset">
-        /// The position in the binary data of the first byte of this type's value.
+        /// The position in the binary data of the first byte
+        /// of data that the symbol refers to.
         /// </param>
         /// <param name="child">
+        /// A <see cref="SymbolTable"/> that stems from this entry.
         /// </param>
-        public SymbolInfo(string name, TypeInfo type, int offset, SymbolTable child)
+        public SymbolTableEntry(string symbol, TypeInfo type, int offset, SymbolTable child)
         {
-            Name = name;
+            Symbol = symbol;
             Type = type;
             Offset = offset;
             Child = child;
         }
 
         /// <summary>
-        /// Gets the name of this symbol.
+        /// Gets the symbol associated with this entry.
         /// </summary>
-        public string Name
+        public string Symbol
         {
             get;
         }
 
         /// <summary>
-        /// Gets or sets the type information.
+        /// Gets or sets the type information associated with the symbol.
         /// </summary>
         /// <remarks>
         /// NOTE: the setter can only be used ONCE!
         /// This is to allow for entries to be added to symbol tables
-        /// before their types are analyzed. This allows the symbol's offset
-        /// to be referenced while it's children are being populated.
+        /// before their types have beeen analyzed. This allows the symbol's
+        /// offset to be referenced while it's children are being populated.
         /// This type should otherwise be immutable.
         /// </remarks>
         public TypeInfo Type
@@ -99,7 +104,8 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the position in the binary data of the first byte of this type's value.
+        /// Gets the position in the binary data of the first byte
+        /// of data that the symbol refers to.
         /// </summary>
         public int Offset
         {
@@ -107,7 +113,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="SymbolTable"/> containing all child symbols.
+        /// Gets the <see cref="SymbolTable"/> object containing all child symbols.
         /// </summary>
         public SymbolTable Child
         {
@@ -127,8 +133,8 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            return string.Format("[Name: {0}, Type: {1}, Offset: {2}, HasChild: {3}",
-                Name, Type, Offset, HasChild);
+            return string.Format("[Symbol: {0}, Type: {1}, Offset: {2}, HasChild: {3}]",
+                Symbol, Type, Offset, HasChild);
         }
     }
 }
