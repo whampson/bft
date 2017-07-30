@@ -26,37 +26,37 @@ using System.Collections;
 
 namespace WHampson.Cascara.Types
 {
+    /// <summary>
+    /// A pointer to an array of values in memory.
+    /// </summary>
+    /// <typeparam name="T">
+    /// The type of each element in the array.
+    /// </typeparam>
     public class ArrayPointer<T> : Pointer<T>, IEnumerable
         where T : struct
     {
+        /// <summary>
+        /// Creates a new <see cref="ArrayPointer{T}"/>
+        /// that points to the array located at the specified address.
+        /// </summary>
+        /// <param name="addr">
+        /// The address to point to.
+        /// </param>
+        /// <param name="count">
+        /// The number of elements in the array.
+        /// </param>
         public ArrayPointer(IntPtr addr, int count)
             : base(addr)
         {
             Count = count;
         }
 
-        private int Count
+        /// <summary>
+        /// Gets the number of elements in the array.
+        /// </summary>
+        public int Count
         {
             get;
-        }
-
-        public override string StringValue
-        {
-            get
-            {
-                string s = "";
-                for (int i = 0; i < Count; i++)
-                {
-                    char c = Convert.ToChar(this[i]);
-                    if (c == '\0')
-                    {
-                        break;
-                    }
-                    s += c;
-                }
-
-                return s;
-            }
         }
 
         public IEnumerator GetEnumerator()
@@ -64,28 +64,29 @@ namespace WHampson.Cascara.Types
             return new ArrayPointerEnumerator<T>(this);
         }
 
+        #region Enumerator
         private class ArrayPointerEnumerator<U> : IEnumerator
             where U : struct
         {
-            private ArrayPointer<U> arr;
+            private ArrayPointer<U> arrayPtr;
             private int position;
 
-            public ArrayPointerEnumerator(ArrayPointer<U> arr)
+            public ArrayPointerEnumerator(ArrayPointer<U> a)
             {
-                this.arr = arr;
+                arrayPtr = a;
                 Reset();
             }
 
             public object Current
             {
-                get { return arr[position]; }
+                get { return arrayPtr[position]; }
             }
 
             public bool MoveNext()
             {
                 position++;
 
-                return position < arr.Count;
+                return position < arrayPtr.Count;
             }
 
             public void Reset()
@@ -93,6 +94,7 @@ namespace WHampson.Cascara.Types
                 position = -1;
             }
         }
+        #endregion
 
         public override string ToString()
         {
