@@ -50,5 +50,9 @@ namespace WHampson.Cascara.Types
         /// <code>False</code> othwewise.
         /// </returns>
         bool IsNull();
+
+        T GetValue<T>() where T : struct;
+
+        void SetValue<T>(T value) where T : struct;
     }
 }
