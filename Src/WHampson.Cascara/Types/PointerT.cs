@@ -32,7 +32,7 @@ namespace WHampson.Cascara.Types
     /// <typeparam name="T">
     /// The type represented by the data pointed to.
     /// </typeparam>
-    public class Pointer<T> : ICascaraPointer
+    public class Pointer<T> : Pointer
         where T : struct
     {
         /// <summary>
@@ -42,8 +42,8 @@ namespace WHampson.Cascara.Types
         /// The address to point to.
         /// </param>
         public Pointer(IntPtr addr)
+            : base(addr)
         {
-            Address = addr;
         }
 
         /// <summary>
@@ -55,23 +55,23 @@ namespace WHampson.Cascara.Types
             set { this[0] = value; }
         }
 
-        public virtual string StringValue
-        {
-            get
-            {
-                string s = "";
-                int i = 0;
-                char c;
-                do
-                {
-                    c = Convert.ToChar(this[i]);
-                    s += c;
-                    i++;
-                } while (c != '\0');
+        //public virtual string StringValue
+        //{
+        //    get
+        //    {
+        //        string s = "";
+        //        int i = 0;
+        //        char c;
+        //        do
+        //        {
+        //            c = Convert.ToChar(this[i]);
+        //            s += c;
+        //            i++;
+        //        } while (c != '\0');
 
-                return s;
-            }
-        }
+        //        return s;
+        //    }
+        //}
 
         /// <summary>
         /// Increments the address pointed to by <paramref name="i"/> units,
@@ -96,16 +96,6 @@ namespace WHampson.Cascara.Types
             }
         }
 
-        public IntPtr Address
-        {
-            get;
-        }
-
-        public bool IsNull()
-        {
-            return Address == IntPtr.Zero;
-        }
-
         /// <summary>
         /// Converts a .NET <see cref="IntPtr"/> type into a <see cref="Pointer{T}"/>.
         /// </summary>
@@ -126,28 +116,6 @@ namespace WHampson.Cascara.Types
         public static implicit operator IntPtr(Pointer<T> ptr)
         {
             return ptr.Address;
-        }
-
-        /// <summary>
-        /// Allows a <see cref="Pointer{T}"/> to be cast to a typeless <see cref="Pointer"/>.
-        /// </summary>
-        /// <param name="ptr">
-        /// The typed <see cref="Pointer{T}"/> to cast.
-        /// </param>
-        public static explicit operator Pointer(Pointer<T> ptr)
-        {
-            return new Pointer(ptr.Address);
-        }
-
-        /// <summary>
-        /// Allows a typeless <see cref="Pointer"/> to be cast to a <see cref="Pointer{T}"/>.
-        /// </summary>
-        /// <param name="ptr">
-        /// The typeless <see cref="Pointer"/> to cast.
-        /// </param>
-        public static explicit operator Pointer<T>(Pointer ptr)
-        {
-            return new Pointer<T>(ptr.Address);
         }
 
         /// <summary>
@@ -191,162 +159,5 @@ namespace WHampson.Cascara.Types
 
             return new Pointer<T>(ptr.Address - (siz * off));
         }
-
-        #region IConvertable
-        public TypeCode GetTypeCode()
-        {
-            return TypeCode.Object;
-        }
-
-        public bool ToBoolean(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public char ToChar(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public sbyte ToSByte(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public byte ToByte(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public short ToInt16(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public ushort ToUInt16(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public int ToInt32(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public uint ToUInt32(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public long ToInt64(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public ulong ToUInt64(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public float ToSingle(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public double ToDouble(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public decimal ToDecimal(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public DateTime ToDateTime(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public string ToString(IFormatProvider provider)
-        {
-            throw new InvalidCastException();
-        }
-
-        public object ToType(Type conversionType, IFormatProvider provider)
-        {
-            //// Convert to other pointer types
-            //if (conversionType == typeof(Pointer))
-            //{
-            //    return (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Bool8>))
-            //{
-            //    return (Pointer<Bool8>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Bool16>))
-            //{
-            //    return (Pointer<Bool16>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Bool32>))
-            //{
-            //    return (Pointer<Bool32>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Bool64>))
-            //{
-            //    return (Pointer<Bool64>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Char8>))
-            //{
-            //    return (Pointer<Char8>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Char16>))
-            //{
-            //    return (Pointer<Char16>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Double>))
-            //{
-            //    return (Pointer<Double>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Float>))
-            //{
-            //    return (Pointer<Float>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Int8>))
-            //{
-            //    return (Pointer<Int8>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Int16>))
-            //{
-            //    return (Pointer<Int16>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Int32>))
-            //{
-            //    return (Pointer<Int32>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<Int64>))
-            //{
-            //    return (Pointer<Int64>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<UInt8>))
-            //{
-            //    return (Pointer<UInt8>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<UInt16>))
-            //{
-            //    return (Pointer<UInt16>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<UInt32>))
-            //{
-            //    return (Pointer<UInt32>) (Pointer) this;
-            //}
-            //else if (conversionType == typeof(Pointer<UInt64>))
-            //{
-            //    return (Pointer<UInt64>) (Pointer) this;
-            //}
-
-            throw new InvalidCastException();
-        }
-        #endregion
     }
 }
