@@ -39,9 +39,6 @@ namespace WHampson.Cascara
         /// Creates a new <see cref="SymbolTableEntry"/> object containing the
         /// given symmbol, type, offset, and child table.
         /// </summary>
-        /// <param name="symbol">
-        /// The symbol associated with this entry.
-        /// </param>
         /// <param name="type">
         /// The type of data that the symbol refers to.
         /// </param>
@@ -52,20 +49,11 @@ namespace WHampson.Cascara
         /// <param name="child">
         /// A <see cref="SymbolTable"/> that stems from this entry.
         /// </param>
-        public SymbolTableEntry(string symbol, TypeInfo type, int offset, SymbolTable child)
+        public SymbolTableEntry(TypeInfo type, int offset, SymbolTable child)
         {
-            Symbol = symbol;
             Type = type;
             Offset = offset;
             Child = child;
-        }
-
-        /// <summary>
-        /// Gets the symbol associated with this entry.
-        /// </summary>
-        public string Symbol
-        {
-            get;
         }
 
         /// <summary>
@@ -133,8 +121,8 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            return string.Format("[Symbol: {0}, Type: {1}, Offset: {2}, HasChild: {3}]",
-                Symbol, Type, Offset, HasChild);
+            return string.Format("[Type: {0}, Offset: {1}, HasChild: {2}]",
+                Type, Offset, HasChild);
         }
     }
 }
