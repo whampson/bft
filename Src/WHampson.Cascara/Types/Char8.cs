@@ -29,11 +29,9 @@ namespace WHampson.Cascara.Types
     /// <summary>
     /// An 8-bit character value.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Size = 1, Pack = 0)]
     public struct Char8 : IConvertible, IComparable, IComparable<Char8>, IEquatable<Char8>
     {
-        private const int Size = 1;
-
         private byte m_value;
 
         private Char8(char value)
@@ -104,7 +102,7 @@ namespace WHampson.Cascara.Types
             return value.CharValue;
         }
 
-        #region IConvertible
+        #region IConvertibleImpl
         public TypeCode GetTypeCode()
         {
             return TypeCode.Char;

@@ -29,11 +29,9 @@ namespace WHampson.Cascara.Types
     /// <summary>
     /// A 16-bit character value.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Size = 2, Pack = 0)]
     public struct Char16 : IConvertible, IComparable, IComparable<Char16>, IEquatable<Char16>
     {
-        private const int Size = 2;
-
         private ushort m_value;
 
         private Char16(char value)
@@ -104,7 +102,7 @@ namespace WHampson.Cascara.Types
             return value.CharValue;
         }
 
-        #region IConvertible
+        #region IConvertibleImpl
         public TypeCode GetTypeCode()
         {
             return TypeCode.Char;
