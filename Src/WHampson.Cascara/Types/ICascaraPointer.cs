@@ -26,7 +26,7 @@ using System;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// Provides a framework for defining a pointer to some data type in memory.
+    /// Provides a framework for defining a pointer to some data in memory.
     /// </summary>
     public interface ICascaraPointer : IConvertible
     {
@@ -48,6 +48,18 @@ namespace WHampson.Cascara.Types
         /// <code>False</code> otherwise.
         /// </returns>
         bool IsNull();
+
+        /// <summary>
+        /// Gets the value that this pointer points to.
+        /// </summary>
+        /// <param name="t">
+        /// The type of the value to get.
+        /// </param>
+        /// <returns>
+        /// The value that this pointer points to in terms of
+        /// the type <paramref name="t"/>.
+        /// </returns>
+        object GetValue(Type t);
 
         /// <summary>
         /// Gets the value that this pointer points to.
