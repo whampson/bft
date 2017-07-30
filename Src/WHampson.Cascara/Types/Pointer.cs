@@ -27,16 +27,16 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A typeless pointer to some data. This can be thought of as a <code>void</code> pointer.
-    /// This pointer cannot be dereferenced.
+    /// A typeless pointer to some data in memory.
     /// </summary>
     /// <remarks>
-    /// To dereference this pointer, it must first be cast to <see cref="Pointer{T}"/>.
+    /// This can be thought of as a <code>void/code> pointer.
     /// </remarks>
     public class Pointer : ICascaraPointer
     {
         /// <summary>
-        /// Creates a new typeless pointer to the specified address.
+        /// Creates a new typeless <see cref="Pointer"/>
+        /// that points to the specified address.
         /// </summary>
         /// <param name="addr">
         /// The address to point to.
@@ -56,6 +56,16 @@ namespace WHampson.Cascara.Types
             return Address == IntPtr.Zero;
         }
 
+        public object GetValue(Type t)
+        {
+            if (!t.IsValueType)
+            {
+                throw new InvalidOperationException("Type must be a value type.");
+            }
+
+            return Marshal.PtrToStructure(Address, t);
+        }
+
         public T GetValue<T>()
             where T : struct
         {
@@ -65,76 +75,29 @@ namespace WHampson.Cascara.Types
         public void SetValue<T>(T value)
             where T : struct
         {
-            int siz = Marshal.SizeOf(typeof(T));
-            byte[] data = BitConverter.GetBytes((dynamic) value);
-            Marshal.Copy(data, 0, Address, data.Length);
+            int size = Marshal.SizeOf(typeof(T));
+            byte[] data = new byte[size];
+
+            Marshal.StructureToPtr(value, Address, true);
         }
 
+        /// <summary>
+        /// Converts this typeless <see cref="Pointer"/> into a <see cref="Pointer{T}"/>.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of the data pointed to.
+        /// </typeparam>
+        /// <returns>
+        /// A <see cref="Pointer{T}"/> object that points to the same
+        /// location as this pointer.
+        /// </returns>
         public Pointer<T> ToPointer<T>()
             where T : struct
         {
             return new Pointer<T>(Address);
         }
 
-        /// <summary>
-        /// Converts a .NET <see cref="IntPtr"/> type into a <see cref="Pointer"/>.
-        /// </summary>
-        /// <param name="ptr">
-        /// The <see cref="IntPtr"/> to convert.
-        /// </param>
-        public static implicit operator Pointer(IntPtr ptr)
-        {
-            return new Pointer(ptr);
-        }
-
-        /// <summary>
-        /// Converts a <see cref="Pointer"/> into a .NET <see cref="IntPtr"/> type.
-        /// </summary>
-        /// <param name="ptr">
-        /// The <see cref="Pointer"/> to convert.
-        /// </param>
-        public static implicit operator IntPtr(Pointer ptr)
-        {
-            return ptr.Address;
-        }
-
-        /// <summary>
-        /// Adds an offset to the value of a pointer.
-        /// The offset is in units of bytes.
-        /// </summary>
-        /// <param name="ptr">
-        /// The base address.
-        /// </param>
-        /// <param name="off">
-        /// The offset to add to the base.
-        /// </param>
-        /// <returns>
-        /// A <see cref="Pointer"/> object that points to the new address.
-        /// </returns>
-        public static Pointer operator +(Pointer ptr, int off)
-        {
-            return new Pointer(ptr.Address + off);
-        }
-
-        /// <summary>
-        /// Subtracts an offset to from value of a pointer.
-        /// The offset is in units of bytes.
-        /// </summary>
-        /// <param name="ptr">
-        /// The base address.
-        /// </param>
-        /// <param name="off">
-        /// The offset to subtract from the base.
-        /// </param>
-        /// <returns>
-        /// A <see cref="Pointer"/> object that points to the new address.
-        /// </returns>
-        public static Pointer operator -(Pointer ptr, int off)
-        {
-            return new Pointer(ptr.Address - off);
-        }
-
-        #region IConvertable
+        #region IConvertableImpl
         public TypeCode GetTypeCode()
         {
             return TypeCode.Object;
@@ -217,11 +180,13 @@ namespace WHampson.Cascara.Types
 
         public object ToType(Type conversionType, IFormatProvider provider)
         {
+            // Handle conversion to self
             if (conversionType == GetType())
             {
                 return this;
             }
 
+            // Handle conversion to Pointer<> and any subclass of Pointer<>
             if (TypeUtils.IsAssignableToGenericType(conversionType, typeof(Pointer<>)))
             {
                 return Activator.CreateInstance(conversionType, Address);
@@ -230,5 +195,63 @@ namespace WHampson.Cascara.Types
             throw new InvalidCastException();
         }
         #endregion
+
+        /// <summary>
+        /// Converts an <see cref="IntPtr"/> into a <see cref="Pointer"/>.
+        /// </summary>
+        /// <param name="ptr">
+        /// The <see cref="IntPtr"/> to convert.
+        /// </param>
+        public static implicit operator Pointer(IntPtr ptr)
+        {
+            return new Pointer(ptr);
+        }
+
+        /// <summary>
+        /// Converts a <see cref="Pointer"/> into an <see cref="IntPtr"/>.
+        /// </summary>
+        /// <param name="ptr">
+        /// The <see cref="Pointer"/> to convert.
+        /// </param>
+        public static implicit operator IntPtr(Pointer ptr)
+        {
+            return ptr.Address;
+        }
+
+        /// <summary>
+        /// Adds an offset to the address pointed to by a <see cref="Pointer"/>.
+        /// The offset is in units of bytes.
+        /// </summary>
+        /// <param name="ptr">
+        /// The base address.
+        /// </param>
+        /// <param name="off">
+        /// The offset to add to the base.
+        /// </param>
+        /// <returns>
+        /// A <see cref="Pointer"/> object that points to the new address.
+        /// </returns>
+        public static Pointer operator +(Pointer ptr, int off)
+        {
+            return new Pointer(ptr.Address + off);
+        }
+
+        /// <summary>
+        /// Subtracts an offset from the address pointed to by a <see cref="Pointer"/>.
+        /// The offset is in units of bytes.
+        /// </summary>
+        /// <param name="ptr">
+        /// The base address.
+        /// </param>
+        /// <param name="off">
+        /// The offset to subtract from the base.
+        /// </param>
+        /// <returns>
+        /// A <see cref="Pointer"/> object that points to the new address.
+        /// </returns>
+        public static Pointer operator -(Pointer ptr, int off)
+        {
+            return new Pointer(ptr.Address - off);
+        }
     }
 }
