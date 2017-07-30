@@ -24,7 +24,8 @@
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// Dummy interface used internally for classifying structs.
+    /// Dummy interface used internally for classifying
+    /// structs defined in a template.
     /// </summary>
     internal interface ICascaraStruct
     {
