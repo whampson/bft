@@ -66,6 +66,10 @@
     <Compile Include="Keywords.cs" />
     <Compile Include="NumberUtils.cs" />
     <Compile Include="Types\ArrayPointer.cs" />
+    <Compile Include="Types\Bool16.cs" />
+    <Compile Include="Types\Bool32.cs" />
+    <Compile Include="Types\Bool64.cs" />
+    <Compile Include="Types\Bool8.cs" />
     <Compile Include="Types\Char16.cs" />
     <Compile Include="Types\Char8.cs" />
     <Compile Include="Types\ICascaraPointer.cs" />
