@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// </returns>
         public static TypeInfo CreatePrimitive(Type t, int size)
         {
-            return new TypeInfo(t, new List<XElement>(), Marshal.SizeOf(t));
+            return new TypeInfo(t, new List<XElement>(), size);
         }
 
         /// <summary>
@@ -87,10 +87,10 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets the .NET <see cref="Type"/> represented.
         /// </summary>
-        //public Type Type
-        //{
-        //    get;
-        //}
+        public Type Type
+        {
+            get;
+        }
 
         /// <summary>
         /// Gets the collection of <see cref="XElement"/>s that define this type.
