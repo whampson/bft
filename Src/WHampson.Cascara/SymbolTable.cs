@@ -32,7 +32,7 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTable
     {
-        private Dictionary<string, SymbolInfo> entries;
+        private Dictionary<string, SymbolTableEntry> entries;
 
         /// <summary>
         /// Creates a new nameless, parentless <see cref="SymbolTable"/>.
@@ -48,7 +48,7 @@ namespace WHampson.Cascara
         /// child of an existing table.
         /// </summary>
         /// <param name="name">
-        /// The name associated with the symbol table.
+        /// The parent symbol associated with the symbol table.
         /// </param>
         /// <param name="parent">
         /// The <see cref="SymbolTable"/> from which this table stems.
@@ -57,7 +57,7 @@ namespace WHampson.Cascara
         {
             Name = name;
             Parent = parent;
-            entries = new Dictionary<string, SymbolInfo>();
+            entries = new Dictionary<string, SymbolTableEntry>();
         }
 
         /// <summary>
@@ -100,19 +100,27 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Adds the provided <see cref="SymbolInfo"/> to the table and
+        /// Gets a value indicating whether this table has a parent table.
+        /// </summary>
+        public bool HasParent
+        {
+            get { return Parent != null; }
+        }
+
+        /// <summary>
+        /// Adds the provided <see cref="SymbolTableEntry"/> to the table and
         /// associates it with the provided name.
         /// </summary>
-        /// <param name="name">
+        /// <param name="symbol">
         /// The name to be given to the table entry.
         /// </param>
         /// <param name="e">
-        /// The <see cref="SymbolInfo"/> to add to the table.
+        /// The <see cref="SymbolTableEntry"/> to add to the table.
         /// </param>
         /// <returns>
         /// <code>False</code> if the given name already exists in the table.
         /// </returns>
-        public bool AddEntry(string name, SymbolInfo e)
+        public bool AddEntry(string name, SymbolTableEntry e)
         {
             string symbol = CreateSymbol(name);
             if (entries.ContainsKey(symbol))
@@ -125,27 +133,48 @@ namespace WHampson.Cascara
             return true;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the provided entry name
+        /// exists in the current table or parent tables.
+        /// </summary>
+        /// <param name="name">
+        /// The name to check for existence
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the entry exists.
+        /// <<code>False</code> if not found.
+        /// </returns>
         public bool ContainsEntry(string name)
         {
             return GetEntry(name) != null;
         }
 
         /// <summary>
-        /// Gets an entry from the table
+        /// Gets an entry from the table.
         /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public SymbolInfo GetEntry(string name)
+        /// <remarks>
+        /// The parent tables will be searched for the entry if necessary.
+        /// </remarks>
+        /// <param name="name">
+        /// The name of the entry to get.
+        /// </param>
+        /// <returns>
+        /// The entry if it exists, <code>null</code> otherwise.
+        /// </returns>
+        public SymbolTableEntry GetEntry(string name)
         {
             string[] splitname = name.Split('.');
 
-            SymbolInfo top = SearchUp(this, CreateSymbol(splitname[0]));
+            // Traverse up the tree until we find the first part of the name.
+            SymbolTableEntry top = SearchUp(this, CreateSymbol(splitname[0]));
             if (top == null)
             {
                 return null;
             }
 
-            SymbolInfo result = top;
+            // Traverse down from the top until we find the entry whose name
+            // matches the last part of the provided name
+            SymbolTableEntry result = top;
             SymbolTable tabl = result.Child;
             string sym;
 
@@ -162,11 +191,39 @@ namespace WHampson.Cascara
             return result;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the given name
+        /// refers to a primitive data type.
+        /// </summary>
+        /// <remarks>
+        /// Primitives and structs are mutually exclusive.
+        /// </remarks>
+        /// <param name="name">
+        /// The name to check for.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the name refers to a primitive type,
+        /// <code>False</code> otherwise.
+        /// </returns>
         public bool IsPrimitive(string name)
         {
             return !IsStruct(name);
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the given name
+        /// refers to a struct.
+        /// </summary>
+        /// <remarks>
+        /// Primitives and structs are mutually exclusive.
+        /// </remarks>
+        /// <param name="name">
+        /// The name to check for.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the name refers to a struct,
+        /// <code>False</code> otherwise.
+        /// </returns>
         public bool IsStruct(string name)
         {
             if (!ContainsEntry(name))
@@ -174,9 +231,20 @@ namespace WHampson.Cascara
                 return false;
             }
 
-            return GetEntry(name).TypeInfo.IsStruct;
+            return GetEntry(name).Type.IsStruct;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the given name
+        /// refers to an array.
+        /// </summary>
+        /// <param name="name">
+        /// The name to check for.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the name refers to an array,
+        /// <code>False</code> otherwise.
+        /// </returns>
         public bool IsArray(string name)
         {
             name = StripArrayNotation(name);
@@ -185,6 +253,18 @@ namespace WHampson.Cascara
             return ContainsEntry(elem1);
         }
 
+        /// <summary>
+        /// Gets the number of elements in the array
+        /// referred to by the given name.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the array to get the element count for.
+        /// </param>
+        /// <returns>
+        /// The number of elements in the array.
+        /// If the given name does not exist or does not refer
+        /// to an array, 0 is returned.
+        /// </returns>
         public int GetElemCount(string name)
         {
             name = StripArrayNotation(name);
@@ -197,36 +277,25 @@ namespace WHampson.Cascara
             do
             {
                 string elemName = name + string.Format("[{0}]", count);
-                SymbolInfo sInfo = GetEntry(elemName);
-                if (sInfo == null) break;
+                if (!ContainsEntry(elemName))
+                {
+                    break;
+                }
                 count++;
             } while (true);
 
             return count;
         }
 
-        public override string ToString()
-        {
-            string baseName = FullyQualifiedName;
-            string s = "";
-            foreach (KeyValuePair<string, SymbolInfo> kvp in entries)
-            {
-                s += baseName;
-                s += (baseName == "") ? "" : ".";
-                s += string.Format("{0}: {1}\n", kvp.Key, kvp.Value);
-
-                if (kvp.Value.Child != null)
-                {
-                    s += kvp.Value.Child;
-                }
-
-            }
-            return s;
-        }
-
         private string StripArrayNotation(string s)
         {
             return Regex.Replace(s, @"\[\d+\]$", "");
+        }
+
+        public override string ToString()
+        {
+            return string.Format("[Name: {0}, NumEntries: {1}, HasParent: {2}]",
+                FullyQualifiedName, entries.Count, HasParent);
         }
 
         /// <summary>
@@ -261,17 +330,17 @@ namespace WHampson.Cascara
         /// The symbol to search for.
         /// </param>
         /// <returns>
-        /// The <see cref="SymbolInfo"/> corresponding to the symbol if found,
+        /// The <see cref="SymbolTableEntry"/> corresponding to the symbol if found,
         /// <code>null</code> if not found.
         /// </returns>
-        private static SymbolInfo SearchUp(SymbolTable tabl, string symbolName)
+        private static SymbolTableEntry SearchUp(SymbolTable tabl, string symbolName)
         {
             if (tabl == null)
             {
                 return null;
             }
 
-            if (tabl.entries.TryGetValue(symbolName, out SymbolInfo entry))
+            if (tabl.entries.TryGetValue(symbolName, out SymbolTableEntry entry))
             {
                 return entry;
             }
