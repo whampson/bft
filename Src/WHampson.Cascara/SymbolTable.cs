@@ -32,7 +32,7 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTable
     {
-        internal Dictionary<string, SymbolInfo> entries;
+        private Dictionary<string, SymbolInfo> entries;
 
         /// <summary>
         /// Creates a new nameless, parentless <see cref="SymbolTable"/>.
@@ -125,6 +125,11 @@ namespace WHampson.Cascara
             return true;
         }
 
+        public bool ContainsEntry(string name)
+        {
+            return GetEntry(name) != null;
+        }
+
         /// <summary>
         /// Gets an entry from the table
         /// </summary>
@@ -157,9 +162,37 @@ namespace WHampson.Cascara
             return result;
         }
 
-        public int CountElems(string name)
+        public bool IsPrimitive(string name)
         {
-            name = Regex.Replace(name, @"\[\d+\]$", "");    // Remove any array brackets
+            return !IsStruct(name);
+        }
+
+        public bool IsStruct(string name)
+        {
+            if (!ContainsEntry(name))
+            {
+                return false;
+            }
+
+            return GetEntry(name).TypeInfo.IsStruct;
+        }
+
+        public bool IsArray(string name)
+        {
+            name = StripArrayNotation(name);
+            string elem1 = name + "[1]";
+
+            return ContainsEntry(elem1);
+        }
+
+        public int GetElemCount(string name)
+        {
+            name = StripArrayNotation(name);
+            if (!ContainsEntry(name))
+            {
+                return 0;
+            }
+
             int count = 0;
             do
             {
@@ -189,6 +222,11 @@ namespace WHampson.Cascara
 
             }
             return s;
+        }
+
+        private string StripArrayNotation(string s)
+        {
+            return Regex.Replace(s, @"\[\d+\]$", "");
         }
 
         /// <summary>
