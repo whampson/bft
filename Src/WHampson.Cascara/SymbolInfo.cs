@@ -39,7 +39,7 @@ namespace WHampson.Cascara
         /// information, location in the binary data, and child symbol
         /// information.
         /// </summary>
-        /// <param name="typeInfo">
+        /// <param name="type">
         /// Information about the data the symbol represents.
         /// </param>
         /// <param name="offset">
@@ -47,11 +47,20 @@ namespace WHampson.Cascara
         /// </param>
         /// <param name="child">
         /// </param>
-        public SymbolInfo(TypeInfo typeInfo, int offset, SymbolTable child)
+        public SymbolInfo(string name, TypeInfo type, int offset, SymbolTable child)
         {
-            TypeInfo = typeInfo;
+            Name = name;
+            Type = type;
             Offset = offset;
             Child = child;
+        }
+
+        /// <summary>
+        /// Gets the name of this symbol.
+        /// </summary>
+        public string Name
+        {
+            get;
         }
 
         /// <summary>
@@ -64,7 +73,7 @@ namespace WHampson.Cascara
         /// to be referenced while it's children are being populated.
         /// This type should otherwise be immutable.
         /// </remarks>
-        public TypeInfo TypeInfo
+        public TypeInfo Type
         {
             get
             {
@@ -76,8 +85,7 @@ namespace WHampson.Cascara
                 // Ensure type is set exactly once
                 if (!isTypeSet)
                 {
-                    type = value;
-                    if (value != null)
+                    if ((type = value) != null)
                     {
                         isTypeSet = true;
                     }
@@ -106,13 +114,21 @@ namespace WHampson.Cascara
             get;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether this symbol has a child table.
+        /// </summary>
+        /// <remarks>
+        /// This indicates whether the symbol refers to a struct.
+        /// </remarks>
+        public bool HasChild
+        {
+            get { return Child != null; }
+        }
+
         public override string ToString()
         {
-            string s = "{";
-            s += string.Format("{0}: {1:X8}", TypeInfo.Type.Name, Offset);
-            s += "}";
-
-            return s;
+            return string.Format("[Name: {0}, Type: {1}, Offset: {2}, HasChild: {3}",
+                Name, Type, Offset, HasChild);
         }
     }
 }
