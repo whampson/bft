@@ -27,16 +27,17 @@ using System.Runtime.InteropServices;
 namespace WHampson.Cascara.Types
 {
     /// <summary>
-    /// A pointer to some <see cref="ICascaraType"/>.
+    /// A pointer to some data in memory.
     /// </summary>
     /// <typeparam name="T">
-    /// The type represented by the data pointed to.
+    /// The type of the data pointed to.
     /// </typeparam>
     public class Pointer<T> : Pointer
         where T : struct
     {
         /// <summary>
-        /// Creates a new pointer to the specified address.
+        /// Creates a new <see cref="Pointer{T}"/>
+        /// that points to the specified address.
         /// </summary>
         /// <param name="addr">
         /// The address to point to.
@@ -55,49 +56,35 @@ namespace WHampson.Cascara.Types
             set { this[0] = value; }
         }
 
-        //public virtual string StringValue
-        //{
-        //    get
-        //    {
-        //        string s = "";
-        //        int i = 0;
-        //        char c;
-        //        do
-        //        {
-        //            c = Convert.ToChar(this[i]);
-        //            s += c;
-        //            i++;
-        //        } while (c != '\0');
-
-        //        return s;
-        //    }
-        //}
-
         /// <summary>
         /// Increments the address pointed to by <paramref name="i"/> units,
         /// then dereferences the value at that address so it can be get or set.
         /// </summary>
         /// <param name="i">
-        /// The offset in units of the type <see cref="T"/>.
+        /// The offset in units of the type <see cref="T"/>. This means that if
+        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
         /// </param>
         public T this[int i]
         {
             get
             {
-                int siz = Marshal.SizeOf(typeof(T));
-                return Marshal.PtrToStructure<T>(Address + (i * siz));
+                int size = Marshal.SizeOf(typeof(T));
+                Pointer<T> ptr = Address + (i * size);
+
+                return ptr.GetValue<T>();
             }
 
             set
             {
-                int siz = Marshal.SizeOf(typeof(T));
-                byte[] data = BitConverter.GetBytes((dynamic) value);
-                Marshal.Copy(data, 0, Address + (i * siz), data.Length);
+                int size = Marshal.SizeOf(typeof(T));
+                Pointer<T> ptr = Address + (i * size);
+
+                ptr.SetValue(value);
             }
         }
 
         /// <summary>
-        /// Converts a .NET <see cref="IntPtr"/> type into a <see cref="Pointer{T}"/>.
+        /// Converts an <see cref="IntPtr"/> into a <see cref="Pointer{T}"/>.
         /// </summary>
         /// <param name="ptr">
         /// The <see cref="IntPtr"/> to convert.
@@ -108,7 +95,7 @@ namespace WHampson.Cascara.Types
         }
 
         /// <summary>
-        /// Converts a <see cref="Pointer{T}"/> into a .NET <see cref="IntPtr"/> type.
+        /// Converts a <see cref="Pointer{T}"/> into an <see cref="IntPtr"/>.
         /// </summary>
         /// <param name="ptr">
         /// The <see cref="Pointer{T}"/> to convert.
@@ -119,10 +106,13 @@ namespace WHampson.Cascara.Types
         }
 
         /// <summary>
-        /// Adds an offset to the value of a pointer.
-        /// The offset is in units of the type <see cref="T"/>. This means that if
-        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// Adds an offset to the address pointed to by a <see cref="Pointer{T}"/>.
+        /// The offset is in units of <see cref="T"/>.
         /// </summary>
+        /// <remarks>
+        /// The offset in units of the type <see cref="T"/>. This means that if
+        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// </remarks>
         /// <param name="ptr">
         /// The base address.
         /// </param>
@@ -140,10 +130,13 @@ namespace WHampson.Cascara.Types
         }
 
         /// <summary>
-        /// Subtracts an offset from the value of a pointer.
-        /// The offset is in units of the type <see cref="T"/>. This means that if
-        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// Subtracts an offset from the address pointed to by a <see cref="Pointer{T}"/>.
+        /// The offset is in units of <see cref="T"/>.
         /// </summary>
+        /// <remarks>
+        /// The offset in units of the type <see cref="T"/>. This means that if
+        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// </remarks>
         /// <param name="ptr">
         /// The base address.
         /// </param>
