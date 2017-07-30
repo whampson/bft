@@ -97,6 +97,11 @@ namespace WHampson.Cascara.Types
             return new Pointer<T>(Address);
         }
 
+        public override string ToString()
+        {
+            return string.Format("[Address: {0}]", Address.ToInt64());
+        }
+
         #region IConvertableImpl
         public TypeCode GetTypeCode()
         {

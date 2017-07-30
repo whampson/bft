@@ -64,6 +64,12 @@ namespace WHampson.Cascara.Types
             return new ArrayPointerEnumerator<T>(this);
         }
 
+        public override string ToString()
+        {
+            return string.Format("[Address: {0}, Type: {1}, Count: {2}]",
+                Address.ToInt64(), typeof(T), Count);
+        }
+
         #region Enumerator
         private class ArrayPointerEnumerator<U> : IEnumerator
             where U : struct
@@ -95,10 +101,5 @@ namespace WHampson.Cascara.Types
             }
         }
         #endregion
-
-        public override string ToString()
-        {
-            return base.ToString();
-        }
     }
 }

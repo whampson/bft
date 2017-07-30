@@ -83,6 +83,11 @@ namespace WHampson.Cascara.Types
             }
         }
 
+        public override string ToString()
+        {
+            return string.Format("[Address: {0}, Type: {1}]", Address.ToInt64(), typeof(T));
+        }
+
         /// <summary>
         /// Converts an <see cref="IntPtr"/> into a <see cref="Pointer{T}"/>.
         /// </summary>
