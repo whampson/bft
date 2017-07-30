@@ -70,28 +70,6 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the globally scoped name of this variable.
-        /// </summary>
-        public string FullyQualifiedName
-        {
-            get
-            {
-                string baseName = "";
-                if (!(Parent == null || Parent.Name == null))
-                {
-                    baseName += CreateSymbol(Parent.Name) + ".";
-                }
-
-                if (Name != null)
-                {
-                    baseName += CreateSymbol(Name);
-                }
-
-                return baseName;
-            }
-        }
-
-        /// <summary>
         /// Gets the parent table.
         /// Returns <code>null</code> if this is the root table.
         /// </summary>
@@ -190,6 +168,64 @@ namespace WHampson.Cascara
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Gets the globally-scoped name of this table.
+        /// </summary>
+        /// <returns>
+        /// The globally-scoped name of this table.
+        /// </returns>
+        public string GetFullyQualifiedName()
+        {
+            if (Parent == null)
+            {
+                return null;
+            }
+
+            string localName = Name;
+            if (!Parent.IsArray(localName))
+            {
+                localName = StripArrayNotation(localName);
+            }
+
+            if (Parent.Name == null)
+            {
+                return localName;
+            }
+
+            return Parent.GetFullyQualifiedName() + "." + localName;
+        }
+
+        /// <summary>
+        /// Gets the fully-qualified name of the entry with the
+        /// matching <paramref name="name"/>.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the entry.
+        /// </param>
+        /// <returns>
+        /// The fully-qualified name of the entry.
+        /// </returns>
+        public string GetFullyQualifiedName(string name)
+        {
+            if (!ContainsEntry(name))
+            {
+                return null;
+            }
+
+            if (!IsArray(name))
+            {
+                name = StripArrayNotation(name);
+            }
+
+            string baseName = GetFullyQualifiedName();
+            if (string.IsNullOrEmpty(baseName))
+            {
+                return name;
+            }
+
+            return baseName + "." + name;
         }
 
         /// <summary>
@@ -306,7 +342,7 @@ namespace WHampson.Cascara
         public override string ToString()
         {
             return string.Format("[Name: {0}, NumEntries: {1}, HasParent: {2}]",
-                FullyQualifiedName, entries.Count, HasParent);
+                GetFullyQualifiedName(), entries.Count, HasParent);
         }
 
         /// <summary>
