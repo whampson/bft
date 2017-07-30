@@ -21,6 +21,7 @@
  */
 #endregion
 
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -30,7 +31,7 @@ namespace WHampson.Cascara
     /// Associates identifiers with a type, offset and child
     /// <see cref="SymbolTable"/> for nested identifiers.
     /// </summary>
-    internal sealed class SymbolTable
+    internal sealed class SymbolTable : IEnumerable<KeyValuePair<string, SymbolTableEntry>>
     {
         private Dictionary<string, SymbolTableEntry> entries;
 
@@ -290,6 +291,16 @@ namespace WHampson.Cascara
         private string StripArrayNotation(string s)
         {
             return Regex.Replace(s, @"\[\d+\]$", "");
+        }
+
+        public IEnumerator<KeyValuePair<string, SymbolTableEntry>> GetEnumerator()
+        {
+            return entries.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
 
         public override string ToString()
