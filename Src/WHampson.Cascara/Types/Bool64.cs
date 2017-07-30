@@ -22,33 +22,26 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WHampson.Cascara.Types
 {
     /// <summary>
     /// A 64-bit true/false value.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Bool64 : ICascaraType,
-        IComparable<Bool64>, IEquatable<Bool64>
+    [StructLayout(LayoutKind.Sequential, Size = 8, Pack = 0)]
+    public struct Bool64 : IConvertible, IComparable, IComparable<Bool64>, IEquatable<Bool64>
     {
-        private const int Size = 8;
-
-        private Int64 m_value;
+        private UInt64 m_value;
 
         private Bool64(bool value)
         {
-            m_value = (value) ? 1 : 0;
+            m_value = (value) ? 1UL : 0UL;
         }
 
         private bool BoolValue
         {
-            get { return (int) m_value != 0; }
+            get { return m_value != 0; }
         }
 
         public int CompareTo(Bool64 other)
@@ -77,16 +70,6 @@ namespace WHampson.Cascara.Types
             }
 
             return CompareTo((Bool64) obj);
-        }
-
-        byte[] ICascaraType.GetBytes()
-        {
-            return ((ICascaraType) m_value).GetBytes();
-        }
-
-        int ICascaraType.GetSize()
-        {
-            return Size;
         }
 
         public override bool Equals(object obj)
@@ -119,7 +102,7 @@ namespace WHampson.Cascara.Types
             return value.BoolValue;
         }
 
-        #region IConvertible
+        #region IConvertibleImpl
         public TypeCode GetTypeCode()
         {
             return TypeCode.Boolean;

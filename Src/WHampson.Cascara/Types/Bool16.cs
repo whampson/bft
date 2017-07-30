@@ -29,22 +29,19 @@ namespace WHampson.Cascara.Types
     /// <summary>
     /// A 16-bit true/false value.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
-    public struct Bool16 : ICascaraType,
-        IComparable<Bool16>, IEquatable<Bool16>
+    [StructLayout(LayoutKind.Sequential, Size = 2, Pack = 0)]
+    public struct Bool16 : IConvertible, IComparable, IComparable<Bool16>, IEquatable<Bool16>
     {
-        private const int Size = 2;
-
-        private Int16 m_value;
+        private ushort m_value;
 
         private Bool16(bool value)
         {
-            m_value = (short) ((value) ? 1 : 0);
+            m_value = (ushort) ((value) ? 1 : 0);
         }
 
         private bool BoolValue
         {
-            get { return (int) m_value != 0; }
+            get { return m_value != 0; }
         }
 
         public int CompareTo(Bool16 other)
@@ -73,16 +70,6 @@ namespace WHampson.Cascara.Types
             }
 
             return CompareTo((Bool16) obj);
-        }
-
-        byte[] ICascaraType.GetBytes()
-        {
-            return ((ICascaraType) m_value).GetBytes();
-        }
-
-        int ICascaraType.GetSize()
-        {
-            return Size;
         }
 
         public override bool Equals(object obj)
@@ -115,7 +102,7 @@ namespace WHampson.Cascara.Types
             return value.BoolValue;
         }
 
-        #region IConvertible
+        #region IConvertibleImpl
         public TypeCode GetTypeCode()
         {
             return TypeCode.Boolean;
