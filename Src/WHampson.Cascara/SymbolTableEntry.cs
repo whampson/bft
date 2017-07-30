@@ -37,7 +37,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Creates a new <see cref="SymbolTableEntry"/> object containing the
-        /// given symmbol, type, offset, and child table.
+        /// given symbol, type, offset, and child table.
         /// </summary>
         /// <param name="type">
         /// The type of data that the symbol refers to.
@@ -62,7 +62,7 @@ namespace WHampson.Cascara
         /// <remarks>
         /// NOTE: the setter can only be used ONCE!
         /// This is to allow for entries to be added to symbol tables
-        /// before their types have beeen analyzed. This allows the symbol's
+        /// before their types have been analyzed. This allows the symbol's
         /// offset to be referenced while it's children are being populated.
         /// This type should otherwise be immutable.
         /// </remarks>
