@@ -35,16 +35,34 @@ namespace WHampson.Cascara
     {
         /// <summary>
         /// Creates a <see cref="TypeInfo"/> object representing a primitive
-        /// data type that is equivalent to the provided .NET <see cref="Kind"/>.
+        /// data type.
         /// </summary>
         /// <param name="t">
         /// The .NET type that this primitive represents.
+        /// </param>
+        /// <param name="size">
+        /// The number of bytes that an instance of this type occupies.
         /// </param>
         /// <returns>
         /// The newly-created <see cref="TypeInfo"/> object.
         /// </returns>
         public static TypeInfo CreatePrimitive(Type t, int size)
         {
+            if (t == null)
+            {
+                throw new ArgumentNullException("t");
+            }
+
+            if (!t.IsValueType)
+            {
+                throw new ArgumentException("Type must be a value type.");
+            }
+
+            if(size < 0)
+            {
+                throw new ArgumentException("Size must be a non-negative integer.");
+            }
+
             return new TypeInfo(t, new List<XElement>(), size);
         }
 
@@ -53,10 +71,11 @@ namespace WHampson.Cascara
         /// composite data type.
         /// </summary>
         /// <param name="members">
-        /// The <see cref="XElement"/>s that describe the composite type.
+        /// The <see cref="XElement"/>s that describe the layout of the
+        /// composite type.
         /// </param>
         /// <param name="size">
-        /// The size in bytes of the data type.
+        /// The number of bytes that an instance of this type occupies.
         /// </param>
         /// <returns>
         /// The newly-created <see cref="TypeInfo"/> object.
@@ -84,7 +103,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the .NET <see cref="Kind"/> represented.
+        /// Gets the .NET <see cref="Type"/> represented.
         /// </summary>
         public Type Kind
         {
@@ -94,13 +113,16 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets the collection of <see cref="XElement"/>s that define this type.
         /// </summary>
+        /// <remarks>
+        /// If the type does not represent a struct, this list will be empty.
+        /// </remarks>
         public IEnumerable<XElement> Members
         {
             get;
         }
 
         /// <summary>
-        /// Gets the size in bytes of the data represented by this type.
+        /// Gets the number of bytes that an instance of this type occupies.
         /// </summary>
         public int Size
         {
