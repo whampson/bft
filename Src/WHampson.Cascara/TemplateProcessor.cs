@@ -23,7 +23,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -40,8 +39,6 @@ namespace WHampson.Cascara
         private const string OffsetofOpPattern = @"\$\[([\[\]\S]+)\]";
         private const string SizeofOpPattern = @"\$\((.+?)\)";
         private const string TypeOpPattern = @"type[ ]+(.+)";
-
-        private static readonly Type GenericPointerType = typeof(Pointer<>);
 
         private delegate int DirectiveProcessAction(XElement elem);
         private delegate T AttributeProcessAction<T>(XAttribute attr);
@@ -133,53 +130,6 @@ namespace WHampson.Cascara
             return symbolTable;
         }
 
-        //public T Process<T>(string filePath) where T : new()
-        //{
-        //    Process(filePath, out T obj);
-
-        //    return obj;
-        //}
-
-        //public int Process<T>(string filePath, out T obj) where T : new()
-        //{
-        //    isEvalutingTypedef = false;
-        //    isConductingDryRun = false;
-        //    dryRunRecursionDepth = 0;
-
-        //    // Validate root element
-        //    if (templateDoc.Root.Name.LocalName != Keywords.BftRoot)
-        //    {
-        //        string fmt = "Template must have a root element named '{0}'.";
-        //        throw TemplateException.Create(templateDoc.Root, fmt, Keywords.BftRoot);
-        //    }
-        //    if (!HasChildren(templateDoc.Root))
-        //    {
-        //        throw new TemplateException("Empty binary file template.");
-        //    }
-
-        //    // Load binary file
-        //    byte[] data = LoadFile(filePath);
-        //    dataLen = data.Length;
-
-        //    // Copy file data to unmanaged memory
-        //    dataPtr = Marshal.AllocHGlobal(data.Length);
-        //    Marshal.Copy(data, 0, dataPtr, data.Length);
-
-        //    // Process the template with respect to the file data
-        //    dataOffset = 0;
-        //    int bytesProcessed = ProcessStructMembers(templateDoc.Root);
-
-        //    // Free unmanaged memory
-        //    // (This will change in the future depending on how we want to manipulate the file data)
-        //    //Marshal.FreeHGlobal(dataPtr);
-
-        //    Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
-        //    //Console.WriteLine(symbolTable);
-
-        //    obj = new T();
-        //    return bytesProcessed;
-        //}
-
         private int ProcessElement(XElement elem)
         {
             string elemName = elem.Name.LocalName;
@@ -217,12 +167,13 @@ namespace WHampson.Cascara
                 throw TemplateException.Create(elem, fmt, elemName);
             }
 
-            if (tInfo.Type == typeof(ICascaraStruct))
+            if (tInfo.IsStruct)
             {
                 // Process user-defined struct type
-                // "Copy and paste" members from type definition into current element
-                elem.Add(typeMap[elemName].Members);
-                localOffset += ProcessStruct(elem);
+                // "Copy and paste" members from type definition into copy of current element
+                XElement copy = new XElement(elem);
+                copy.Add(typeMap[elemName].Members);
+                localOffset += ProcessStruct(copy);
             }
             else
             {
@@ -249,7 +200,7 @@ namespace WHampson.Cascara
                 // Tack on array index to var name so it's unique
                 varName = name + "[" + i + "]";
 
-                SymbolInfo entry = null;
+                SymbolTableEntry entry = null;
                 if (!isConductingDryRun && name != null)
                 {
                     if (localsMap.ContainsKey(name))
@@ -263,8 +214,8 @@ namespace WHampson.Cascara
                     SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
 
                     // Create symbol table entry for this struct in the current table
-                    // Type reamins 'null' because we haven't processed the struct yet
-                    entry = new SymbolInfo(null, dataOffset, newSymTabl);
+                    // Type remains 'null' because we haven't processed the struct yet
+                    entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
@@ -281,7 +232,7 @@ namespace WHampson.Cascara
                 if (!isConductingDryRun && name != null)
                 {
                     // We've finished processing the struct, so now we can set the type
-                    entry.TypeInfo = TypeInfo.CreateStruct(elem.Elements(), localOffset);
+                    entry.Type = TypeInfo.CreateStruct(elem.Elements(), localOffset);
 
                     // Make the previous table "active"
                     symTablStack.Pop();
@@ -344,7 +295,7 @@ namespace WHampson.Cascara
 
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
-                        SymbolInfo e = new SymbolInfo(t, dataOffset, null);
+                        SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
@@ -410,7 +361,8 @@ namespace WHampson.Cascara
                 }
                 catch (Exception e)
                 {
-                    if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
+                    if (e is ArithmeticException || e is OverflowException
+                        || e is FormatException || e is TemplateException)
                     {
                         throw TemplateException.Create(e, messageAttr, e.Message);
                     }
@@ -523,6 +475,31 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Gets the value of the attribute with the specified name
+        /// from the specified <see cref="XElement"/>.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of the value of the attribute.
+        /// </typeparam>
+        /// <param name="elem">
+        /// The element from which to get the attribute.
+        /// </param>
+        /// <param name="name">
+        /// The name of the attribute to get the value of.
+        /// </param>
+        /// <param name="isRequired">
+        /// A value indicating whether this attribute must be present.
+        /// </param>
+        /// <param name="defaultValue">
+        /// The default value to return if the attribute is not present.
+        /// </param>
+        /// <returns>
+        /// The attribute value if present.
+        /// </returns>
+        /// <exception cref="TemplateException">
+        /// Thrown if the attribute is marked as required but not present.
+        /// </exception>
         private T GetAttributeValue<T>(XElement elem, string name, bool isRequired, T defaultValue)
         {
             if (!attributeActionMap.ContainsKey(name))
@@ -556,6 +533,7 @@ namespace WHampson.Cascara
             {
                 string valStr = ResolveVariables(attr.Value);
                 double val = NumberUtils.EvaluateExpression(valStr);
+
                 if (val < 0 || !NumberUtils.IsInteger(val))
                 {
                     string msg = "Value '{0}' is not a non-negative integer.";
@@ -566,7 +544,8 @@ namespace WHampson.Cascara
             }
             catch (Exception e)
             {
-                if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
+                if (e is ArithmeticException ||  e is OverflowException
+                    || e is FormatException || e is TemplateException)
                 {
                     throw TemplateException.Create(e, attr, e.Message);
                 }
@@ -658,7 +637,8 @@ namespace WHampson.Cascara
             }
             catch (Exception e)
             {
-                if (e is ArithmeticException || e is FormatException || e is OverflowException || e is TemplateException)
+                if (e is ArithmeticException || e is OverflowException
+                    || e is FormatException || e is TemplateException)
                 {
                     throw TemplateException.Create(e, attr, e.Message);
                 }
@@ -700,6 +680,10 @@ namespace WHampson.Cascara
             return s;
         }
 
+        /// <summary>
+        /// Resolves all instances of the 'valueof' operator in
+        /// the given regex <see cref="Match"/>.
+        /// </summary>
         private string ResolveValueof(Match m)
         {
             if (isEvalutingTypedef)
@@ -719,30 +703,31 @@ namespace WHampson.Cascara
                     return dataOffset + "";
             }
 
+            // Handle locals
             if (localsMap.TryGetValue(varName, out double localVal))
             {
                 return localVal + "";
             }
 
-            SymbolInfo e = GetVariableInfo(varName);
-            if (e.TypeInfo == null)
+            // Handle variables tied to the binary data
+            SymbolTableEntry e = GetSymbolInfo(varName);
+            if (e.Type == null)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
-            else if (e.TypeInfo.Type == typeof(ICascaraStruct))
+            else if (e.Type.IsStruct)
             {
                 throw new TemplateException("Cannot take the value of a struct.");
             }
 
-            // Create pointer to value and dereference
-            Type ptrType = GenericPointerType.MakeGenericType(new Type[] { e.TypeInfo.Type });
-            object ptrObj = Activator.CreateInstance(ptrType, dataPtr + e.Offset);
-            object val = ptrObj.GetType().GetProperty("Value").GetValue(ptrObj);
-
-            return val.ToString();
+            return GetValue(e.Type.Kind, e.Offset).ToString();
         }
 
+        /// <summary>
+        /// Resolves all instances of the 'offsetof' operator in
+        /// the given regex <see cref="Match"/>.
+        /// </summary>
         private string ResolveOffsetof(Match m)
         {
             if (isEvalutingTypedef)
@@ -752,17 +737,22 @@ namespace WHampson.Cascara
 
             string varName = m.Groups[1].Value;
 
+            // Handle locals
             if (localsMap.ContainsKey(varName))
             {
                 string msg = "Offset not defined for local variables.";
                 throw new TemplateException(msg);
             }
 
-            SymbolInfo e = GetVariableInfo(varName);
-
+            // Handle variables tied to the binary data
+            SymbolTableEntry e = GetSymbolInfo(varName);
             return e.Offset + "";
         }
 
+        /// <summary>
+        /// Resolves all instances of the 'sizeof' operator in
+        /// the given regex <see cref="Match"/>.
+        /// </summary>
         private string ResolveSizeof(Match m)
         {
             if (isEvalutingTypedef)
@@ -772,19 +762,20 @@ namespace WHampson.Cascara
 
             string varName = m.Groups[1].Value;
 
+            // Handle locals
             if (localsMap.ContainsKey(varName))
             {
                 string msg = "Size not defined for local variables.";
                 throw new TemplateException(msg);
             }
 
+            // Handle special 'sizeof type' operator
             string typeName = null;
             Match m2 = Regex.Match(varName, TypeOpPattern);
             if (m2.Success)
             {
                 typeName = m2.Groups[1].Value;
             }
-
             if (!string.IsNullOrWhiteSpace(typeName))
             {
                 // Get size of type
@@ -798,73 +789,117 @@ namespace WHampson.Cascara
             }
 
             // Get size of variable value
-            SymbolInfo e = GetVariableInfo(varName);
-            if (e.TypeInfo == null)
+            SymbolTableEntry e = GetSymbolInfo(varName);
+            if (e.Type == null)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
 
-            return e.TypeInfo.Size + "";
+            return e.Type.Size + "";
         }
 
-        private SymbolInfo GetVariableInfo(string varName)
+        /// <summary>
+        /// Gets information about the specified symbol from
+        /// the active symbol table. An exception is thrown if
+        /// the symbol name is undefined.
+        /// </summary>
+        /// <exception cref="TemplateException">
+        /// Thrown if the symbol name is undefined.
+        /// </exception>
+        private SymbolTableEntry GetSymbolInfo(string name)
         {
-            SymbolInfo e = symTablStack.Peek().GetEntry(varName);
-            if (e == null)
+            SymbolTable tabl = symTablStack.Peek();
+            if (!tabl.ContainsEntry(name))
             {
-                string msg = string.Format("Variable '{0}' not defined.", varName);
+                string msg = string.Format("Variable '{0}' not defined.", name);
                 throw new TemplateException(msg);
             }
 
-            return e;
+            return tabl.GetEntry(name);
         }
 
+        /// <summary>
+        /// Gets the value of type <paramref name="t"/> at
+        /// the specified <paramref name="offset"/>.
+        /// </summary>
+        private object GetValue(Type t, int offset)
+        {
+            // Create pointer to offset and dereference
+            Type ptrType = typeof(Pointer<>).MakeGenericType(new Type[] { t });
+            object ptrObj = Activator.CreateInstance(ptrType, dataPtr + offset);
+            object val = ptrObj.GetType().GetProperty("Value").GetValue(ptrObj);
+
+            return val;
+        }
+
+        /// <summary>
+        /// Checks to make sure there are at least <paramref name="localOffset"/>
+        /// bytes remaining in the file buffer from the current offset.
+        /// </summary>
+        /// <exception cref="TemplateException">
+        /// Thrown if there are not enough bytes left in the buffer.
+        /// </exception>
         private void EnsureCapacity(XElement elem, int localOffset)
         {
             int absOffset = dataOffset + localOffset;
-            if (/*absOffset < 0 || */absOffset > dataLen)
+            if (absOffset < 0)
+            {
+                string fmt = "Attempt to read data before the beginning of the file "
+                    + "({0} bytes from beginning).";
+                throw TemplateException.Create(elem, fmt, absOffset, dataLen);
+            }
+            else if (absOffset > dataLen)
             {
                 string fmt = "Reached end of file. Offset: {0}, length: {1}.";
                 throw TemplateException.Create(elem, fmt, absOffset, dataLen);
             }
         }
 
+        /// <summary>
+        /// Checks whether the specified <see cref="XElement"/> has child elements.
+        /// </summary>
         private bool HasChildren(XElement elem)
         {
             return elem.Elements().Count() != 0;
         }
 
+        /// <summary>
+        /// Populates the map of built-in type names to <see cref="TypeInfo"/> definitions.
+        /// </summary>
         private void BuildTypeMap()
         {
-            //typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(Bool8));
-            //typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(Bool8));
-            //typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(Bool16));
-            //typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(Bool32));
-            //typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(Bool64));
-            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(byte));
-            typeMap[Keywords.Char] = TypeInfo.CreatePrimitive(typeof(Char8));
-            typeMap[Keywords.Char8] = TypeInfo.CreatePrimitive(typeof(Char8));
-            typeMap[Keywords.Char16] = TypeInfo.CreatePrimitive(typeof(Char16));
-            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(double));
-            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(float));
-            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(int));
-            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(sbyte));
-            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(short));
-            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(int));
-            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(long));
-            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(long));
-            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(short));
-            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(float));
-            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(uint));
-            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(byte));
-            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(ushort));
-            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(uint));
-            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(ulong));
-            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(ulong));
-            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(ushort));
+            typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(bool), 1);
+            typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(bool), 1);
+            typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(bool), 2);
+            typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(bool), 4);
+            typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(bool), 8);
+            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(byte), 1);
+            typeMap[Keywords.Char] = TypeInfo.CreatePrimitive(typeof(char), 1);
+            typeMap[Keywords.Char8] = TypeInfo.CreatePrimitive(typeof(char), 1);
+            typeMap[Keywords.Char16] = TypeInfo.CreatePrimitive(typeof(char), 2);
+            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(double), 4);
+            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(float), 4);
+            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(int), 4);
+            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(sbyte), 1);
+            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(short), 2);
+            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(int), 4);
+            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(long), 8);
+            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(long), 8);
+            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(short), 2);
+            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(float), 4);
+            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(uint), 4);
+            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(byte), 1);
+            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(ushort), 2);
+            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(uint), 4);
+            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(ulong), 8);
+            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(ulong), 8);
+            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(ushort), 2);
         }
 
+        /// <summary>
+        /// Populates the map of directive names to processing functions.
+        /// </summary>
         private void BuildDirectiveActionMap()
         {
             directiveActionMap[Keywords.Align] = ProcessAlignDirective;
@@ -873,6 +908,9 @@ namespace WHampson.Cascara
             directiveActionMap[Keywords.Typedef] = ProcessTypedefDirective;
         }
 
+        /// <summary>
+        /// Populates the map of attribute names to processing functions.
+        /// </summary>
         private void BuildAttributeActionMap()
         {
             attributeActionMap[Keywords.Count] = (AttributeProcessAction<int>) ProcessCountAttribute;
@@ -884,42 +922,9 @@ namespace WHampson.Cascara
             attributeActionMap[Keywords.Value] = (AttributeProcessAction<double>) ProcessValueAttribute;
         }
 
-        private static byte[] LoadFile(string filePath)
-        {
-            const int OneGibiByte = 1 << 30;
-
-            FileInfo fInfo = new FileInfo(filePath);
-            if (fInfo.Length > OneGibiByte)
-            {
-                throw new IOException("File size must be less than 1 GiB.");
-            }
-
-            int len = (int) fInfo.Length;
-            byte[] data = new byte[len];
-
-            using (FileStream fs = new FileStream(filePath, FileMode.Open))
-            {
-                fs.Read(data, 0, len);
-            }
-
-            return data;
-        }
-
-        private static XDocument OpenXmlFile(string path)
-        {
-            try
-            {
-                return XDocument.Load(path, LoadOptions.SetLineInfo);
-            }
-            catch (XmlException e)
-            {
-                throw new TemplateException(e.Message, e);
-            }
-        }
-
         /// <summary>
-        /// Replaces all C-like escape sequences with the character they
-        /// represent.
+        /// Replaces all C-like escape sequences with the non-printable
+        /// character they represent.
         /// </summary>
         /// <remarks>
         /// Not all C escape sequences are supported.
@@ -942,33 +947,62 @@ namespace WHampson.Cascara
                 string esc = "";
                 switch (c)
                 {
+                    // Backspace
                     case 'b':
                         esc += '\b';
                         break;
 
+                    // Linefeed
                     case 'n':
                         esc += '\n';
                         break;
 
+                    // Carriage return
                     case 'r':
                         esc += '\r';
                         break;
 
+                    // Horizontal tab
                     case 't':
                         esc += '\t';
                         break;
 
+                    // Literal backslash
                     case '\\':
                         esc += '\\';
                         break;
 
                     default:
-                        string exMsg = string.Format(@"Invalid escape sequence '\{0}'", c);
-                        throw new FormatException(exMsg);
+                        string msg = string.Format(@"Invalid escape sequence '\{0}'", c);
+                        throw new FormatException(msg);
                 }
 
                 return esc;
             });
+        }
+
+        /// <summary>
+        /// Loads data from an XML file located at the specified path.
+        /// </summary>
+        /// <param name="path">
+        /// The path to the XML file to load.
+        /// </param>
+        /// <returns>
+        /// The loaded XML data as an <see cref="XDocument"/>.
+        /// </returns>
+        /// <exception cref="TemplateException">
+        /// Thrown if there is an error while loading the XML document.
+        /// </exception>
+        private static XDocument OpenXmlFile(string path)
+        {
+            try
+            {
+                return XDocument.Load(path, LoadOptions.SetLineInfo);
+            }
+            catch (XmlException e)
+            {
+                throw new TemplateException(e.Message, e);
+            }
         }
     }
 }
