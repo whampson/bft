@@ -22,24 +22,39 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Convenience class for miscellaneous tasks related to data types.
+    /// </summary>
     internal static class TypeUtils
     {
-        // Checks whether the given type stems from a generic type.
-        // Taken from https://stackoverflow.com/questions/74616#1075059
+        /// <summary>
+        /// Checks whether a given type can be assigned to some generic type.
+        /// </summary>
+        /// <remarks>
+        /// Adapted from code found at https://stackoverflow.com/questions/74616#1075059
+        /// </remarks>
+        /// <param name="givenType">
+        /// The type to check whether it can be assigned to
+        /// <paramref name="genericType"/>.
+        /// </param>
+        /// <param name="genericType">
+        /// The generic type.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the <paramref name="givenType"/> can be assigned to
+        /// the <paramref name="genericType"/>,
+        /// <code>False</code> otherwise.
+        /// </returns>
         public static bool IsAssignableToGenericType(Type givenType, Type genericType)
         {
             Type[] interfaceTypes = givenType.GetInterfaces();
 
-            foreach (Type typ in interfaceTypes)
+            foreach (Type type in interfaceTypes)
             {
-                if (typ.IsGenericType && typ.GetGenericTypeDefinition() == genericType)
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == genericType)
                 {
                     return true;
                 }
