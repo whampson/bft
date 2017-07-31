@@ -171,6 +171,18 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Gets a collection of all symbol names in the symbol table
+        /// and child tables.
+        /// </summary>
+        /// <returns>
+        /// A collection of all symbol names.
+        /// </returns>
+        public IEnumerable<string> GetAllKeys()
+        {
+            return GetAllKeys(this);
+        }
+
+        /// <summary>
         /// Gets the globally-scoped name of this table.
         /// </summary>
         /// <returns>
@@ -393,6 +405,34 @@ namespace WHampson.Cascara
             }
 
             return SearchUp(tabl.Parent, symbolName);
+        }
+
+        /// <summary>
+        /// Gets a collection of all symbol names from the given
+        /// <see cref="SymbolTable"/> and child tables.
+        /// </summary>
+        /// <param name="tabl">
+        /// The table to get the collection of symbols from.
+        /// </param>
+        /// <returns>
+        /// The collection of all symbols found in the given table.
+        /// </returns>
+        private static IEnumerable<string> GetAllKeys(SymbolTable tabl)
+        {
+            List<string> keys = new List<string>();
+            foreach (KeyValuePair<string, SymbolTableEntry> kvp in tabl)
+            {
+                string name = tabl.GetFullyQualifiedName(kvp.Key);
+                keys.Add(name);
+
+                SymbolTableEntry entry = kvp.Value;
+                if (entry.HasChild)
+                {
+                    keys.AddRange(GetAllKeys(entry.Child));
+                }
+            }
+
+            return keys;
         }
     }
 }
