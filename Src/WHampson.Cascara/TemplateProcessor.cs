@@ -102,6 +102,11 @@ namespace WHampson.Cascara
             set { echoWriter = value ?? throw new ArgumentNullException(nameof(value)); }
         }
 
+        public IEnumerable<string> GetAllVariableNames()
+        {
+            return symbolTable.GetAllKeys();
+        }
+
         public SymbolTable Process(IntPtr dataPtr, int dataLen)
         {
             this.dataPtr = dataPtr;
