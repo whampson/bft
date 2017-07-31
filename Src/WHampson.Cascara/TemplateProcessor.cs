@@ -96,9 +96,10 @@ namespace WHampson.Cascara
             BuildAttributeActionMap();
         }
 
-        public void SetEchoWriter(TextWriter w)
+        public TextWriter EchoWriter
         {
-            echoWriter = w ?? throw new ArgumentNullException("w");
+            get { return echoWriter; }
+            set { echoWriter = value ?? throw new ArgumentNullException(nameof(value)); }
         }
 
         public SymbolTable Process(IntPtr dataPtr, int dataLen)
@@ -995,6 +996,11 @@ namespace WHampson.Cascara
         /// </exception>
         private static XDocument OpenXmlFile(string path)
         {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                throw new ArgumentException("Path cannot be empty or null");
+            }
+
             try
             {
                 return XDocument.Load(path, LoadOptions.SetLineInfo);
