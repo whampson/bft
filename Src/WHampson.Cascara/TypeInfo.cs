@@ -35,7 +35,7 @@ namespace WHampson.Cascara
     {
         /// <summary>
         /// Creates a <see cref="TypeInfo"/> object representing a primitive
-        /// data type that is equivalent to the provided .NET <see cref="Type"/>.
+        /// data type that is equivalent to the provided .NET <see cref="Kind"/>.
         /// </summary>
         /// <param name="t">
         /// The .NET type that this primitive represents.
@@ -78,15 +78,15 @@ namespace WHampson.Cascara
 
         private TypeInfo(Type t, IEnumerable<XElement> members, int size)
         {
-            Type = t;
+            Kind = t;
             Members = new List<XElement>(members);
             Size = size;
         }
 
         /// <summary>
-        /// Gets the .NET <see cref="Type"/> represented.
+        /// Gets the .NET <see cref="Kind"/> represented.
         /// </summary>
-        public Type Type
+        public Type Kind
         {
             get;
         }
@@ -107,14 +107,17 @@ namespace WHampson.Cascara
             get;
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the type is a struct.
+        /// </summary>
         public bool IsStruct
         {
-            get { return Type == typeof(ICascaraStruct); }
+            get { return Kind == typeof(ICascaraStruct); }
         }
 
         public override string ToString()
         {
-            return string.Format("[Kind: {0}, Size: {1}]", Type, Size);
+            return string.Format("[Kind: {0}, Size: {1}]", Kind, Size);
         }
     }
 }
