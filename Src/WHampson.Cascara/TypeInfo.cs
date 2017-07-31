@@ -23,14 +23,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Xml.Linq;
 using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Contains information about types used during the processing of a template.
+    /// Contains information about a data type used during the processing of a template.
     /// </summary>
     internal sealed class TypeInfo
     {
@@ -111,6 +110,11 @@ namespace WHampson.Cascara
         public bool IsStruct
         {
             get { return Type == typeof(ICascaraStruct); }
+        }
+
+        public override string ToString()
+        {
+            return string.Format("[Kind: {0}, Size: {1}]", Type, Size);
         }
     }
 }
