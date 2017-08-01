@@ -31,10 +31,10 @@ namespace WHampson.Cascara
     /// <summary>
     /// Contains information about a data type used during the processing of a template.
     /// </summary>
-    internal sealed class TypeInfo
+    internal sealed class TypeDefinition
     {
         /// <summary>
-        /// Creates a <see cref="TypeInfo"/> object representing a primitive
+        /// Creates a <see cref="TypeDefinition"/> object representing a primitive
         /// data type.
         /// </summary>
         /// <param name="t">
@@ -44,9 +44,9 @@ namespace WHampson.Cascara
         /// The number of bytes that an instance of this type occupies.
         /// </param>
         /// <returns>
-        /// The newly-created <see cref="TypeInfo"/> object.
+        /// The newly-created <see cref="TypeDefinition"/> object.
         /// </returns>
-        public static TypeInfo CreatePrimitive(Type t, int size)
+        public static TypeDefinition CreatePrimitive(Type t, int size)
         {
             if (t == null)
             {
