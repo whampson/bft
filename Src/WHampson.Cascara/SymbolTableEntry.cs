@@ -48,14 +48,14 @@ namespace WHampson.Cascara
         /// </param>
         public SymbolTableEntry(TypeInfo tInfo, SymbolTable child)
         {
-            Type = tInfo;
+            TypeInfo = tInfo;
             Child = child;
         }
 
         /// <summary>
         /// Gets or sets the type information associated with the symbol.
         /// </summary>
-        public TypeInfo Type
+        public TypeInfo TypeInfo
         {
             get;
         }
@@ -81,7 +81,7 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            return string.Format("[Type: {0}, HasChild: {1}]", Type, HasChild);
+            return string.Format("[Type: {0}, HasChild: {1}]", TypeInfo, HasChild);
         }
     }
 }
