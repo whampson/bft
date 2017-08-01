@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using WHampson.Cascara.Types;
 
@@ -43,7 +44,25 @@ namespace WHampson.Cascara
             {
                 bFile.ApplyTemplate(xmlPath);
                 Gta3PCSave gameSave = bFile.Extract<Gta3PCSave>();
-                Console.WriteLine(GetStringValue(gameSave.SimpleVars.SaveTitle));
+
+                /*
+                 * TODO: IsArray(), IsStruct(), GetSizeOf(), GetTypeOf(), GetMembers()
+                 */
+
+                Dictionary<string, TypeInfo> prims = bFile.GetAllPrimitives();
+                foreach (var kvp in prims)
+                {
+                    string n = kvp.Key;
+                    TypeInfo t = kvp.Value;
+                    object v = bFile.GetValue(n, t.Type);
+                    Console.WriteLine("{0:X8}: {1} => {2}", t.Offset, n, v);
+                }
+
+                //uint mainBlockSize = bFile.GetValue<uint>("SimpleVars.Header.Size");
+                //uint scrBlockSize = bFile.GetValue<uint>("SimpleVars.Size");
+
+                //Console.WriteLine(mainBlockSize);
+                //Console.WriteLine(scrBlockSize);
             }
 
             // Pause
