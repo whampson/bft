@@ -89,6 +89,7 @@ namespace WHampson.Cascara
         public int Size
         {
             get;
+            internal set;
         }
 
         /// <summary>
