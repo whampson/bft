@@ -77,7 +77,6 @@
     <Compile Include="Types\Char16.cs" />
     <Compile Include="Types\Char8.cs" />
     <Compile Include="Types\ICascaraPointer.cs" />
-    <Compile Include="Types\ICascaraStruct.cs" />
     <Compile Include="Types\PointerT.cs" />
     <Compile Include="SymbolTable.cs" />
     <Compile Include="SymbolTableEntry.cs" />
