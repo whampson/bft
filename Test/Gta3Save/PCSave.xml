@@ -3,14 +3,22 @@
     <typedef name="BlockHeader" kind="struct">
         <uint32 name="Size"/>
     </typedef>
+    <typedef name="RwV3d" kind="struct">
+        <float name="X"/>
+        <float name="Y"/>
+        <float name="Z"/>
+    </typedef>
     
     <struct name="SimpleVars">
         <BlockHeader name="Header"/>
         <char16 name="SaveTitle" count="24"/>
+        <align count="24"/>
+        <RwV3d name="CameraCoords"/>
         <align count="${Header.Size} - (${__OFFSET__} - $[SaveTitle])"/>
     </struct>
-    <echo message="Reached end of Block 0."/>
-    <local name="skipAmt" value="${__FILESIZE__} - ${__OFFSET__}"/>
-    <echo message="Skipping ${skipAmt} bytes..."/>
+    
+    <local name="skipAmt" value="${__FILESIZE__} - ${__OFFSET__} - 4"/>
     <align count="${skipAmt}"/>
+    
+    <uint32 name="Checksum"/>
 </cascaraBinaryTemplate>
