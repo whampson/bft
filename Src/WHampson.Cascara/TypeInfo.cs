@@ -32,6 +32,7 @@ namespace WHampson.Cascara
     /// </summary>
     public sealed class TypeInfo
     {
+
         /// <summary>
         /// Creates a new <see cref="TypeInfo"/> object using the specified
         /// type, offset, and size.
@@ -46,7 +47,12 @@ namespace WHampson.Cascara
         /// <param name="size">
         /// The number of bytes that an instance of this type occupies.
         /// </param>
-        internal TypeInfo(Type type, int offset, int size)
+        /// <param name="isFullyDefined">
+        /// Indicates whether the type has been fully defined.
+        /// This is needed when processing structs so we can the struct entry
+        /// to the symbol table before its size is fully known.
+        /// </param>
+        internal TypeInfo(Type type, int offset, int size, bool isFullyDefined)
         {
             if (offset < 0)
             {
@@ -58,9 +64,10 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.", nameof(size));
             }
 
-            Type = type;
+            Type = type ?? throw new ArgumentException(nameof(type));
             Offset = offset;
             Size = size;
+            IsFullyDefined = isFullyDefined;
         }
 
         /// <summary>
@@ -71,7 +78,6 @@ namespace WHampson.Cascara
         public Type Type
         {
             get;
-            internal set;
         }
 
         /// <summary>
@@ -90,6 +96,12 @@ namespace WHampson.Cascara
         {
             get;
             internal set;
+        }
+
+        internal bool IsFullyDefined
+        {
+            get;
+            set;
         }
 
         /// <summary>
