@@ -21,8 +21,10 @@
  */
 #endregion
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace WHampson.Cascara
@@ -182,6 +184,11 @@ namespace WHampson.Cascara
             return GetAllKeys(this);
         }
 
+        public Dictionary<string, SymbolTableEntry> GetAllEntries()
+        {
+            return GetAllEntries(this);
+        }
+
         /// <summary>
         /// Gets the globally-scoped name of this table.
         /// </summary>
@@ -280,7 +287,7 @@ namespace WHampson.Cascara
                 return false;
             }
 
-            return GetEntry(name).Type.IsStruct;
+            return GetEntry(name).TypeInfo.IsStruct;
         }
 
         /// <summary>
@@ -433,6 +440,25 @@ namespace WHampson.Cascara
             }
 
             return keys;
+        }
+
+        private static Dictionary<string, SymbolTableEntry> GetAllEntries(SymbolTable tabl)
+        {
+            Dictionary<string, SymbolTableEntry> entries = new Dictionary<string, SymbolTableEntry>();
+            foreach (KeyValuePair<string, SymbolTableEntry> kvp in tabl)
+            {
+                string name = tabl.GetFullyQualifiedName(kvp.Key);
+                SymbolTableEntry entry = kvp.Value;
+                entries[name] = entry;
+
+                if (entry.HasChild)
+                {
+                    Dictionary<string, SymbolTableEntry> childEntries = GetAllEntries(entry.Child);
+                    entries = entries.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);
+                }
+            }
+
+            return entries;
         }
     }
 }
