@@ -49,7 +49,7 @@ namespace WHampson.Cascara
         private int dataLen;
         private int dataOffset;
 
-        private Dictionary<string, TypeInfo> typeMap;
+        private Dictionary<string, TypeDefinition> typeMap;
         private Dictionary<string, DirectiveProcessAction> directiveActionMap;
         private Dictionary<string, Delegate> attributeActionMap;
         private Dictionary<string, double> localsMap;
@@ -76,7 +76,7 @@ namespace WHampson.Cascara
             dataLen = 0;
             dataOffset = 0;
 
-            typeMap = new Dictionary<string, TypeInfo>();
+            typeMap = new Dictionary<string, TypeDefinition>();
             directiveActionMap = new Dictionary<string, DirectiveProcessAction>();
             attributeActionMap = new Dictionary<string, Delegate>();
             localsMap = new Dictionary<string, double>();
@@ -100,11 +100,6 @@ namespace WHampson.Cascara
         {
             get { return echoWriter; }
             set { echoWriter = value ?? throw new ArgumentNullException(nameof(value)); }
-        }
-
-        public IEnumerable<string> GetAllVariableNames()
-        {
-            return symbolTable.GetAllKeys();
         }
 
         public SymbolTable Process(IntPtr dataPtr, int dataLen)
@@ -150,7 +145,7 @@ namespace WHampson.Cascara
 
             // Ensure element name corresponds to either a primitive type,
             // user-defined type, or directive
-            bool isType = typeMap.TryGetValue(elemName, out TypeInfo tInfo);
+            bool isType = typeMap.TryGetValue(elemName, out TypeDefinition typeDef);
             bool isDirective = directiveActionMap.ContainsKey(elemName);
             if (!isDirective && !isType)
             {
@@ -173,7 +168,7 @@ namespace WHampson.Cascara
                 throw TemplateException.Create(elem, fmt, elemName);
             }
 
-            if (tInfo.IsStruct)
+            if (typeDef.IsStruct)
             {
                 // Process user-defined struct type
                 // "Copy and paste" members from type definition into copy of current element
@@ -220,8 +215,10 @@ namespace WHampson.Cascara
                     SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
 
                     // Create symbol table entry for this struct in the current table
-                    // Type remains 'null' because we haven't processed the struct yet
-                    entry = new SymbolTableEntry(null, dataOffset, newSymTabl);
+                    // Type remains 'null' and size is 0 because we haven't processed the struct yet
+                    TypeInfo tInfo = new TypeInfo(null, dataOffset, 0, false);
+                    entry = new SymbolTableEntry(tInfo, newSymTabl);
+
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
@@ -237,8 +234,9 @@ namespace WHampson.Cascara
 
                 if (!isConductingDryRun && name != null)
                 {
-                    // We've finished processing the struct, so now we can set the type
-                    entry.Type = TypeInfo.CreateStruct(elem.Elements(), localOffset);
+                    // We've finished processing the struct, so now we can set the size
+                    entry.TypeInfo.Size = localOffset;
+                    entry.TypeInfo.IsFullyDefined = true;
 
                     // Make the previous table "active"
                     symTablStack.Pop();
@@ -276,7 +274,7 @@ namespace WHampson.Cascara
             string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
 
             string elemName = elem.Name.LocalName;
-            TypeInfo t = typeMap[elemName];
+            TypeDefinition tDef = typeMap[elemName];
 
             // Process primitive 'count' times
             int localOffset = 0;
@@ -284,7 +282,7 @@ namespace WHampson.Cascara
             for (int i = 0; i < count; i++)
             {
                 // Make sure we have enough bytes left in the buffer
-                EnsureCapacity(elem, t.Size);
+                EnsureCapacity(elem, tDef.Size);
 
                 // Tack on array index to var name so it's unique
                 varName = name + "[" + i + "]";
@@ -301,7 +299,8 @@ namespace WHampson.Cascara
 
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
-                        SymbolTableEntry e = new SymbolTableEntry(t, dataOffset, null);
+                        TypeInfo tInfo = new TypeInfo(tDef.Kind, dataOffset, tDef.Size, true);
+                        SymbolTableEntry e = new SymbolTableEntry(tInfo, null);
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
@@ -310,9 +309,9 @@ namespace WHampson.Cascara
                     }
 
                     // Increment data pointer
-                    dataOffset += t.Size;
+                    dataOffset += tDef.Size;
                 }
-                localOffset += t.Size;
+                localOffset += tDef.Size;
             }
 
             return localOffset;
@@ -323,8 +322,9 @@ namespace WHampson.Cascara
             EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Kind);
 
             // Get attribute values
+            TypeDefinition defaultType = typeMap[Keywords.Int8];
+            TypeDefinition kind = GetAttributeValue<TypeDefinition>(elem, Keywords.Kind, false, defaultType);
             int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
-            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, false, typeMap[Keywords.Int8]);
 
             // Skip ahead correct number of bytes as defined by 'kind' and 'count'
             int off = kind.Size * count;
@@ -440,7 +440,8 @@ namespace WHampson.Cascara
                 throw TemplateException.Create(elem, fmt, typename);
             }
 
-            TypeInfo kind = GetAttributeValue<TypeInfo>(elem, Keywords.Kind, true, null);   // Type analysis happens here
+            TypeDefinition kind =
+                GetAttributeValue<TypeDefinition>(elem, Keywords.Kind, true, null);   // Type analysis happens here
 
             typeMap[typename] = kind;
             isEvalutingTypedef = false;
@@ -560,7 +561,7 @@ namespace WHampson.Cascara
             }
         }
 
-        private TypeInfo ProcessKindAttribute(XAttribute attr)
+        private TypeDefinition ProcessKindAttribute(XAttribute attr)
         {
             string typeName = attr.Value;
             XElement srcElem = attr.Parent;
@@ -586,7 +587,7 @@ namespace WHampson.Cascara
                     isConductingDryRun = false;
                 }
 
-                return TypeInfo.CreateStruct(srcElem.Elements(), size);
+                return TypeDefinition.CreateStruct(srcElem.Elements(), size);
             }
 
             // Process primitive or user-defined type
@@ -717,17 +718,17 @@ namespace WHampson.Cascara
 
             // Handle variables tied to the binary data
             SymbolTableEntry e = GetSymbolInfo(varName);
-            if (e.Type == null)
+            if (!e.TypeInfo.IsFullyDefined)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
-            else if (e.Type.IsStruct)
+            else if (e.TypeInfo.IsStruct)
             {
                 throw new TemplateException("Cannot take the value of a struct.");
             }
 
-            return GetValue(e.Type.Kind, e.Offset).ToString();
+            return GetValue(e.TypeInfo.Type, e.TypeInfo.Offset).ToString();
         }
 
         /// <summary>
@@ -752,7 +753,7 @@ namespace WHampson.Cascara
 
             // Handle variables tied to the binary data
             SymbolTableEntry e = GetSymbolInfo(varName);
-            return e.Offset + "";
+            return e.TypeInfo.Offset + "";
         }
 
         /// <summary>
@@ -785,24 +786,24 @@ namespace WHampson.Cascara
             if (!string.IsNullOrWhiteSpace(typeName))
             {
                 // Get size of type
-                if (!typeMap.TryGetValue(typeName, out TypeInfo info))
+                if (!typeMap.TryGetValue(typeName, out TypeDefinition tDef))
                 {
                     string msg = string.Format("Invalid type '{0}'", typeName);
                     throw new TemplateException(msg);
                 }
 
-                return info.Size + "";
+                return tDef.Size + "";
             }
 
             // Get size of variable value
             SymbolTableEntry e = GetSymbolInfo(varName);
-            if (e.Type == null)
+            if (!e.TypeInfo.IsFullyDefined)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new TemplateException(msg);
             }
 
-            return e.Type.Size + "";
+            return e.TypeInfo.Size + "";
         }
 
         /// <summary>
@@ -875,32 +876,32 @@ namespace WHampson.Cascara
         /// </summary>
         private void BuildTypeMap()
         {
-            typeMap[Keywords.Bool] = TypeInfo.CreatePrimitive(typeof(bool), 1);
-            typeMap[Keywords.Bool8] = TypeInfo.CreatePrimitive(typeof(bool), 1);
-            typeMap[Keywords.Bool16] = TypeInfo.CreatePrimitive(typeof(bool), 2);
-            typeMap[Keywords.Bool32] = TypeInfo.CreatePrimitive(typeof(bool), 4);
-            typeMap[Keywords.Bool64] = TypeInfo.CreatePrimitive(typeof(bool), 8);
-            typeMap[Keywords.Byte] = TypeInfo.CreatePrimitive(typeof(byte), 1);
-            typeMap[Keywords.Char] = TypeInfo.CreatePrimitive(typeof(char), 1);
-            typeMap[Keywords.Char8] = TypeInfo.CreatePrimitive(typeof(char), 1);
-            typeMap[Keywords.Char16] = TypeInfo.CreatePrimitive(typeof(char), 2);
-            typeMap[Keywords.Double] = TypeInfo.CreatePrimitive(typeof(double), 4);
-            typeMap[Keywords.Float] = TypeInfo.CreatePrimitive(typeof(float), 4);
-            typeMap[Keywords.Int] = TypeInfo.CreatePrimitive(typeof(int), 4);
-            typeMap[Keywords.Int8] = TypeInfo.CreatePrimitive(typeof(sbyte), 1);
-            typeMap[Keywords.Int16] = TypeInfo.CreatePrimitive(typeof(short), 2);
-            typeMap[Keywords.Int32] = TypeInfo.CreatePrimitive(typeof(int), 4);
-            typeMap[Keywords.Int64] = TypeInfo.CreatePrimitive(typeof(long), 8);
-            typeMap[Keywords.Long] = TypeInfo.CreatePrimitive(typeof(long), 8);
-            typeMap[Keywords.Short] = TypeInfo.CreatePrimitive(typeof(short), 2);
-            typeMap[Keywords.Single] = TypeInfo.CreatePrimitive(typeof(float), 4);
-            typeMap[Keywords.UInt] = TypeInfo.CreatePrimitive(typeof(uint), 4);
-            typeMap[Keywords.UInt8] = TypeInfo.CreatePrimitive(typeof(byte), 1);
-            typeMap[Keywords.UInt16] = TypeInfo.CreatePrimitive(typeof(ushort), 2);
-            typeMap[Keywords.UInt32] = TypeInfo.CreatePrimitive(typeof(uint), 4);
-            typeMap[Keywords.UInt64] = TypeInfo.CreatePrimitive(typeof(ulong), 8);
-            typeMap[Keywords.ULong] = TypeInfo.CreatePrimitive(typeof(ulong), 8);
-            typeMap[Keywords.UShort] = TypeInfo.CreatePrimitive(typeof(ushort), 2);
+            typeMap[Keywords.Bool] = TypeDefinition.CreatePrimitive(typeof(bool), 1);
+            typeMap[Keywords.Bool8] = TypeDefinition.CreatePrimitive(typeof(bool), 1);
+            typeMap[Keywords.Bool16] = TypeDefinition.CreatePrimitive(typeof(bool), 2);
+            typeMap[Keywords.Bool32] = TypeDefinition.CreatePrimitive(typeof(bool), 4);
+            typeMap[Keywords.Bool64] = TypeDefinition.CreatePrimitive(typeof(bool), 8);
+            typeMap[Keywords.Byte] = TypeDefinition.CreatePrimitive(typeof(byte), 1);
+            typeMap[Keywords.Char] = TypeDefinition.CreatePrimitive(typeof(char), 1);
+            typeMap[Keywords.Char8] = TypeDefinition.CreatePrimitive(typeof(char), 1);
+            typeMap[Keywords.Char16] = TypeDefinition.CreatePrimitive(typeof(char), 2);
+            typeMap[Keywords.Double] = TypeDefinition.CreatePrimitive(typeof(double), 4);
+            typeMap[Keywords.Float] = TypeDefinition.CreatePrimitive(typeof(float), 4);
+            typeMap[Keywords.Int] = TypeDefinition.CreatePrimitive(typeof(int), 4);
+            typeMap[Keywords.Int8] = TypeDefinition.CreatePrimitive(typeof(sbyte), 1);
+            typeMap[Keywords.Int16] = TypeDefinition.CreatePrimitive(typeof(short), 2);
+            typeMap[Keywords.Int32] = TypeDefinition.CreatePrimitive(typeof(int), 4);
+            typeMap[Keywords.Int64] = TypeDefinition.CreatePrimitive(typeof(long), 8);
+            typeMap[Keywords.Long] = TypeDefinition.CreatePrimitive(typeof(long), 8);
+            typeMap[Keywords.Short] = TypeDefinition.CreatePrimitive(typeof(short), 2);
+            typeMap[Keywords.Single] = TypeDefinition.CreatePrimitive(typeof(float), 4);
+            typeMap[Keywords.UInt] = TypeDefinition.CreatePrimitive(typeof(uint), 4);
+            typeMap[Keywords.UInt8] = TypeDefinition.CreatePrimitive(typeof(byte), 1);
+            typeMap[Keywords.UInt16] = TypeDefinition.CreatePrimitive(typeof(ushort), 2);
+            typeMap[Keywords.UInt32] = TypeDefinition.CreatePrimitive(typeof(uint), 4);
+            typeMap[Keywords.UInt64] = TypeDefinition.CreatePrimitive(typeof(ulong), 8);
+            typeMap[Keywords.ULong] = TypeDefinition.CreatePrimitive(typeof(ulong), 8);
+            typeMap[Keywords.UShort] = TypeDefinition.CreatePrimitive(typeof(ushort), 2);
         }
 
         /// <summary>
@@ -920,7 +921,7 @@ namespace WHampson.Cascara
         private void BuildAttributeActionMap()
         {
             attributeActionMap[Keywords.Count] = (AttributeProcessAction<int>) ProcessCountAttribute;
-            attributeActionMap[Keywords.Kind] = (AttributeProcessAction<TypeInfo>) ProcessKindAttribute;
+            attributeActionMap[Keywords.Kind] = (AttributeProcessAction<TypeDefinition>) ProcessKindAttribute;
             attributeActionMap[Keywords.Message] = (AttributeProcessAction<string>) ProcessMessageAttribute;
             attributeActionMap[Keywords.Name] = (AttributeProcessAction<string>) ProcessNameAttribute;
             attributeActionMap[Keywords.Newline] = (AttributeProcessAction<bool>) ProcessNewlineAttribute;
