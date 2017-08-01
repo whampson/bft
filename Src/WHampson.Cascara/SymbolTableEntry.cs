@@ -32,14 +32,11 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTableEntry
     {
-        private TypeInfo type;
-        private bool isTypeSet;
-
         /// <summary>
         /// Creates a new <see cref="SymbolTableEntry"/> object containing the
         /// given symbol, type, offset, and child table.
         /// </summary>
-        /// <param name="type">
+        /// <param name="tInfo">
         /// The type of data that the symbol refers to.
         /// </param>
         /// <param name="offset">
@@ -49,53 +46,16 @@ namespace WHampson.Cascara
         /// <param name="child">
         /// A <see cref="SymbolTable"/> that stems from this entry.
         /// </param>
-        public SymbolTableEntry(TypeInfo type, int offset, SymbolTable child)
+        public SymbolTableEntry(TypeInfo tInfo, SymbolTable child)
         {
-            Type = type;
-            Offset = offset;
+            Type = tInfo;
             Child = child;
         }
 
         /// <summary>
         /// Gets or sets the type information associated with the symbol.
         /// </summary>
-        /// <remarks>
-        /// NOTE: the setter can only be used ONCE!
-        /// This is to allow for entries to be added to symbol tables
-        /// before their types have been analyzed. This allows the symbol's
-        /// offset to be referenced while it's children are being populated.
-        /// This type should otherwise be immutable.
-        /// </remarks>
         public TypeInfo Type
-        {
-            get
-            {
-                return type;
-            }
-
-            set
-            {
-                // Ensure type is set exactly once
-                if (!isTypeSet)
-                {
-                    if ((type = value) != null)
-                    {
-                        isTypeSet = true;
-                    }
-                }
-                else
-                {
-                    string msg = "Cannot set Type as it has already been set.";
-                    throw new InvalidOperationException(msg);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the position in the binary data of the first byte
-        /// of data that the symbol refers to.
-        /// </summary>
-        public int Offset
         {
             get;
         }
@@ -121,8 +81,7 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            return string.Format("[Type: {0}, Offset: {1}, HasChild: {2}]",
-                Type, Offset, HasChild);
+            return string.Format("[Type: {0}, HasChild: {1}]", Type, HasChild);
         }
     }
 }
