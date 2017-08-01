@@ -31,6 +31,10 @@ namespace WHampson.Cascara
     /// <summary>
     /// Contains information about a data type used during the processing of a template.
     /// </summary>
+    /// <remarks>
+    /// This is different from <see cref="TypeInfo"/> in that this represents the
+    /// type itself, whereas <see cref="TypeInfo"/> represents an instance of a type.
+    /// </remarks>
     internal sealed class TypeDefinition
     {
         /// <summary>
@@ -63,11 +67,11 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.");
             }
 
-            return new TypeInfo(t, new List<XElement>(), size);
+            return new TypeDefinition(t, new List<XElement>(), size);
         }
 
         /// <summary>
-        /// Creates a new <see cref="TypeInfo"/> object that represents a
+        /// Creates a new <see cref="TypeDefinition"/> object that represents a
         /// composite data type.
         /// </summary>
         /// <param name="members">
@@ -78,9 +82,9 @@ namespace WHampson.Cascara
         /// The number of bytes that an instance of this type occupies.
         /// </param>
         /// <returns>
-        /// The newly-created <see cref="TypeInfo"/> object.
+        /// The newly-created <see cref="TypeDefinition"/> object.
         /// </returns>
-        public static TypeInfo CreateStruct(IEnumerable<XElement> members, int size)
+        public static TypeDefinition CreateStruct(IEnumerable<XElement> members, int size)
         {
             if (members == null)
             {
@@ -92,10 +96,10 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.");
             }
 
-            return new TypeInfo(typeof(ICascaraStruct), members, size);
+            return new TypeDefinition(typeof(ICascaraStruct), members, size);
         }
 
-        private TypeInfo(Type t, IEnumerable<XElement> members, int size)
+        private TypeDefinition(Type t, IEnumerable<XElement> members, int size)
         {
             Kind = t;
             Members = new List<XElement>(members);
