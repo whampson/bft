@@ -31,7 +31,7 @@ namespace WHampson.Cascara
 {
     class Program
     {
-        const string TestDir = "../../../../Test/Gta3Save";
+        const string TestDir = "../../TestData/Gta3Save";
         const string BinDir = TestDir + "/Binaries";
 
         static void Main(string[] args)
@@ -44,12 +44,6 @@ namespace WHampson.Cascara
                 bFile.ApplyTemplate(xmlPath);
                 Gta3PCSave gameSave = bFile.Extract<Gta3PCSave>();
                 Console.WriteLine(GetStringValue(gameSave.SimpleVars.SaveTitle));
-                Console.WriteLine(gameSave.SimpleVars.CameraCoords.Value);
-                Console.WriteLine(gameSave.Checksum.Value);
-
-                Console.WriteLine(gameSave.SimpleVars.SaveTitle);
-
-                //bFile.Write(TestDir + "/out.b");
             }
 
             // Pause

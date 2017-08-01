@@ -45,6 +45,9 @@
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="TestData\BasicTests\Binaries\DynamicArray.bin" />
+    <None Include="TestData\BasicTests\Binaries\Test.bin" />
+    <None Include="TestData\Gta3Save\Binaries\PC\GTA3sf1.B" />
     <None Include="WHampson.Cascara.Test.licenseheader" />
   </ItemGroup>
   <ItemGroup>
@@ -55,6 +58,14 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+    <Folder Include="TestData\Gxt\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestData\BasicTests\DynamicArray.xml" />
+    <Content Include="TestData\BasicTests\Test.xml" />
+    <Content Include="TestData\DynamicArray.xml" />
+    <Content Include="TestData\Gta3Save\PCSave.xml" />
+    <Content Include="TestData\Test.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
