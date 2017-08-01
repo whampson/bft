@@ -64,7 +64,7 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.", nameof(size));
             }
 
-            Type = type ?? throw new ArgumentException(nameof(type));
+            Type = type;
             Offset = offset;
             Size = size;
             IsFullyDefined = isFullyDefined;
@@ -72,8 +72,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the .NET <see cref="System.Type"/> that the data represents.
-        /// The classifier <see cref="ICascaraStruct"/> is used if the data
-        /// represents a struct.
+        /// If the data represents a struct, then this value is <code>null</code>.
         /// </summary>
         public Type Type
         {
@@ -98,6 +97,9 @@ namespace WHampson.Cascara
             internal set;
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the type has been fully defined.
+        /// </summary>
         internal bool IsFullyDefined
         {
             get;
@@ -109,13 +111,13 @@ namespace WHampson.Cascara
         /// </summary>
         public bool IsStruct
         {
-            get { return Type == typeof(ICascaraStruct); }
+            get { return Type == null; }
         }
 
         public override string ToString()
         {
-            return string.Format("[Type: {0}, Offset: {1}, Size: {2}]",
-                Type, Offset, Size);
+            return string.Format("[Type: {0}, Offset: {1}, Size: {2}, IsStruct: {3}]",
+                Type, Offset, Size, IsStruct);
         }
     }
 }

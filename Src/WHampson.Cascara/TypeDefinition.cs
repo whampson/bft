@@ -96,7 +96,7 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Size must be a non-negative integer.");
             }
 
-            return new TypeDefinition(typeof(ICascaraStruct), members, size);
+            return new TypeDefinition(null, members, size);
         }
 
         private TypeDefinition(Type t, IEnumerable<XElement> members, int size)
@@ -108,6 +108,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the .NET <see cref="Type"/> represented.
+        /// If the data represents a struct, then this value is <code>null</code>.
         /// </summary>
         public Type Kind
         {
@@ -138,12 +139,13 @@ namespace WHampson.Cascara
         /// </summary>
         public bool IsStruct
         {
-            get { return Kind == typeof(ICascaraStruct); }
+            get { return Kind == null; }
         }
 
         public override string ToString()
         {
-            return string.Format("[Kind: {0}, Size: {1}]", Kind, Size);
+            return string.Format("[Kind: {0}, Size: {1}, IsStruct: {2}]",
+                Kind, Size, IsStruct);
         }
     }
 }
