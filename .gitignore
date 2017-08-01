@@ -241,8 +241,5 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
-# License header definitions
-*.licenseheader
-
 # Temporary backup files
 *.bak
