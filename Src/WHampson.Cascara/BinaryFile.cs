@@ -22,11 +22,12 @@
 #endregion
 
 using System;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.IO;
-using WHampson.Cascara.Types;
-using System.Text.RegularExpressions;
+using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using WHampson.Cascara.Types;
 
 using Pointer = WHampson.Cascara.Types.Pointer;
 
@@ -85,7 +86,7 @@ namespace WHampson.Cascara
         /// The identifier to check for.
         /// </param>
         /// <returns>
-        /// <code>True</code> if <paramref name="name"/> is a valid identitifer,
+        /// <code>True</code> if <paramref name="name"/> is a valid identifier,
         /// <code>False</code> otherwise.
         /// </returns>
         public bool IdentifierExists(string name)
@@ -93,28 +94,41 @@ namespace WHampson.Cascara
             return symTabl.GetEntry(name) != null;
         }
 
-        /// <summary>
-        /// Gets a value indicating whether the given variable identifier
-        /// represents a primitive type (i.e. non-struct).
-        /// </summary>
-        /// <param name="name">
-        /// The identifier to check for.
-        /// </param>
-        /// <returns>
-        /// <code>True</code> if <paramref name="name"/> represents a primitive type
-        /// <code>False</code> otherwise.
-        /// </returns>
-        public bool IsPrimitive(string name)
-        {
-            SymbolInfo info = symTabl.GetEntry(name);
+        ///// <summary>
+        ///// Gets a value indicating whether the given variable identifier
+        ///// represents a primitive type (i.e. non-struct).
+        ///// </summary>
+        ///// <param name="name">
+        ///// The identifier to check for.
+        ///// </param>
+        ///// <returns>
+        ///// <code>True</code> if <paramref name="name"/> represents a primitive type
+        ///// <code>False</code> otherwise.
+        ///// </returns>
+        //public bool IsPrimitive(string name)
+        //{
+        //    SymbolInfo info = symTabl.GetEntry(name);
 
-            return info != null && info.TypeInfo.Type != typeof(ICascaraStruct);
-        }
+        //    return info != null && info.TypeInfo.Type != typeof(ICascaraStruct);
+        //}
 
         public void ApplyTemplate(string templateFilePath)
         {
             TemplateProcessor proc = new TemplateProcessor(templateFilePath);
             symTabl = proc.Process(dataPtr, dataLen);
+        }
+
+        private void PrintSymbols(SymbolTable tabl)
+        {
+            Console.WriteLine("=== Symbols for " + tabl.GetFullyQualifiedName() + " ===");
+            foreach (var entry in tabl)
+            {
+                Console.WriteLine("{0} => {1}", tabl.GetFullyQualifiedName(entry.Key), entry.Value);
+                if (entry.Value.HasChild)
+                {
+                    PrintSymbols(entry.Value.Child);
+                }
+            }
         }
 
         /// <summary>
@@ -166,33 +180,33 @@ namespace WHampson.Cascara
 
         public Pointer GetPointer(string name)
         {
-            SymbolInfo info = symTabl.GetEntry(name);
-            if (info == null)
+            SymbolTableEntry entry = symTabl.GetEntry(name);
+            if (entry == null)
             {
                 string fmt = "Symbol not found '{0}'";
                 throw new ArgumentException(string.Format(fmt, name));
             }
 
-            return new Pointer(dataPtr + info.Offset);
+            return new Pointer(dataPtr + entry.TypeInfo.Offset);
         }
 
         public Pointer<T> GetPointer<T>(string name)
             where T : struct
         {
-            SymbolInfo info = symTabl.GetEntry(name);
-            if (info == null)
+            SymbolTableEntry entry = symTabl.GetEntry(name);
+            if (entry == null)
             {
                 string fmt = "Symbol not found '{0}'";
                 throw new ArgumentException(string.Format(fmt, name));
             }
 
-            if (info.TypeInfo.Type == typeof(ICascaraStruct))
+            if (entry.TypeInfo.IsStruct)
             {
                 string fmt = "Cannot get a pointer to struct '{0}' using type '{1}'.";
                 throw new NotSupportedException(string.Format(fmt, name, typeof(T).Name));
             }
 
-            return new Pointer<T>(dataPtr + info.Offset);
+            return new Pointer<T>(dataPtr + entry.TypeInfo.Offset);
         }
 
         public ArrayPointer<T> GetArrayPointer<T>(int offset, int count)
@@ -236,6 +250,37 @@ namespace WHampson.Cascara
             pValue.Value = value;
         }
 
+        public Dictionary<string, TypeInfo> GetAll()
+        {
+            Dictionary<string, TypeInfo> allEntries = symTabl.GetAllEntries()
+                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+
+            return allEntries;
+        }
+
+        public Dictionary<string, TypeInfo> GetAllPrimitives()
+        {
+            Dictionary<string, TypeInfo> primitives = symTabl.GetAllEntries()
+                .Where(x => !x.Value.TypeInfo.IsStruct)
+                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+
+            return primitives;
+        }
+
+        public Dictionary<string, TypeInfo> GetAllStructs()
+        {
+            Dictionary<string, TypeInfo> structs = symTabl.GetAllEntries()
+                .Where(x => x.Value.TypeInfo.IsStruct)
+                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+
+            return structs;
+        }
+
+        //public Dictionary<string, TypeInfo> GetAllMembers(string name)
+        //{
+        //    Dictionary<string, TypeInfo> allEntries = GetAll();
+        //}
+
         public T Extract<T>() where T : new()
         {
             return (T) Extract(symTabl, typeof(T));
@@ -248,7 +293,7 @@ namespace WHampson.Cascara
 
             foreach (PropertyInfo p in props)
             {
-                SymbolInfo sInfo = tabl.GetEntry(p.Name);
+                SymbolTableEntry sInfo = tabl.GetEntry(p.Name);
                 if (sInfo == null)
                 {
                     continue;
@@ -256,7 +301,7 @@ namespace WHampson.Cascara
 
                 //bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
-                bool isStruct = sInfo.TypeInfo.Type == typeof(ICascaraStruct);
+                bool isStruct = sInfo.TypeInfo.IsStruct;
                 bool isArrayPointer = IsPropertyArrayPointer(p);
 
                 if (p.PropertyType.IsPrimitive)
@@ -267,7 +312,7 @@ namespace WHampson.Cascara
                 {
                     if (isArrayPointer)
                     {
-                        int elemCount = tabl.CountElems(p.Name);
+                        int elemCount = tabl.GetElemCount(p.Name);
                         SetArrayPointerValue(p, o, sInfo, elemCount);
                     }
                     else
@@ -315,12 +360,12 @@ namespace WHampson.Cascara
             //    }
             //}
 
-            int elemCount = tabl.CountElems(p.Name);
+            int elemCount = tabl.GetElemCount(p.Name);
             Array a = Array.CreateInstance(elemType, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
                 string elemName = string.Format("{0}[{1}]", p.Name, i);
-                SymbolInfo sInfo = tabl.GetEntry(elemName);
+                SymbolTableEntry sInfo = tabl.GetEntry(elemName);
                 // TODO: watch out for sInfo == null
                 object memb = Extract(sInfo.Child, elemType);
                 a.SetValue(memb, i);
@@ -329,33 +374,41 @@ namespace WHampson.Cascara
             p.SetValue(o, a);
         }
 
-        private void SetPrimitiveValue(PropertyInfo p, object o, SymbolInfo sInfo)
+        private void SetPrimitiveValue(PropertyInfo p, object o, SymbolTableEntry sInfo)
         {
-            object val = GetValue(sInfo.TypeInfo.Type, sInfo.Offset);
+            object val = GetValue(p.PropertyType, sInfo.TypeInfo.Offset);
             p.SetValue(o, Convert.ChangeType(val, p.PropertyType));
         }
 
-        private void SetPointerValue(PropertyInfo p, object o, SymbolInfo sInfo)
+        private void SetPointerValue(PropertyInfo p, object o, SymbolTableEntry sInfo)
         {
-            Pointer ptr = GetPointer(sInfo.Offset);
-            Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { sInfo.TypeInfo.Type });
+            Pointer ptr = GetPointer(sInfo.TypeInfo.Offset);
 
-            p.SetValue(o, Convert.ChangeType(ptr, ptrGeneric));
+            p.SetValue(o, Convert.ChangeType(ptr, p.PropertyType));
         }
 
-        private void SetArrayPointerValue(PropertyInfo p, object o, SymbolInfo sInfo, int elemCount)
+        private void SetArrayPointerValue(PropertyInfo p, object o, SymbolTableEntry sInfo, int elemCount)
         {
-            object ptrVal = Activator.CreateInstance(p.PropertyType, dataPtr + sInfo.Offset, elemCount);
+            object ptrVal = Activator.CreateInstance(p.PropertyType, dataPtr + sInfo.TypeInfo.Offset, elemCount);
             p.SetValue(o, ptrVal);
         }
 
         public object GetValue(Type valType, int offset)
         {
-            Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { valType });
-            object ptr = Activator.CreateInstance(ptrGeneric, dataPtr + offset);
-            PropertyInfo valProp = ptr.GetType().GetProperty("Value");
+            //Type ptrGeneric = typeof(Pointer<>).MakeGenericType(new Type[] { valType });
+            //object ptr = Activator.CreateInstance(ptrGeneric, dataPtr + offset);
+            //PropertyInfo valProp = ptr.GetType().GetProperty("Value");
 
-            return valProp.GetValue(ptr);
+            //return valProp.GetValue(ptr);
+
+            Pointer ptr = dataPtr + offset;
+            return ptr.GetValue(valType);
+        }
+
+        public object GetValue(string name, Type valType)
+        {
+            Pointer ptr = GetPointer(name);
+            return ptr.GetValue(valType);
         }
 
         /// <summary>
