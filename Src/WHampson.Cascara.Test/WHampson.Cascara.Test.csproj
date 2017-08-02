@@ -58,14 +58,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-    <Folder Include="TestData\Gxt\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\BasicTests\DynamicArray.xml" />
     <Content Include="TestData\BasicTests\Test.xml" />
-    <Content Include="TestData\DynamicArray.xml" />
     <Content Include="TestData\Gta3Save\PCSave.xml" />
-    <Content Include="TestData\Test.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
