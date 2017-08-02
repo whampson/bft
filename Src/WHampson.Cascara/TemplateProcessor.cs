@@ -202,6 +202,7 @@ namespace WHampson.Cascara
                 varName = name + "[" + i + "]";
 
                 SymbolTableEntry entry = null;
+                SymbolTable curSymTabl = symTablStack.Peek();
                 if (!isConductingDryRun && name != null)
                 {
                     if (localsMap.ContainsKey(name))
@@ -211,7 +212,6 @@ namespace WHampson.Cascara
                     }
 
                     // Create new symbol table and make current table its parent
-                    SymbolTable curSymTabl = symTablStack.Peek();
                     SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
 
                     // Create symbol table entry for this struct in the current table
@@ -227,6 +227,13 @@ namespace WHampson.Cascara
 
                     // Push new symbol table onto the stack to make it "active"
                     symTablStack.Push(newSymTabl);
+                }
+                else
+                {
+                    // Push a new, nameless symbol table onto the stack
+                    // so children can still reference other members
+                    // within the scope of the struct
+                    symTablStack.Push(new SymbolTable(null, curSymTabl));
                 }
 
                 // Process the struct
