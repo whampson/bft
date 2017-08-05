@@ -94,41 +94,30 @@ namespace WHampson.Cascara
             return symTabl.GetEntry(name) != null;
         }
 
-        ///// <summary>
-        ///// Gets a value indicating whether the given variable identifier
-        ///// represents a primitive type (i.e. non-struct).
-        ///// </summary>
-        ///// <param name="name">
-        ///// The identifier to check for.
-        ///// </param>
-        ///// <returns>
-        ///// <code>True</code> if <paramref name="name"/> represents a primitive type
-        ///// <code>False</code> otherwise.
-        ///// </returns>
-        //public bool IsPrimitive(string name)
-        //{
-        //    SymbolInfo info = symTabl.GetEntry(name);
+        public bool IsArray(string name)
+        {
+            return symTabl.IsArray(name);
+        }
 
-        //    return info != null && info.TypeInfo.Type != typeof(ICascaraStruct);
-        //}
+        public bool IsPrimitive(string name)
+        {
+            return symTabl.IsPrimitive(name);
+        }
+
+        public bool IsStruct(string name)
+        {
+            return symTabl.IsStruct(name);
+        }
+
+        public int GetElemCount(string name)
+        {
+            return symTabl.GetElemCount(name);
+        }
 
         public void ApplyTemplate(string templateFilePath)
         {
             TemplateProcessor proc = new TemplateProcessor(templateFilePath);
             symTabl = proc.Process(dataPtr, dataLen);
-        }
-
-        private void PrintSymbols(SymbolTable tabl)
-        {
-            Console.WriteLine("=== Symbols for " + tabl.GetFullyQualifiedName() + " ===");
-            foreach (var entry in tabl)
-            {
-                Console.WriteLine("{0} => {1}", tabl.GetFullyQualifiedName(entry.Key), entry.Value);
-                if (entry.Value.HasChild)
-                {
-                    PrintSymbols(entry.Value.Child);
-                }
-            }
         }
 
         /// <summary>
@@ -434,7 +423,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Closes out the file by releasing all umanaged resources.
+        /// Closes out the file by releasing all unmanaged resources.
         /// </summary>
         public void Close()
         {
