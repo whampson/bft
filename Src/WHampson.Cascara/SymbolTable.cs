@@ -263,7 +263,7 @@ namespace WHampson.Cascara
         /// </returns>
         public bool IsPrimitive(string name)
         {
-            return !IsStruct(name);
+            return ContainsEntry(name) && !IsStruct(name);
         }
 
         /// <summary>
@@ -323,12 +323,12 @@ namespace WHampson.Cascara
         /// </returns>
         public int GetElemCount(string name)
         {
-            name = StripArrayNotation(name);
-            if (!ContainsEntry(name))
+            if (!IsArray(name))
             {
                 return 0;
             }
 
+            name = StripArrayNotation(name);
             int count = 0;
             do
             {
