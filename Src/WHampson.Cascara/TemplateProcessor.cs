@@ -195,6 +195,7 @@ namespace WHampson.Cascara
 
             // Process the struct 'count' times
             int localOffset = 0;
+            int elemSize = 0;
             string varName;
             for (int i = 0; i < count; i++)
             {
@@ -237,12 +238,13 @@ namespace WHampson.Cascara
                 }
 
                 // Process the struct
-                localOffset += ProcessStructMembers(elem);
+                elemSize = ProcessStructMembers(elem);
+                localOffset += elemSize;
 
                 if (!isConductingDryRun && name != null)
                 {
                     // We've finished processing the struct, so now we can set the size
-                    entry.TypeInfo.Size = localOffset;
+                    entry.TypeInfo.Size = elemSize;
                     entry.TypeInfo.IsFullyDefined = true;
 
                     // Make the previous table "active"
