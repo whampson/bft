@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/whampson/cascara.svg?branch=master)](https://travis-ci.org/whampson/cascara)
+
+(needs updating)
 # Binary File Template Specification
 ## What is it?
 **BFT** is a specification for an XML-based binary file template, which is used
