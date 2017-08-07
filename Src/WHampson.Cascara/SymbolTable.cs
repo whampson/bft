@@ -184,9 +184,81 @@ namespace WHampson.Cascara
             return GetAllKeys(this);
         }
 
-        public Dictionary<string, SymbolTableEntry> GetAllEntries()
+        /// <summary>
+        /// Gets the most immediate descendants of this symbol table.
+        /// </summary>
+        /// <returns>
+        /// A dictionary containing the children of the current symbol table (if any).
+        /// </returns>
+        public Dictionary<string, SymbolTableEntry> GetChildren()
         {
-            return GetAllEntries(this);
+            return GetChildren(this);
+        }
+
+        /// <summary>
+        /// Gets the most immediate descendants of the symbol with the
+        /// specified name.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the symbol to get the children of.
+        /// </param>
+        /// <returns>
+        /// A dictionary containing the children of the specified symbol (if any).
+        /// </returns>
+        public Dictionary<string, SymbolTableEntry> GetChildren(string name)
+        {
+            SymbolTableEntry e = GetEntry(name);
+            if (e == null)
+            {
+                string msg = string.Format("Variable '{0}' not found.", name);
+                throw new KeyNotFoundException(msg);
+            }
+
+            if (!e.HasChild)
+            {
+                return new Dictionary<string, SymbolTableEntry>();
+            }
+
+            return GetChildren(e.Child);
+        }
+
+        /// <summary>
+        /// Gets all symbols that stem from this symbol table,
+        /// all the way to the leaves.
+        /// </summary>
+        /// <returns>
+        /// A dictionary containing all descendants of the current symbol table (if any).
+        /// </returns>
+        public Dictionary<string, SymbolTableEntry> GetDescendants()
+        {
+            return GetDescendants(this);
+        }
+
+        /// <summary>
+        /// Gets all symbols that stem from this specified symbol,
+        /// all the way to the leaves.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the symbol to get the descendants of.
+        /// </param>
+        /// <returns>
+        /// A dictionary containing all descendants of the specified symbol (if any).
+        /// </returns>
+        public Dictionary<string, SymbolTableEntry> GetDescendants(string name)
+        {
+            SymbolTableEntry e = GetEntry(name);
+            if (e == null)
+            {
+                string msg = string.Format("Variable '{0}' not found.", name);
+                throw new KeyNotFoundException(msg);
+            }
+
+            if (!e.HasChild)
+            {
+                return new Dictionary<string, SymbolTableEntry>();
+            }
+
+            return GetDescendants(e.Child);
         }
 
         /// <summary>
@@ -442,23 +514,36 @@ namespace WHampson.Cascara
             return keys;
         }
 
-        private static Dictionary<string, SymbolTableEntry> GetAllEntries(SymbolTable tabl)
+        private static Dictionary<string, SymbolTableEntry> GetChildren(SymbolTable tabl)
         {
-            Dictionary<string, SymbolTableEntry> entries = new Dictionary<string, SymbolTableEntry>();
+            Dictionary<string, SymbolTableEntry> children = new Dictionary<string, SymbolTableEntry>();
             foreach (KeyValuePair<string, SymbolTableEntry> kvp in tabl)
             {
                 string name = tabl.GetFullyQualifiedName(kvp.Key);
                 SymbolTableEntry entry = kvp.Value;
-                entries[name] = entry;
+                children[name] = entry;
+            }
+
+            return children;
+        }
+
+        private static Dictionary<string, SymbolTableEntry> GetDescendants(SymbolTable tabl)
+        {
+            Dictionary<string, SymbolTableEntry> descendants = new Dictionary<string, SymbolTableEntry>();
+            foreach (KeyValuePair<string, SymbolTableEntry> kvp in tabl)
+            {
+                string name = tabl.GetFullyQualifiedName(kvp.Key);
+                SymbolTableEntry entry = kvp.Value;
+                descendants[name] = entry;
 
                 if (entry.HasChild)
                 {
-                    Dictionary<string, SymbolTableEntry> childEntries = GetAllEntries(entry.Child);
-                    entries = entries.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);
+                    Dictionary<string, SymbolTableEntry> childEntries = GetDescendants(entry.Child);
+                    descendants = descendants.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);
                 }
             }
 
-            return entries;
+            return descendants;
         }
     }
 }
