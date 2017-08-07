@@ -45,7 +45,7 @@
         <align count="3"/>
         <uint8 name="GameMinutes"/>
         <align count="3"/>
-        <uint16 name="CurrentPadMde"/>
+        <uint16 name="CurrentPadMode"/>
         <align count="2"/>
         <uint32 name="TimeInMilliSeconds"/>
         <float name="_TimeScale"/>
@@ -67,13 +67,14 @@
         <float/>
         <float/>
 
-        <uint32 name="Size"/>
         <struct name="Scripts">
-            <TaggedBlockHeader name="Header"/>
+            <BlockHeader name="Header"/>
             <struct name="Data">
+                <TaggedBlockHeader name="Header"/>
                 <uint32 name="GlobalVariableSpaceSize"/>
                 <ScriptVariable name="GlobalVariables" count="${GlobalVariableSpaceSize} / 4"/>
-                <uint32 name="Size"/>
+                <!--<ScriptVariable count="${GlobalVariableSpaceSize} / 4"/>-->
+                <uint32 name="Size" comment="Presumably"/>
                 <struct name="ScmState">
                     <uint32 name="OnAMissionVar"/>
                     <struct name="ContactInfo" count="16">
@@ -124,6 +125,23 @@
                     <align count="2"/>
                 </struct>
             </struct>
+        </struct>
+    </struct>
+    
+    <!-- Block 1: Player Peds -->
+    <struct name="PlayerPeds">
+        <BlockHeader name="Header"/>
+        <!-- Skip this block for now... -->
+        <align count="${Header.Size}"/>
+    </struct>
+    
+    <!-- Block 2: Garages -->
+    <struct name="Garages">
+        <BlockHeader name="Header"/>
+        <struct name="GarageData">
+            <BlockHeader name="Header"/>
+            <uint32 name="NumberOfDefinedGarages"/>
+            <bool32 name="BombsAreFree"/>
         </struct>
     </struct>
 

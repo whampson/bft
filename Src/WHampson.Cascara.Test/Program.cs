@@ -23,7 +23,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using WHampson.Cascara.Types;
 
 using Pointer = WHampson.Cascara.Types.Pointer;
@@ -43,30 +45,37 @@ namespace WHampson.Cascara
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
                 bFile.ApplyTemplate(xmlPath);
-                Gta3PCSave gameSave = bFile.Extract<Gta3PCSave>();
-
-                /*
-                 * TODO: IsArray(), IsStruct(), GetSizeOf(), GetTypeOf(), GetMembers()
-                 */
-
-                Dictionary<string, TypeInfo> prims = bFile.GetAllPrimitives();
-                foreach (var kvp in prims)
+                Gta3PCSave gameSave = bFile.ExtractData<Gta3PCSave>();
+                ArrayPointer<int> GlobalVariables = bFile.GetArrayPointer<int>("SimpleVars.Scripts.Data.GlobalVariables");
+                for (int i = 0; i < GlobalVariables.Count; i++)
                 {
-                    string n = kvp.Key;
-                    TypeInfo t = kvp.Value;
-                    object v = bFile.GetValue(n, t.Type);
-                    Console.WriteLine("{0:X8}: {1} => {2}", t.Offset, n, v);
+                    GlobalVariables[i] = 0;
                 }
 
-                //uint mainBlockSize = bFile.GetValue<uint>("SimpleVars.Header.Size");
-                //uint scrBlockSize = bFile.GetValue<uint>("SimpleVars.Size");
-
-                //Console.WriteLine(mainBlockSize);
-                //Console.WriteLine(scrBlockSize);
+                //bFile.Write(BinDir + "/PC/GTA3sf2.b");
             }
 
             // Pause
             Console.ReadKey();
+        }
+
+        private static void PrintString(BinaryFile bFile, string name)
+        {
+            int len = bFile.GetElemCount(name);
+            name = Regex.Replace(name, @"\[\d+\]$", "");
+
+            string s = "";
+            for (int i = 0; i < len; i++)
+            {
+                char ch = bFile.GetValue<char>(name + "[" + i + "]");
+                if (ch == 0)
+                {
+                    break;
+                }
+                s += ch;
+            }
+
+            Console.WriteLine(s);
         }
 
         private static string GetStringValue(Pointer<Char16> ptr)
@@ -81,6 +90,43 @@ namespace WHampson.Cascara
             }
 
             return s;
+        }
+
+        private static bool IsCharType(object o)
+        {
+            if (!(o is IConvertible))
+            {
+                return false;
+            }
+
+            IConvertible conv = (IConvertible) o;
+            return conv.GetTypeCode() == TypeCode.Char;
+        }
+
+        public static bool IsAssignableToGenericType(Type givenType, Type genericType)
+        {
+            Type[] interfaceTypes = givenType.GetInterfaces();
+
+            foreach (Type type in interfaceTypes)
+            {
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == genericType)
+                {
+                    return true;
+                }
+            }
+
+            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
+            {
+                return true;
+            }
+
+            Type baseType = givenType.BaseType;
+            if (baseType == null)
+            {
+                return false;
+            }
+
+            return IsAssignableToGenericType(baseType, genericType);
         }
     }
 
