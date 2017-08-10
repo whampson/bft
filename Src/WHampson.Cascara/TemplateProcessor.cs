@@ -122,6 +122,12 @@ namespace WHampson.Cascara
             dryRunRecursionDepth = 0;
             dataOffset = 0;
 
+            // Prevent 'include' cycles
+            if (pathStack.Contains(templatePath))
+            {
+                throw new TemplateException("Template inclusion cycle detected.");
+            }
+
             pathStack.Push(Path.GetFullPath(templatePath));
             XDocument doc = OpenXmlFile(templatePath);
 
@@ -415,7 +421,14 @@ namespace WHampson.Cascara
 
             string path = GetAttributeValue<string>(elem, Keywords.Path, true, null);
 
-            return ProcessTemplate(path);
+            try
+            {
+                return ProcessTemplate(path);
+            }
+            catch (TemplateException ex)
+            {
+                throw TemplateException.Create(ex, elem, ex.Message);
+            }
         }
 
         private int ProcessLocalDirective(XElement elem)
