@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
@@ -34,13 +35,22 @@ namespace WHampson.Cascara
 {
     class Program
     {
-        const string TestDir = "../../TestData/Gta3Save";
-        const string BinDir = TestDir + "/Binaries";
+        const string TestDataPath = "../../TestData";
 
         static void Main(string[] args)
         {
-            string xmlPath = TestDir + "/PCSave.xml";
-            string binPath = BinDir + "/PC/GTA3sf1.b";
+            IncludeDirective();
+            Console.WriteLine("All tests passed!");
+
+            // Pause
+            Console.ReadKey();
+        }
+
+        private static void Gta3Save()
+        {
+            // TODO: fix paths
+            string xmlPath = TestDataPath + "/PCSave.xml";
+            string binPath = /*BinDir +*/ "/PC/GTA3sf1.b";
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
@@ -54,9 +64,22 @@ namespace WHampson.Cascara
 
                 //bFile.Write(BinDir + "/PC/GTA3sf2.b");
             }
+        }
 
-            // Pause
-            Console.ReadKey();
+        private static void IncludeDirective()
+        {
+            string testPath = TestDataPath + "/IncludeDirective";
+            string binPath = testPath + "/IncludeTest.bin";
+            string xmlPath = testPath + "/IncludeTest.xml";
+
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                bFile.ApplyTemplate(xmlPath);
+
+                Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.X") == 58.14f);
+                Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.Y") == -42.41f);
+                Debug.Assert(bFile.GetValue<float>("CircleData[0].Radius") == 1.0f);
+            }
         }
 
         private static void PrintString(BinaryFile bFile, string name)
