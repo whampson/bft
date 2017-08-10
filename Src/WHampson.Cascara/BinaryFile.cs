@@ -44,13 +44,31 @@ namespace WHampson.Cascara
         private bool hasBeenDisposed;
 
         // Use Open() to create a new instance
-        private BinaryFile(IntPtr addr, int len)
+        private BinaryFile(string path, IntPtr addr, int len)
         {
+            SourcePath = path;
             dataPtr = addr;
             dataLen = len;
             symTabl = new SymbolTable();
 
             hasBeenDisposed = false;
+        }
+
+        /// <summary>
+        /// Gets the path to the file currently loaded.
+        /// </summary>
+        public string SourcePath
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Gets a pointer to the address of the start of the
+        /// binary file's data.
+        /// </summary>
+        protected IntPtr BaseAddress
+        {
+            get;
         }
 
         /// <summary>
@@ -530,38 +548,123 @@ namespace WHampson.Cascara
             pValue.Value = value;
         }
 
+        /// <summary>
+        /// Gets a collection of the most immediate descendants to the
+        /// top level of the binary file. That is, a collection
+        /// containing the first level of children.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="Dictionary{TKey, TValue}"/> containing the
+        /// most immediate descendants to the top-level of the binary file.
+        /// </returns>
         public Dictionary<string, TypeInfo> GetChildren()
         {
             return symTabl.GetChildren()
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
         }
 
+        /// <summary>
+        /// Gets a collection of the most immediate descendants of the
+        /// specified variable.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the variable to get the children of.
+        /// </param>
+        /// <returns>
+        /// A <see cref="Dictionary{TKey, TValue}"/> containing all
+        /// children of the specified variable, if any.
+        /// </returns>
         public Dictionary<string, TypeInfo> GetChildren(string name)
         {
             return symTabl.GetChildren(name)
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
         }
 
+        /// <summary>
+        /// Gets a collection of all variables that exist in the
+        /// binary file data. The collection contains the variables
+        /// in the order in which they appear in the file data.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="Dictionary{TKey, TValue}"/> containing all
+        /// descendants of the binary file, if any.
+        /// </returns>
         public Dictionary<string, TypeInfo> GetDescendants()
         {
             return symTabl.GetDescendants()
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
         }
 
+        /// <summary>
+        /// Gets a collection of all descendants of the specified variable
+        /// in the order in which they appear in the binary file data.
+        /// </summary>
+        /// <param name="name">
+        /// The name of the variable to get the descendants of.
+        /// </param>
+        /// <returns>
+        /// A <see cref="Dictionary{TKey, TValue}"/> containing all
+        /// descendants of the specified variable, if any.
+        /// </returns>
         public Dictionary<string, TypeInfo> GetDescendants(string name)
         {
             return symTabl.GetDescendants(name)
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
         }
 
+        /// <summary>
+        /// Runs a Cascara Binary Template on the file contents
+        /// and maps variable names to offsets in the file data
+        /// based on the layout of the template.
+        /// </summary>
+        /// <param name="templateFilePath">
+        /// The path to the template to run.
+        /// </param>
         public void ApplyTemplate(string templateFilePath)
         {
-            TemplateProcessor proc = new TemplateProcessor(templateFilePath);
-            symTabl = proc.Process(dataPtr, dataLen);
+            ApplyTemplate(templateFilePath, Console.Out);
         }
 
+        /// <summary>
+        /// Runs a Cascara Binary Template on the file contents
+        /// and maps variable names to offsets in the file data
+        /// based on the layout of the template.
+        /// </summary>
+        /// <param name="templateFilePath">
+        /// The path to the template to run.
+        /// </param>
+        /// <param name="echoWriter">
+        /// A <see cref="TextWriter"/> to use as the output stream
+        /// for the <code>echo</code> directive.
+        /// </param>
+        public void ApplyTemplate(string templateFilePath, TextWriter echoWriter)
+        {
+            TemplateProcessor proc = new TemplateProcessor();
+            proc.EchoWriter = echoWriter;
+            symTabl = proc.Process(templateFilePath, dataPtr, dataLen);
+        }
+
+        /// <summary>
+        /// Creates an instance of <typeparamref name="T"/> and sets
+        /// the values of the object's public, settable properties
+        /// with the values of variables whose names match the properties'
+        /// names. If a property's type is a reference type, it will be
+        /// set recursively using the members of a struct variable with the
+        /// same name. This method requires that <see cref="ApplyTemplate(string)"/>
+        /// has been run.
+        /// </summary>
+        /// <typeparam name="T">
+        /// The type of the object to be instantiated with the data
+        /// from the binary file.
+        /// </typeparam>
+        /// <returns>
+        /// An object of type <typeparamref name="T"/> whose properties are
+        /// set using data from the binary file.
+        /// </returns>
         public T ExtractData<T>() where T : new()
         {
+            // TODO: Rename to Deserialize()?
+            // Perhaps Serialize() will become a function later in life...
             return (T) ExtractData(symTabl, typeof(T));
         }
 
@@ -625,19 +728,6 @@ namespace WHampson.Cascara
         {
             Type propType = p.PropertyType;
             Type elemType = propType.GetElementType();
-
-            //// Check if property is a Pointer<T>[], which is not allowed
-            //if (propType.IsGenericType)
-            //{
-            //    Type propGenType = elemType.GetGenericTypeDefinition();
-            //    if (propGenType == typeof(Pointer<>))
-            //    {
-            //        // TODO: better exception message
-            //        string msg = "Arrays of the Pointer<> type are not allowed. "
-            //            + "Use the ArrayPointer<> class to create a pointer to an array.";
-            //        throw new InvalidCastException(msg);
-            //    }
-            //}
 
             int elemCount = tabl.GetElemCount(p.Name);
             Array a = Array.CreateInstance(elemType, elemCount);
@@ -707,6 +797,10 @@ namespace WHampson.Cascara
             Dispose();
         }
 
+        /// <summary>
+        /// Checks whether a given offset falls within the
+        /// range of the file buffer.
+        /// </summary>
         private bool RangeCheck(int offset)
         {
             return offset > -1 && offset < dataLen;
@@ -730,8 +824,7 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            //TODO
-            return "";
+            return string.Format("[Path: {0}, Length: {1}]", SourcePath, Length);
         }
 
         #region Disposal
@@ -767,7 +860,11 @@ namespace WHampson.Cascara
         }
         #endregion
 
-        public static bool IsPropertyArrayPointer(PropertyInfo p)
+        /// <summary>
+        /// Gets a value indicating whether a class or struct property has
+        /// as type of <see cref="ArrayPointer{T}"/>.
+        /// </summary>
+        private static bool IsPropertyArrayPointer(PropertyInfo p)
         {
             Type propType = p.PropertyType;
             if (propType.IsGenericType)
@@ -782,6 +879,17 @@ namespace WHampson.Cascara
             return false;
         }
 
+        /// <summary>
+        /// Loads the contents of the file at the specified
+        /// path into memory as a <see cref="BinaryFile"/>.
+        /// </summary>
+        /// <param name="filePath">
+        /// The path to the file to load.
+        /// </param>
+        /// <returns>
+        /// A <see cref="BinaryFile"/> object containing the
+        /// contents of the file loaded.
+        /// </returns>
         public static BinaryFile Open(string filePath)
         {
             const int OneGibiByte = 1 << 30;
@@ -803,7 +911,7 @@ namespace WHampson.Cascara
             IntPtr dataPtr = Marshal.AllocHGlobal(len);
             Marshal.Copy(data, 0, dataPtr, len);
 
-            return new BinaryFile(dataPtr, len);
+            return new BinaryFile(Path.GetFullPath(filePath), dataPtr, len);
         }
     }
 }

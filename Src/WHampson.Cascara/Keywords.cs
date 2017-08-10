@@ -71,6 +71,7 @@ namespace WHampson.Cascara
         // Directives
         public const string Align = "align";
         public const string Echo = "echo";
+        public const string Include = "include";
         public const string Local = "local";
         public const string Typedef = "typedef";
 
@@ -81,6 +82,7 @@ namespace WHampson.Cascara
         public const string Message = "message";
         public const string Name = "name";
         public const string Newline = "newline";
+        public const string Path = "path";
         public const string Raw = "raw";
         //public const string Typename = "typename";
         public const string Value = "value";
@@ -131,6 +133,7 @@ namespace WHampson.Cascara
 
             // Directives
             Align,
+            Include,
             Echo,
             Local,
             Typedef,

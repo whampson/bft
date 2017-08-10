@@ -43,7 +43,7 @@ namespace WHampson.Cascara
         private delegate int DirectiveProcessAction(XElement elem);
         private delegate T AttributeProcessAction<T>(XAttribute attr);
 
-        private XDocument templateDoc;
+        //private XDocument templateDoc;
 
         private IntPtr dataPtr;
         private int dataLen;
@@ -54,8 +54,10 @@ namespace WHampson.Cascara
         private Dictionary<string, Delegate> attributeActionMap;
         private Dictionary<string, double> localsMap;
 
-        private SymbolTable symbolTable;
         private Stack<SymbolTable> symTablStack;
+
+        // TODO: Change into Stack<TemplateFile> after implemented
+        private Stack<string> pathStack;
 
         private bool isEvalutingTypedef;
         private bool isConductingDryRun;    // Analyzing a struct and computing size, but not applying to binary data
@@ -63,14 +65,14 @@ namespace WHampson.Cascara
 
         private TextWriter echoWriter;
 
-        public TemplateProcessor(string templateFilePath)
-            : this(OpenXmlFile(templateFilePath))
-        {
-        }
+        //public TemplateProcessor(string templateFilePath)
+        //    : this(OpenXmlFile(templateFilePath))
+        //{
+        //}
 
-        public TemplateProcessor(XDocument doc)
+        public TemplateProcessor(/*XDocument doc*/)
         {
-            templateDoc = doc ?? throw new ArgumentNullException("doc");
+            //templateDoc = doc ?? throw new ArgumentNullException("doc");
 
             dataPtr = IntPtr.Zero;
             dataLen = 0;
@@ -81,9 +83,9 @@ namespace WHampson.Cascara
             attributeActionMap = new Dictionary<string, Delegate>();
             localsMap = new Dictionary<string, double>();
 
-            symbolTable = new SymbolTable();
             symTablStack = new Stack<SymbolTable>();
-            symTablStack.Push(symbolTable);
+
+            pathStack = new Stack<string>();
 
             isEvalutingTypedef = false;
             isConductingDryRun = false;
@@ -102,33 +104,48 @@ namespace WHampson.Cascara
             set { echoWriter = value ?? throw new ArgumentNullException(nameof(value)); }
         }
 
-        public SymbolTable Process(IntPtr dataPtr, int dataLen)
+        public SymbolTable Process(string templatePath, IntPtr dataPtr, int dataLen)
         {
             this.dataPtr = dataPtr;
             this.dataLen = dataLen;
 
+            symTablStack.Push(new SymbolTable());
+            ProcessTemplate(templatePath);
+            return symTablStack.Pop();
+        }
+
+        // TODO: create TemplateFile class and pass that here
+        private int ProcessTemplate(string templatePath)
+        {
             isEvalutingTypedef = false;
             isConductingDryRun = false;
             dryRunRecursionDepth = 0;
+            dataOffset = 0;
+
+            // Prevent 'include' cycles
+            if (pathStack.Contains(templatePath))
+            {
+                throw new TemplateException("Template inclusion cycle detected.");
+            }
+
+            pathStack.Push(Path.GetFullPath(templatePath));
+            XDocument doc = OpenXmlFile(templatePath);
 
             // Validate root element
-            if (templateDoc.Root.Name.LocalName != Keywords.TemplateRoot)
+            if (doc.Root.Name.LocalName != Keywords.TemplateRoot)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                throw TemplateException.Create(templateDoc.Root, fmt, Keywords.TemplateRoot);
+                throw TemplateException.Create(doc.Root, fmt, Keywords.TemplateRoot);
             }
-            if (!HasChildren(templateDoc.Root))
+            if (!HasChildren(doc.Root))
             {
                 throw new TemplateException("Empty binary file template.");
             }
 
-            // Process the template with respect to the file data
-            dataOffset = 0;
-            int bytesProcessed = ProcessStructMembers(templateDoc.Root);
+            int bytesProcessed = ProcessStructMembers(doc.Root);
+            pathStack.Pop();
 
-            Console.WriteLine("Processed {0} out of {1} bytes.", bytesProcessed, dataLen);
-
-            return symbolTable;
+            return bytesProcessed;
         }
 
         private int ProcessElement(XElement elem)
@@ -398,6 +415,22 @@ namespace WHampson.Cascara
             return 0;
         }
 
+        private int ProcessIncludeDirective(XElement elem)
+        {
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Path);
+
+            string path = GetAttributeValue<string>(elem, Keywords.Path, true, null);
+
+            try
+            {
+                return ProcessTemplate(path);
+            }
+            catch (TemplateException ex)
+            {
+                throw TemplateException.Create(ex, elem, ex.Message);
+            }
+        }
+
         private int ProcessLocalDirective(XElement elem)
         {
             if (isEvalutingTypedef)
@@ -415,7 +448,7 @@ namespace WHampson.Cascara
             string name = GetAttributeValue<string>(elem, Keywords.Name, true, null);
             double value = GetAttributeValue<double>(elem, Keywords.Value, true, 0);
 
-            if (symbolTable.GetEntry(name) != null)
+            if (symTablStack.Peek().GetEntry(name) != null)
             {
                 string fmt = "Variable '{0}' already exists as a non-local variable.";
                 throw TemplateException.Create(elem, fmt, name);
@@ -637,6 +670,12 @@ namespace WHampson.Cascara
         private bool ProcessNewlineAttribute(XAttribute attr)
         {
             return ProcessBooleanAttribute(attr);
+        }
+
+        private string ProcessPathAttribute(XAttribute attr)
+        {
+            string parent = Path.GetDirectoryName(pathStack.Peek()); 
+            return Path.Combine(parent, attr.Value);
         }
 
         private bool ProcessRawAttribute(XAttribute attr)
@@ -920,6 +959,7 @@ namespace WHampson.Cascara
         {
             directiveActionMap[Keywords.Align] = ProcessAlignDirective;
             directiveActionMap[Keywords.Echo] = ProcessEchoDirective;
+            directiveActionMap[Keywords.Include] = ProcessIncludeDirective;
             directiveActionMap[Keywords.Local] = ProcessLocalDirective;
             directiveActionMap[Keywords.Typedef] = ProcessTypedefDirective;
         }
@@ -934,6 +974,7 @@ namespace WHampson.Cascara
             attributeActionMap[Keywords.Message] = (AttributeProcessAction<string>) ProcessMessageAttribute;
             attributeActionMap[Keywords.Name] = (AttributeProcessAction<string>) ProcessNameAttribute;
             attributeActionMap[Keywords.Newline] = (AttributeProcessAction<bool>) ProcessNewlineAttribute;
+            attributeActionMap[Keywords.Path] = (AttributeProcessAction<string>) ProcessPathAttribute;
             attributeActionMap[Keywords.Raw] = (AttributeProcessAction<bool>) ProcessRawAttribute;
             attributeActionMap[Keywords.Value] = (AttributeProcessAction<double>) ProcessValueAttribute;
         }
