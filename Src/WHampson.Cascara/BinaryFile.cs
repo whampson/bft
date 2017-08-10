@@ -639,9 +639,9 @@ namespace WHampson.Cascara
         /// </param>
         public void ApplyTemplate(string templateFilePath, TextWriter echoWriter)
         {
-            TemplateProcessor proc = new TemplateProcessor(templateFilePath);
+            TemplateProcessor proc = new TemplateProcessor();
             proc.EchoWriter = echoWriter;
-            symTabl = proc.Process(dataPtr, dataLen);
+            symTabl = proc.Process(templateFilePath, dataPtr, dataLen);
         }
 
         /// <summary>
