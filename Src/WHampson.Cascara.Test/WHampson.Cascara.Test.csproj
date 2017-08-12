@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -47,6 +48,8 @@
   <ItemGroup>
     <None Include="TestData\DynamicArray\DynamicArray.bin" />
     <None Include="TestData\Basic\Basic.bin" />
+    <None Include="TestData\Gta3Gxt\american.gxt" />
+    <None Include="TestData\Gta3Gxt\spanish.gxt" />
     <None Include="TestData\IncludeDirective\IncludeTest.bin" />
     <None Include="TestData\Gta3Save\Binaries\PC\GTA3sf1.B" />
     <None Include="WHampson.Cascara.Test.licenseheader" />
@@ -62,6 +65,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="TestData\DynamicArray\DynamicArray.xml" />
+    <Content Include="TestData\Gta3Gxt\Gta3Gxt.xml">
+      <SubType>Designer</SubType>
+    </Content>
+    <Content Include="TestData\Gta3Gxt\Types.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="TestData\IncludeDirective\IncludeTest.xml">
       <SubType>Designer</SubType>
     </Content>

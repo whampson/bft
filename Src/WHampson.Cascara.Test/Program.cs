@@ -39,11 +39,115 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
-            IncludeDirective();
+            Gta3Gxt();
             Console.WriteLine("All tests passed!");
 
             // Pause
             Console.ReadKey();
+        }
+
+        private static void Gta3Gxt()
+        {
+            string testPath = TestDataPath + "/Gta3Gxt";
+            string binPath = testPath + "/american.gxt";
+            string xmlPath = testPath + "/Gta3Gxt.xml";
+
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                bFile.ApplyTemplate(xmlPath);
+                Pointer valueBase = bFile.GetPointer("ValueBlock.BasePointer");
+
+                Dictionary<string, string> gxtData = new Dictionary<string, string>();
+                Gta3GxtFile gxt = bFile.ExtractData<Gta3GxtFile>();
+                foreach (GxtKey key in gxt.KeyBlock.KeyArray)
+                {
+                    Pointer<Char16> pVal = new Pointer<Char16>(valueBase + (int) key.ValueOffset.Value);
+                    gxtData[ReadString8(key.KeyName)] = ReadString16(pVal);
+                    //Console.WriteLine(string.Format("{0} => {1}", key, ReadString16(pVal)));
+                }
+
+                Debug.Assert(gxtData["HM1_3"] == "~g~The 'Nines' walk their turf in Wichita Gardens.");
+                Debug.Assert(gxtData["TRAIN_1"] == "Kurowski Station");
+
+                //Console.WriteLine(bFile.GetValue<int>("KeyBlock.KeyArray[0].ValueOffset"));
+
+                //Pointer pChar = valueBase + bFile.GetValue<int>("KeyBlock.KeyArray[0].ValueOffset");
+                //Pointer<Char16> p = (Pointer<Char16>) Convert.ChangeType(pChar, typeof(Pointer<Char16>));
+                //Console.WriteLine(ReadString16(p));
+            }
+        }
+
+        class Gta3GxtFile
+        {
+            public KeyBlock KeyBlock { get; set; }
+        }
+
+        class KeyBlock
+        {
+            public GxtKey[] KeyArray { get; set; }
+        }
+
+        class GxtKey
+        {
+            public Pointer<uint> ValueOffset { get; set; }
+            public ArrayPointer<Char8> KeyName { get; set; }
+
+            public override string ToString()
+            {
+                return "{ " + string.Format("{0,6} : {1,8}", ValueOffset.Value, ReadString8(KeyName)) + " }";
+                //return "{ " + ReadString8(KeyName) + " }";
+            }
+        }
+
+        //[StructLayout(LayoutKind.Explicit, Pack = 0, Size = 12)]
+        //unsafe struct GxtKey
+        //{
+        //    [FieldOffset(0)]
+        //    public uint ValuePointer;
+
+        //    [FieldOffset(4)]
+        //    public fixed sbyte KeyName[8];
+        //}
+
+        private static string ReadString8(Pointer<Char8> ptr)
+        {
+            string s = "";
+            if (Pointer.IsArrayPointer(ptr))
+            {
+                int len = ((ArrayPointer<Char8>) ptr).Count;
+                for (int i = 0; i < len; i++)
+                {
+                    if ((char) ptr.Value == '\0')
+                    {
+                        break;
+                    }
+
+                    s += ptr.Value;
+                    ptr += 1;
+                }
+
+                return s;
+            }
+
+            while ((char) ptr.Value != '\0')
+            {
+                s += ptr.Value;
+                ptr += 1;
+            }
+
+            return s;
+        }
+
+        private static string ReadString16(Pointer<Char16> ptr)
+        {
+            string s = "";
+            while ((char) ptr.Value != '\0')
+            {
+                s += ptr.Value;
+                ptr += 1;
+            }
+
+            return s;
         }
 
         private static void Gta3Save()
