@@ -680,11 +680,14 @@ namespace WHampson.Cascara
                 {
                     continue;
                 }
+                
+                // TODO: Ensure AnArray[] gets set correctly (both refTypes and valTypes)
 
                 //bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
                 bool isStruct = sInfo.TypeInfo.IsStruct;
-                bool isArrayPointer = IsPropertyArrayPointer(p);
+                bool isArrayPointer = Pointer.IsArrayPointer(p.PropertyType);
+                bool isArray = p.PropertyType.IsArray;
 
                 if (p.PropertyType.IsPrimitive)
                 {
@@ -859,25 +862,6 @@ namespace WHampson.Cascara
             GC.SuppressFinalize(this);
         }
         #endregion
-
-        /// <summary>
-        /// Gets a value indicating whether a class or struct property has
-        /// as type of <see cref="ArrayPointer{T}"/>.
-        /// </summary>
-        private static bool IsPropertyArrayPointer(PropertyInfo p)
-        {
-            Type propType = p.PropertyType;
-            if (propType.IsGenericType)
-            {
-                Type propGenType = propType.GetGenericTypeDefinition();
-                if (propGenType == typeof(ArrayPointer<>))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
 
         /// <summary>
         /// Loads the contents of the file at the specified
