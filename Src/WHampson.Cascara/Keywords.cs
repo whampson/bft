@@ -65,6 +65,7 @@ namespace WHampson.Cascara
         public const string UInt32 = "uint32";
         public const string UInt64 = "uint64";
         public const string ULong = "ulong";
+        public const string Union = "union";
         public const string UShort = "ushort";
         //public const string Word = "word";
 
@@ -129,6 +130,7 @@ namespace WHampson.Cascara
             UInt32,
             UInt64,
             ULong,
+            Union,
             UShort,
 
             // Directives
