@@ -258,5 +258,43 @@ namespace WHampson.Cascara.Types
         {
             return new Pointer(ptr.Address - off);
         }
+
+        public static bool IsArrayPointer(Pointer ptr)
+        {
+            return IsArrayPointer(ptr.GetType());
+        }
+
+        public static bool IsArrayPointer<T>(Pointer ptr)
+            where T : struct
+        {
+            return IsArrayPointer<T>(ptr.GetType());
+        }
+
+        public static bool IsArrayPointer(Type t)
+        {
+            if (t.IsGenericType)
+            {
+                Type propGenType = t.GetGenericTypeDefinition();
+                if (propGenType == typeof(ArrayPointer<>))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static bool IsArrayPointer<T>(Type t)
+            where T : struct
+        {
+            if (!IsArrayPointer(t))
+            {
+                return false;
+            }
+
+            Type genType = t.GetGenericArguments()[0];  // We only need the first one
+
+            return genType == typeof(T);
+        }
     }
 }
