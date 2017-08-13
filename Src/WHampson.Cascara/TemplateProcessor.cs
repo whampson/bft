@@ -59,16 +59,12 @@ namespace WHampson.Cascara
         // TODO: Change into Stack<TemplateFile> after implemented
         private Stack<string> pathStack;
 
+        private bool isEvaluatingUnion;
         private bool isEvalutingTypedef;
         private bool isConductingDryRun;    // Analyzing a struct and computing size, but not applying to binary data
         private int dryRunRecursionDepth;
 
         private TextWriter echoWriter;
-
-        //public TemplateProcessor(string templateFilePath)
-        //    : this(OpenXmlFile(templateFilePath))
-        //{
-        //}
 
         public TemplateProcessor(/*XDocument doc*/)
         {
@@ -157,6 +153,13 @@ namespace WHampson.Cascara
             if (elemName == Keywords.Struct)
             {
                 localOffset += ProcessStruct(elem);
+                return localOffset;
+            }
+
+            // Process 'union'
+            if (elemName == Keywords.Union)
+            {
+                localOffset += ProcessUnion(elem);
                 return localOffset;
             }
 
@@ -286,6 +289,85 @@ namespace WHampson.Cascara
             foreach (XElement memberElem in elem.Elements())
             {
                 localOffset += ProcessElement(memberElem);
+            }
+
+            return localOffset;
+        }
+
+        private int ProcessUnion(XElement elem)
+        {
+
+            EnsureAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
+
+            int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
+            string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
+
+            int localOffset = 0;
+            string varName;
+            for (int i = 0; i < count; i++)
+            {
+                /* ============= TODO: Put into own function ======== */
+                // Tack on array index to var name so it's unique
+                varName = name + "[" + i + "]";
+
+                SymbolTableEntry entry = null;
+                SymbolTable curSymTabl = symTablStack.Peek();
+                if (!isConductingDryRun && name != null)
+                {
+                    if (localsMap.ContainsKey(name))
+                    {
+                        string fmt = "Variable '{0}' already defined as a local.";
+                        throw TemplateException.Create(elem, fmt, name);
+                    }
+
+                    // Create new symbol table and make current table its parent
+                    SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
+
+                    // Create symbol table entry for this struct in the current table
+                    // Type remains 'null' and size is 0 because we haven't processed the struct yet
+                    TypeInfo tInfo = new TypeInfo(null, dataOffset, 0, false);
+                    entry = new SymbolTableEntry(tInfo, newSymTabl);
+
+                    if (!curSymTabl.AddEntry(varName, entry))
+                    {
+                        string fmt = "Variable '{0}' already defined.";
+                        throw TemplateException.Create(elem, fmt, name);
+                    }
+
+                    // Push new symbol table onto the stack to make it "active"
+                    symTablStack.Push(newSymTabl);
+                }
+                else
+                {
+                    // Push a new, nameless symbol table onto the stack
+                    // so children can still reference other members
+                    // within the scope of the struct
+                    symTablStack.Push(new SymbolTable(null, curSymTabl));
+                }
+
+                /* ============================================================ */
+
+                int startOffset = dataOffset;
+                int bytesRead = 0;
+                int size = 0;
+                foreach (XElement memberElem in elem.Elements())
+                {
+                    bytesRead = ProcessElement(memberElem);
+                    size = Math.Max(bytesRead, size);
+                    dataOffset = startOffset;
+                }
+                localOffset += size;
+                dataOffset += localOffset;
+
+                if (!isConductingDryRun && name != null)
+                {
+                    // We've finished processing the struct, so now we can set the size
+                    entry.TypeInfo.Size = size;
+                    entry.TypeInfo.IsFullyDefined = true;
+
+                    // Make the previous table "active"
+                    symTablStack.Pop();
+                }
             }
 
             return localOffset;

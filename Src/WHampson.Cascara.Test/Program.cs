@@ -39,7 +39,7 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
-            Gta3Gxt();
+            UnionType();
             Console.WriteLine("All tests passed!");
 
             // Pause
@@ -184,6 +184,69 @@ namespace WHampson.Cascara
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.Y") == -42.41f);
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Radius") == 1.0f);
             }
+        }
+
+        private static void UnionType()
+        {
+            string testPath = TestDataPath + "/UnionType";
+            string binPath = testPath + "/UnionTest.bin";
+            string xmlPath = testPath + "/UnionTest.xml";
+
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                bFile.ApplyTemplate(xmlPath);
+
+                Debug.Assert(bFile.GetOffset("TestUnion.Float1") == 0);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Float1") == 0);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Int1") == 4);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.InnerUnion.Int1") == 8);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.InnerUnion.Float1") == 8);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Bool1") == 12);
+                Debug.Assert(bFile.GetOffset("TestUnion.Int1") == 0);
+
+                Debug.Assert(bFile.GetValue<float>("TestUnion.Float1") == 1.0f);
+                Debug.Assert(bFile.GetValue<float>("TestUnion.InnerStruct.Float1") == 1.0f);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.InnerStruct.Int1") == 1);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.InnerStruct.InnerUnion.Int1") == 2);
+                Debug.Assert(bFile.GetValue<float>("TestUnion.InnerStruct.InnerUnion.Float1") == 2.802597e-45f);
+                Debug.Assert(bFile.GetValue<bool>("TestUnion.InnerStruct.Bool1") == true);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.Int1") == 1065353216);
+
+                UnionTest ut = bFile.ExtractData<UnionTest>();
+                Debug.Assert(ut.TestUnion.Float1 == 1.0f);
+                Debug.Assert(ut.TestUnion.InnerStruct.Float1 == 1.0f);
+                Debug.Assert(ut.TestUnion.InnerStruct.Int1 == 1);
+                Debug.Assert(ut.TestUnion.InnerStruct.InnerUnion.Int1 == 2);
+                Debug.Assert(ut.TestUnion.InnerStruct.InnerUnion.Float1 == 2.802597e-45f);
+                Debug.Assert(ut.TestUnion.InnerStruct.Bool1 == true);
+                Debug.Assert(ut.TestUnion.Int1 == 1065353216);
+            }
+        }
+
+        class UnionTest
+        {
+            public TestUnion TestUnion { get; set; }
+        }
+
+        class TestUnion
+        {
+            public float Float1 { get; set; }
+            public int Int1 { get; set; }
+            public UnionTestInnerStruct InnerStruct { get; set; }
+        }
+
+        class UnionTestInnerStruct
+        {
+            public float Float1 { get; set; }
+            public int Int1 { get; set; }
+            public bool Bool1 { get; set; }
+            public UnionTestInnerStructInnerUnion InnerUnion { get; set; }
+        }
+
+        class UnionTestInnerStructInnerUnion
+        {
+            public float Float1 { get; set; }
+            public int Int1 { get; set; }
         }
 
         private static void PrintString(BinaryFile bFile, string name)
