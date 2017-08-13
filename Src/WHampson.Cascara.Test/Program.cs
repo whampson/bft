@@ -195,6 +195,22 @@ namespace WHampson.Cascara
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
                 bFile.ApplyTemplate(xmlPath);
+
+                Debug.Assert(bFile.GetOffset("TestUnion.Float1") == 0);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Float1") == 0);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Int1") == 4);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.InnerUnion.Int1") == 8);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.InnerUnion.Float1") == 8);
+                Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Bool1") == 12);
+                Debug.Assert(bFile.GetOffset("TestUnion.Int1") == 0);
+
+                Debug.Assert(bFile.GetValue<float>("TestUnion.Float1") == 1.0f);
+                Debug.Assert(bFile.GetValue<float>("TestUnion.InnerStruct.Float1") == 1.0f);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.InnerStruct.Int1") == 1);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.InnerStruct.InnerUnion.Int1") == 2);
+                Debug.Assert(bFile.GetValue<float>("TestUnion.InnerStruct.InnerUnion.Float1") == 2.802597e-45f);
+                Debug.Assert(bFile.GetValue<bool>("TestUnion.InnerStruct.Bool1") == true);
+                Debug.Assert(bFile.GetValue<int>("TestUnion.Int1") == 1065353216);
             }
         }
 
