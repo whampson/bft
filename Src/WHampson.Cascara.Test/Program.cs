@@ -39,7 +39,7 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
-            Gta3Gxt();
+            UnionType();
             Console.WriteLine("All tests passed!");
 
             // Pause
@@ -183,6 +183,18 @@ namespace WHampson.Cascara
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.X") == 58.14f);
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.Y") == -42.41f);
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Radius") == 1.0f);
+            }
+        }
+
+        private static void UnionType()
+        {
+            string testPath = TestDataPath + "/UnionType";
+            string binPath = testPath + "/UnionTest.bin";
+            string xmlPath = testPath + "/UnionTest.xml";
+
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                bFile.ApplyTemplate(xmlPath);
             }
         }
 
