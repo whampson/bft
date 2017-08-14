@@ -17,7 +17,9 @@ target format file after the template has been processed and applied to it.
 ### Overview
 (TODO)
 ### Primitive Data Types
-(TODO: Description)
+(TODO: Description)  
+Note that many types are duplicates for convenience.  
+As of now, all multi-byte primitive data types are stored in little-endian format.
 #### List of Primitive Types
 <table>
   <tbody>
@@ -27,152 +29,137 @@ target format file after the template has been processed and applied to it.
       <th>Notes</th>
     </tr>
     <tr>
-      <td><code>bool</code>
-      </td><td>1</td>
+      <td><code>bool</code></td>
+      <td>1</td>
+      <td>alias of <code>bool8</code></td>
+    </tr>
+    <tr>
+      <td><code>bool8</code></td>
+      <td>1</td>
       <td>
-        8-bit Boolean value; zero is treated as <code>false</code>, nonzero is
-        treated as <code>true</code>
+        8-bit true/false value; an integer value of zero is considered <code>false</code>,
+        a nonzero value is considered <code>true</code>
       </td>
     </tr>
     <tr>
-      <td><code>bool8</code>
-      </td><td>1</td>
-      <td>8-bit Boolean value; same rules as <code>bool</code></td>
+      <td><code>bool16</code></td>
+      <td>2</td>
+      <td>16-bit true/false value; same rules as <code>bool8</code></td>
     </tr>
     <tr>
-      <td><code>bool16</code>
-      </td><td>2</td>
-      <td>16-bit Boolean value; same rules as <code>bool</code></td>
+      <td><code>bool32</code></td>
+      <td>4</td>
+      <td>32-bit true/false value; same rules as <code>bool8</code></td>
     </tr>
     <tr>
-      <td><code>bool32</code>
-      </td><td>4</td>
-      <td>32-bit Boolean value; same rules as <code>bool</code></td>
+      <td><code>bool64</code></td>
+      <td>8</td>
+      <td>64-bit true/false value; same rules as <code>bool8</code></td>
     </tr>
     <tr>
-      <td><code>bool64</code>
-      </td><td>8</td>
-      <td>64-bit Boolean value; same rules as <code>bool</code></td>
+      <td><code>byte</code></td>
+      <td>1</td>
+      <td>alias of <code>uint8</code></td>
     </tr>
     <tr>
-      <td><code>char</code>
-      </td><td>1</td>
+      <td><code>char</code></td>
+      <td>1</td>
+      <td>alias of <code>char8</code></td>
+    </tr>
+    <tr>
+      <td><code>char8</code></td>
+      <td>1</td>
       <td>unsigned 8-bit integer; intended for use with characters</td>
     </tr>
     <tr>
-      <td><code>char8</code>
-      </td><td>1</td>
-      <td>unsigned 8-bit integer; intended for use with characters</td>
-    </tr>
-    <tr>
-      <td><code>char16</code>
-      </td><td>2</td>
+      <td><code>char16</code></td>
+      <td>2</td>
       <td>unsigned 16-bit integer; intended for use with characters</td>
     </tr>
     <tr>
-      <td><code>char32</code>
-      </td><td>4</td>
-      <td>unsigned 32-bit integer; intended for use with characters</td>
-    </tr>
-    <tr>
-      <td><code>char64</code>
-      </td><td>8</td>
-      <td>unsigned 64-bit integer; intended for use with characters</td>
-    </tr>
-    <tr>
-      <td><code>double</code>
-      </td><td>8</td>
+      <td><code>double</code></td>
+      <td>8</td>
       <td>double-precision IEEE 754 floating-point number</td>
     </tr>
     <tr>
-      <td><code>dword</code>
-      </td><td>4</td>
-      <td>unsigned 32-bit integer</td>
+      <td><code>float</code></td>
+      <td>4</td>
+      <td>alias of <code>single</code></td>
     </tr>
     <tr>
-      <td><code>float</code>
-      </td><td>4</td>
-      <td>single-precision IEEE 754 floating-point number</td>
+      <td><code>int</code></td>
+      <td>4</td>
+      <td>alias of <code>int32</code></td>
     </tr>
     <tr>
-      <td><code>int</code>
-      </td><td>4</td>
-      <td>signed 32-bit integer</td>
-    </tr>
-    <tr>
-      <td><code>int8</code>
-      </td><td>1</td>
+      <td><code>int8</code></td>
+      <td>1</td>
       <td>signed 8-bit integer</td>
     </tr>
     <tr>
-      <td><code>int16</code>
-      </td><td>2</td>
+      <td><code>int16</code></td>
+      <td>2</td>
       <td>signed 16-bit integer</td>
     </tr>
     <tr>
-      <td><code>int32</code>
-      </td><td>4</td>
+      <td><code>int32</code></td>
+      <td>4</td>
       <td>signed 32-bit integer</td>
     </tr>
     <tr>
-      <td><code>int64</code>
-      </td><td>8</td>
+      <td><code>int64</code></td>
+      <td>8</td>
       <td>signed 64-bit integer</td>
     </tr>
     <tr>
-      <td><code>long</code>
-      </td><td>8</td>
-      <td>signed 64-bit integer</td>
+      <td><code>long</code></td>
+      <td>8</td>
+      <td>alias of <code>int64</code></td>
     </tr>
     <tr>
-      <td><code>qword</code>
-      </td><td>8</td>
-      <td>unsigned 64-bit integer</td>
+      <td><code>short</code></td>
+      <td>2</td>
+      <td>alias of <code>int16</code></td>
     </tr>
     <tr>
-      <td><code>short</code>
-      </td><td>2</td>
-      <td>signed 16-bit integer</td>
+      <td><code>single</code></td>
+      <td>4</td>
+      <td>single-precision IEEE 754 floating-point number</td>
     </tr>
     <tr>
-      <td><code>uint</code>
-      </td><td>4</td>
-      <td>unsigned 32-bit integer</td>
+      <td><code>uint</code></td>
+      <td>4</td>
+      <td>alias of <code>uint32</code></td>
     </tr>
     <tr>
-      <td><code>uint8</code>
-      </td><td>1</td>
+      <td><code>uint8</code></td>
+      <td>1</td>
       <td>unsigned 8-bit integer</td>
     </tr>
     <tr>
-      <td><code>uint16</code>
-      </td><td>2</td>
+      <td><code>uint16</code></td>
+      <td>2</td>
       <td>unsigned 16-bit integer</td>
     </tr>
     <tr>
-      <td><code>uint32</code>
-      </td><td>4</td>
+      <td><code>uint32</code></td>
+      <td>4</td>
       <td>unsigned 32-bit integer</td>
     </tr>
     <tr>
-      <td><code>uint64</code>
-      </td><td>8</td>
+      <td><code>uint64</code></td>
+      <td>8</td>
       <td>unsigned 64-bit integer</td>
     </tr>
     <tr>
-      <td><code>ulong</code>
-      </td><td>8</td>
-      <td>unsigned 64-bit integer</td>
+      <td><code>ulong</code></td>
+      <td>8</td>
+      <td>alias of <code>uint64</code></td>
     </tr>
     <tr>
-      <td><code>ushort</code>
-      </td><td>2</td>
-      <td>unsigned 16-bit integer</td>
-    </tr>
-    <tr>
-      <td><code>word</code>
-      </td><td>2</td>
-      <td>unsigned 16-bit integer</td>
+      <td><code>ushort</code></td>
+      <td>2</td>
+      <td>alias of <code>uint16</code></td>
     </tr>
   </tbody>
 </table>
