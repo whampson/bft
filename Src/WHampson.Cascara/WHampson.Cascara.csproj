@@ -7,7 +7,7 @@
     <ProjectGuid>{BA7EE64B-D06B-4907-9DC9-09C4DC0ECE77}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>WHampson.Cascara</RootNamespace>
-    <AssemblyName>WHampson.Cascara</AssemblyName>
+    <AssemblyName>Cascara</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -37,7 +37,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DocumentationFile>bin\Debug\WHampson.Cascara.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\Cascara.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
