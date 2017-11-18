@@ -1,2 +1,2 @@
 language: csharp
-solution: ./Src/Cascara.sln
+solution: ./Cascara.sln
