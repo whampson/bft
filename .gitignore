@@ -243,3 +243,6 @@ ModelManifest.xml
 
 # Temporary backup files
 *.bak
+
+# Visual Studio Code workspace configuration
+.vscode/
