@@ -332,7 +332,7 @@ namespace WHampson.Cascara
             where T : struct
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            if (entry.TypeInfo.IsStruct)
+            if (entry.TypeInfo.IsStruct && !typeof(T).IsValueType)
             {
                 string fmt = "Cannot get a pointer to struct '{0}' using type '{1}'.";
                 throw new NotSupportedException(string.Format(fmt, name, typeof(T).Name));
