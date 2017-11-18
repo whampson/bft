@@ -52,6 +52,7 @@ Name     | Description
 **Boolean Types**
 
 A *Boolean* is defined as being `false` for the value 0 and `true` for any non-zero value.
+
 Name     | Description
 -------- | ------------
 `bool`   | alias for `bool8`
