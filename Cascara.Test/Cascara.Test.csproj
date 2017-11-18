@@ -7,7 +7,7 @@
     <ProjectGuid>{850685BC-FB16-4B63-9956-93579BB2AD51}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>WHampson.Cascara.Test</RootNamespace>
-    <AssemblyName>WHampson.Cascara.Test</AssemblyName>
+    <AssemblyName>Cascara.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -43,7 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Src\Program.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="TestData\DynamicArray\DynamicArray.bin" />
@@ -53,10 +53,10 @@
     <None Include="TestData\IncludeDirective\IncludeTest.bin" />
     <None Include="TestData\Gta3Save\Binaries\PC\GTA3sf1.B" />
     <None Include="TestData\UnionType\UnionTest.bin" />
-    <None Include="WHampson.Cascara.Test.licenseheader" />
+    <None Include="Cascara.Test.licenseheader" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\WHampson.Cascara\WHampson.Cascara.csproj">
+    <ProjectReference Include="..\Cascara\Cascara.csproj">
       <Project>{ba7ee64b-d06b-4907-9dc9-09c4dc0ece77}</Project>
       <Name>WHampson.Cascara</Name>
     </ProjectReference>

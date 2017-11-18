@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WHampson.Cascara", "WHampson.Cascara\WHampson.Cascara.csproj", "{BA7EE64B-D06B-4907-9DC9-09C4DC0ECE77}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cascara", "Cascara\Cascara.csproj", "{BA7EE64B-D06B-4907-9DC9-09C4DC0ECE77}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WHampson.Cascara.Test", "WHampson.Cascara.Test\WHampson.Cascara.Test.csproj", "{850685BC-FB16-4B63-9956-93579BB2AD51}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cascara.Test", "Cascara.Test\Cascara.Test.csproj", "{850685BC-FB16-4B63-9956-93579BB2AD51}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
