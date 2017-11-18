@@ -39,10 +39,6 @@ namespace WHampson.Cascara
         /// <param name="tInfo">
         /// The type of data that the symbol refers to.
         /// </param>
-        /// <param name="offset">
-        /// The position in the binary data of the first byte
-        /// of data that the symbol refers to.
-        /// </param>
         /// <param name="child">
         /// A <see cref="SymbolTable"/> that stems from this entry.
         /// </param>

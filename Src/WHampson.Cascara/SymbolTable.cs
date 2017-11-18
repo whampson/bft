@@ -92,7 +92,7 @@ namespace WHampson.Cascara
         /// Adds the provided <see cref="SymbolTableEntry"/> to the table and
         /// associates it with the provided name.
         /// </summary>
-        /// <param name="symbol">
+        /// <param name="name">
         /// The name to be given to the table entry.
         /// </param>
         /// <param name="e">
@@ -123,7 +123,7 @@ namespace WHampson.Cascara
         /// </param>
         /// <returns>
         /// <code>True</code> if the entry exists.
-        /// <<code>False</code> if not found.
+        /// <code>False</code> if not found.
         /// </returns>
         public bool ContainsEntry(string name)
         {

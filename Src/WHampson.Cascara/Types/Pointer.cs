@@ -30,7 +30,7 @@ namespace WHampson.Cascara.Types
     /// A typeless pointer to some data in memory.
     /// </summary>
     /// <remarks>
-    /// This can be thought of as a <code>void/code> pointer.
+    /// This can be thought of as a <code>void</code> pointer.
     /// </remarks>
     public class Pointer : ICascaraPointer
     {
