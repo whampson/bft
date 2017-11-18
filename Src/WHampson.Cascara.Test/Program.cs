@@ -39,8 +39,11 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
+            Console.WriteLine("==== Running Gta3Save ====");
+            Gta3Save();
+            Console.WriteLine("==== Running UnionType ====");
             UnionType();
-            Console.WriteLine("All tests passed!");
+            Console.WriteLine("==== All tests passed! ====");
 
             // Pause
             Console.ReadKey();
@@ -152,14 +155,21 @@ namespace WHampson.Cascara
 
         private static void Gta3Save()
         {
-            // TODO: fix paths
-            string xmlPath = TestDataPath + "/PCSave.xml";
-            string binPath = /*BinDir +*/ "/PC/GTA3sf1.b";
+            string testPath = TestDataPath + "/Gta3Save";
+            string binPath = testPath + "/Binaries/PC/GTA3sf1.B";
+            string xmlPath = testPath + "/PCSave.xml";
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
                 bFile.ApplyTemplate(xmlPath);
                 Gta3PCSave gameSave = bFile.ExtractData<Gta3PCSave>();
+
+                string saveTitle = ReadString16(bFile.GetArrayPointer<Char16>("SimpleVars.SaveTitle"));
+                Console.WriteLine(saveTitle);
+
+                RwV3d cameraCoords = bFile.GetValue<RwV3d>("SimpleVars.CameraCoords");
+                Console.WriteLine(cameraCoords);
+
                 ArrayPointer<int> GlobalVariables = bFile.GetArrayPointer<int>("SimpleVars.Scripts.Data.GlobalVariables");
                 for (int i = 0; i < GlobalVariables.Count; i++)
                 {
