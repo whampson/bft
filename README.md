@@ -17,13 +17,17 @@ combined, can be used to create complex data structures. Data type instances
 can be repeated to create arrays and named to become accessible by your program.
 
 ### List of XML Elements
+
 #### Root Element
+
 Name                    | Description
 ----------------------- | ------------
 `cascaraBinaryTemplate` | All Layout Files must open with this element.
 
 #### Data Types
-**Integer Types**  
+
+**Integer Types**
+
 Name     | Description
 -------- | ------------
 `byte`   | alias for `uint8`
@@ -45,7 +49,8 @@ Name     | Description
 `ulong`  | alias for `uint64`
 `ushort` | alias for `uint16`
 
-**Boolean Types**  
+**Boolean Types**
+
 A *Boolean* is defined as being `false` for the value 0 and `true` for any non-zero value.
 Name     | Description
 -------- | ------------
@@ -54,20 +59,23 @@ Name     | Description
 `bool16` | 16-bit Boolean value
 `bool32` | 32-bit Boolean value
 
-**Floating-Point Types**  
+**Floating-Point Types**
+
 Name     | Description
 -------- | ------------
 `float`  | alias for `single`
 `single` | 32-bit IEEE-754 floating-point value
 `double` | 64-bit IEEE-754 floating-point value
 
-**Structure Types**  
+**Structure Types**
+
 Name     | Description
 -------- | ------------
 `struct` | a data structure whose members are laid out sequentially in memory
 `union`  | a data structure whose members start at the same address
 
 #### Directives
+
 Name      | Description
 --------- | ------------
 `align`   | adjusts the current offset
