@@ -29,33 +29,33 @@ using System.Xml.Linq;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// The exception that is thrown for errors that occur during template
+    /// The exception that is thrown for errors that occur during layout file
     /// processing.
     /// </summary>
-    public class TemplateException : Exception
+    public class LayoutException : Exception
     {
         /// <summary>
-        /// Creates a new instance of the <see cref="TemplateException"/> class.
+        /// Creates a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
-        public TemplateException()
+        public LayoutException()
             : base()
         {
         }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="TemplateException"/> class
+        /// Creates a new instance of the <see cref="LayoutException"/> class
         /// with the specified error message.
         /// <param name="message">
         /// A message associated with the error that caused the exception.
         /// </param>
         /// </summary>
-        public TemplateException(string message)
+        public LayoutException(string message)
             : base(message)
         {
         }
 
         /// <summary>
-        /// Creates a new instance of the <see cref="TemplateException"/> class
+        /// Creates a new instance of the <see cref="LayoutException"/> class
         /// with the specified error message and exception that caused this
         /// exception.
         /// <param name="message">
@@ -65,37 +65,37 @@ namespace WHampson.Cascara
         /// The exception that caused this exception to be thrown.
         /// </param>
         /// </summary>
-        public TemplateException(string message, Exception innerException)
+        public LayoutException(string message, Exception innerException)
             : base(message, innerException)
         {
         }
 
-        internal static TemplateException Create(XObject obj, string msg)
+        internal static LayoutException Create(XObject obj, string msg)
         {
             msg = AppendLineInfo(obj, msg);
-            return new TemplateException(msg);
+            return new LayoutException(msg);
         }
 
-        internal static TemplateException Create(XObject obj, string msgFmt, params object[] fmtArgs)
+        internal static LayoutException Create(XObject obj, string msgFmt, params object[] fmtArgs)
         {
             string msg = string.Format(msgFmt, fmtArgs);
             msg = AppendLineInfo(obj, msg);
 
-            return new TemplateException(msg);
+            return new LayoutException(msg);
         }
 
-        internal static TemplateException Create(Exception innerException, XObject obj, string msg)
+        internal static LayoutException Create(Exception innerException, XObject obj, string msg)
         {
             msg = AppendLineInfo(obj, msg);
-            return new TemplateException(msg, innerException);
+            return new LayoutException(msg, innerException);
         }
 
-        internal static TemplateException Create(Exception innerException, XObject obj, string msgFmt, params object[] fmtArgs)
+        internal static LayoutException Create(Exception innerException, XObject obj, string msgFmt, params object[] fmtArgs)
         {
             string msg = string.Format(msgFmt, fmtArgs);
             msg = AppendLineInfo(obj, msg);
 
-            return new TemplateException(msg, innerException);
+            return new LayoutException(msg, innerException);
         }
 
         private static string AppendLineInfo(XObject obj, string msg)

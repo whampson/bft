@@ -639,7 +639,7 @@ namespace WHampson.Cascara
         /// </param>
         public void ApplyTemplate(string templateFilePath, TextWriter echoWriter)
         {
-            TemplateProcessor proc = new TemplateProcessor();
+            LayoutFileProcessor proc = new LayoutFileProcessor();
             proc.EchoWriter = echoWriter;
             symTabl = proc.Process(templateFilePath, dataPtr, dataLen);
         }

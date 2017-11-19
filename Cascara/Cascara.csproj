@@ -81,10 +81,10 @@
     <Compile Include="Src\Types\PointerT.cs" />
     <Compile Include="Src\SymbolTable.cs" />
     <Compile Include="Src\SymbolTableEntry.cs" />
-    <Compile Include="Src\TemplateProcessor.cs" />
+    <Compile Include="Src\LayoutFileProcessor.cs" />
     <Compile Include="Src\TypeDefinition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Src\TemplateException.cs" />
+    <Compile Include="Src\LayoutException.cs" />
     <Compile Include="Src\Types\Pointer.cs" />
     <Compile Include="Src\TypeUtils.cs" />
   </ItemGroup>

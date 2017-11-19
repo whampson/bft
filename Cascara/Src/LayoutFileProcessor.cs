@@ -32,7 +32,7 @@ using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
-    internal sealed class TemplateProcessor
+    internal sealed class LayoutFileProcessor
     {
         private const string IdentifierPattern = @"^[a-zA-Z_][\da-zA-Z_]*$";
         private const string ValueofOpPattern = @"\${(.+?)}";
@@ -66,7 +66,7 @@ namespace WHampson.Cascara
 
         private TextWriter echoWriter;
 
-        public TemplateProcessor(/*XDocument doc*/)
+        public LayoutFileProcessor(/*XDocument doc*/)
         {
             //templateDoc = doc ?? throw new ArgumentNullException("doc");
 
@@ -121,7 +121,7 @@ namespace WHampson.Cascara
             // Prevent 'include' cycles
             if (pathStack.Contains(templatePath))
             {
-                throw new TemplateException("Template inclusion cycle detected.");
+                throw new LayoutException("Template inclusion cycle detected.");
             }
 
             pathStack.Push(Path.GetFullPath(templatePath));
@@ -131,11 +131,11 @@ namespace WHampson.Cascara
             if (doc.Root.Name.LocalName != Keywords.TemplateRoot)
             {
                 string fmt = "Template must have a root element named '{0}'.";
-                throw TemplateException.Create(doc.Root, fmt, Keywords.TemplateRoot);
+                throw LayoutException.Create(doc.Root, fmt, Keywords.TemplateRoot);
             }
             if (!HasChildren(doc.Root))
             {
-                throw new TemplateException("Empty binary file template.");
+                throw new LayoutException("Empty binary file template.");
             }
 
             int bytesProcessed = ProcessStructMembers(doc.Root);
@@ -170,7 +170,7 @@ namespace WHampson.Cascara
             if (!isDirective && !isType)
             {
                 string fmt = "Unknown type or directive '{0}'.";
-                throw TemplateException.Create(elem, fmt, elemName);
+                throw LayoutException.Create(elem, fmt, elemName);
             }
 
             // Process directive
@@ -185,7 +185,7 @@ namespace WHampson.Cascara
             if (HasChildren(elem))
             {
                 string fmt = "Type '{0}' cannot contain child elements.";
-                throw TemplateException.Create(elem, fmt, elemName);
+                throw LayoutException.Create(elem, fmt, elemName);
             }
 
             if (typeDef.IsStruct)
@@ -229,7 +229,7 @@ namespace WHampson.Cascara
                     if (localsMap.ContainsKey(name))
                     {
                         string fmt = "Variable '{0}' already defined as a local.";
-                        throw TemplateException.Create(elem, fmt, name);
+                        throw LayoutException.Create(elem, fmt, name);
                     }
 
                     // Create new symbol table and make current table its parent
@@ -243,7 +243,7 @@ namespace WHampson.Cascara
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
-                        throw TemplateException.Create(elem, fmt, name);
+                        throw LayoutException.Create(elem, fmt, name);
                     }
 
                     // Push new symbol table onto the stack to make it "active"
@@ -281,7 +281,7 @@ namespace WHampson.Cascara
             if (!HasChildren(elem))
             {
                 string fmt = "Empty struct.";
-                throw TemplateException.Create(elem, fmt);
+                throw LayoutException.Create(elem, fmt);
             }
 
             // Process child elements
@@ -317,7 +317,7 @@ namespace WHampson.Cascara
                     if (localsMap.ContainsKey(name))
                     {
                         string fmt = "Variable '{0}' already defined as a local.";
-                        throw TemplateException.Create(elem, fmt, name);
+                        throw LayoutException.Create(elem, fmt, name);
                     }
 
                     // Create new symbol table and make current table its parent
@@ -331,7 +331,7 @@ namespace WHampson.Cascara
                     if (!curSymTabl.AddEntry(varName, entry))
                     {
                         string fmt = "Variable '{0}' already defined.";
-                        throw TemplateException.Create(elem, fmt, name);
+                        throw LayoutException.Create(elem, fmt, name);
                     }
 
                     // Push new symbol table onto the stack to make it "active"
@@ -402,7 +402,7 @@ namespace WHampson.Cascara
                         if (localsMap.ContainsKey(name))
                         {
                             string fmt = "Variable '{0}' already defined as a local.";
-                            throw TemplateException.Create(elem, fmt, name);
+                            throw LayoutException.Create(elem, fmt, name);
                         }
 
                         // Create symbol table entry for this type
@@ -412,7 +412,7 @@ namespace WHampson.Cascara
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
                             string fmt = "Variable '{0}' already defined.";
-                            throw TemplateException.Create(elem, fmt, name);
+                            throw LayoutException.Create(elem, fmt, name);
                         }
                     }
 
@@ -455,7 +455,7 @@ namespace WHampson.Cascara
             if (HasChildren(elem))
             {
                 string fmt = "Directive '{0}' cannot contain child elements.";
-                throw TemplateException.Create(elem, fmt, Keywords.Echo);
+                throw LayoutException.Create(elem, fmt, Keywords.Echo);
             }
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Message, Keywords.Newline, Keywords.Raw);
@@ -476,9 +476,9 @@ namespace WHampson.Cascara
                 catch (Exception e)
                 {
                     if (e is ArithmeticException || e is OverflowException
-                        || e is FormatException || e is TemplateException)
+                        || e is FormatException || e is LayoutException)
                     {
-                        throw TemplateException.Create(e, messageAttr, e.Message);
+                        throw LayoutException.Create(e, messageAttr, e.Message);
                     }
 
                     throw;
@@ -507,9 +507,9 @@ namespace WHampson.Cascara
             {
                 return ProcessTemplate(path);
             }
-            catch (TemplateException ex)
+            catch (LayoutException ex)
             {
-                throw TemplateException.Create(ex, elem, ex.Message);
+                throw LayoutException.Create(ex, elem, ex.Message);
             }
         }
 
@@ -522,7 +522,7 @@ namespace WHampson.Cascara
             if (HasChildren(elem))
             {
                 string fmt = "Directive '{0}' cannot contain child elements.";
-                throw TemplateException.Create(elem, fmt, Keywords.Echo);
+                throw LayoutException.Create(elem, fmt, Keywords.Echo);
             }
 
             EnsureAttributes(elem, Keywords.Comment, Keywords.Name, Keywords.Value);
@@ -533,7 +533,7 @@ namespace WHampson.Cascara
             if (symTablStack.Peek().GetEntry(name) != null)
             {
                 string fmt = "Variable '{0}' already exists as a non-local variable.";
-                throw TemplateException.Create(elem, fmt, name);
+                throw LayoutException.Create(elem, fmt, name);
             }
 
             localsMap[name] = value;
@@ -546,7 +546,7 @@ namespace WHampson.Cascara
             if (isEvalutingTypedef)
             {
                 string fmt = "Nested type definitions are not allowed.";
-                throw TemplateException.Create(elem, fmt);
+                throw LayoutException.Create(elem, fmt);
             }
             isEvalutingTypedef = true;
 
@@ -556,12 +556,12 @@ namespace WHampson.Cascara
             if (typeMap.ContainsKey(typename))
             {
                 string fmt = "Type '{0}' has already been defined.";
-                throw TemplateException.Create(elem, fmt, typename);
+                throw LayoutException.Create(elem, fmt, typename);
             }
             else if (Keywords.ReservedWords.Contains(typename))
             {
                 string fmt = "Cannot use reserved word '{0}' as a type name.";
-                throw TemplateException.Create(elem, fmt, typename);
+                throw LayoutException.Create(elem, fmt, typename);
             }
 
             TypeDefinition kind =
@@ -584,7 +584,7 @@ namespace WHampson.Cascara
         /// <param name="validAttributes">
         /// An array of valid attribute names.
         /// </param>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// If an attribute whose name does not appear in the list of valid attributes
         /// is present or if the attribute value is empty.
         /// </exception>
@@ -596,12 +596,12 @@ namespace WHampson.Cascara
                 if (!validAttributes.Contains(name))
                 {
                     string fmt = "Unknown attribute '{0}'.";
-                    throw TemplateException.Create(attr, fmt, name);
+                    throw LayoutException.Create(attr, fmt, name);
                 }
                 else if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Attribute '{0}' cannot have an empty value.";
-                    throw TemplateException.Create(attr, fmt, name);
+                    throw LayoutException.Create(attr, fmt, name);
                 }
             }
         }
@@ -628,7 +628,7 @@ namespace WHampson.Cascara
         /// <returns>
         /// The attribute value if present.
         /// </returns>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// Thrown if the attribute is marked as required but not present.
         /// </exception>
         private T GetAttributeValue<T>(XElement elem, string name, bool isRequired, T defaultValue)
@@ -638,7 +638,7 @@ namespace WHampson.Cascara
                 // Should never happen;
                 // name SHOULD HAVE been validated before this method is called
                 string msg = string.Format("Unknown attribute '{0}'", name);
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
 
             XAttribute attr = elem.Attribute(name);
@@ -647,7 +647,7 @@ namespace WHampson.Cascara
                 if (isRequired)
                 {
                     string fmt = "Missing required attribute '{0}'.";
-                    throw TemplateException.Create(elem, fmt, name);
+                    throw LayoutException.Create(elem, fmt, name);
                 }
 
                 return defaultValue;
@@ -668,7 +668,7 @@ namespace WHampson.Cascara
                 if (val < 0 || !NumberUtils.IsInteger(val))
                 {
                     string msg = "Value '{0}' is not a non-negative integer.";
-                    throw TemplateException.Create(attr, msg, val);
+                    throw LayoutException.Create(attr, msg, val);
                 }
 
                 return Convert.ToInt32(val);
@@ -676,9 +676,9 @@ namespace WHampson.Cascara
             catch (Exception e)
             {
                 if (e is ArithmeticException ||  e is OverflowException
-                    || e is FormatException || e is TemplateException)
+                    || e is FormatException || e is LayoutException)
                 {
-                    throw TemplateException.Create(e, attr, e.Message);
+                    throw LayoutException.Create(e, attr, e.Message);
                 }
 
                 throw;
@@ -720,7 +720,7 @@ namespace WHampson.Cascara
                 if (HasChildren(srcElem))
                 {
                     string fmt = "Type '{0}' cannot contain child elements.";
-                    throw TemplateException.Create(attr, fmt, typeName);
+                    throw LayoutException.Create(attr, fmt, typeName);
                 }
 
                 return typeMap[typeName];
@@ -728,7 +728,7 @@ namespace WHampson.Cascara
             else
             {
                 string fmt = "Unknown type '{0}'.";
-                throw TemplateException.Create(attr, fmt, typeName);
+                throw LayoutException.Create(attr, fmt, typeName);
             }
         }
 
@@ -743,7 +743,7 @@ namespace WHampson.Cascara
             {
                 string fmt = "'{0}' is not a valid identifier. Identifiers may consist only of "
                     + "alphanumeric characters and underscores, and may not begin with a number.";
-                throw TemplateException.Create(attr, fmt, attr.Value);
+                throw LayoutException.Create(attr, fmt, attr.Value);
             }
 
             return attr.Value;
@@ -775,9 +775,9 @@ namespace WHampson.Cascara
             catch (Exception e)
             {
                 if (e is ArithmeticException || e is OverflowException
-                    || e is FormatException || e is TemplateException)
+                    || e is FormatException || e is LayoutException)
                 {
-                    throw TemplateException.Create(e, attr, e.Message);
+                    throw LayoutException.Create(e, attr, e.Message);
                 }
 
                 throw;
@@ -789,7 +789,7 @@ namespace WHampson.Cascara
             if (!bool.TryParse(attr.Value, out bool val))
             {
                 string fmt = "'{0}' is not a valid boolean value.";
-                throw TemplateException.Create(attr, fmt, attr.Value);
+                throw LayoutException.Create(attr, fmt, attr.Value);
             }
 
             return val;
@@ -804,7 +804,7 @@ namespace WHampson.Cascara
         /// <returns>
         /// The input string with all variables replaced with their corresponding values.
         /// </returns>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// If an undefined variable is present in the string.
         /// </exception>
         private string ResolveVariables(string s)
@@ -825,7 +825,7 @@ namespace WHampson.Cascara
         {
             if (isEvalutingTypedef)
             {
-                throw new TemplateException("Variables cannot be used when defining a type.");
+                throw new LayoutException("Variables cannot be used when defining a type.");
             }
 
             string varName = m.Groups[1].Value;
@@ -851,11 +851,11 @@ namespace WHampson.Cascara
             if (!e.TypeInfo.IsFullyDefined)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
             else if (e.TypeInfo.IsStruct)
             {
-                throw new TemplateException("Cannot take the value of a struct.");
+                throw new LayoutException("Cannot take the value of a struct.");
             }
 
             return GetValue(e.TypeInfo.Type, e.TypeInfo.Offset).ToString();
@@ -869,7 +869,7 @@ namespace WHampson.Cascara
         {
             if (isEvalutingTypedef)
             {
-                throw new TemplateException("Variables cannot be used when defining a type.");
+                throw new LayoutException("Variables cannot be used when defining a type.");
             }
 
             string varName = m.Groups[1].Value;
@@ -878,7 +878,7 @@ namespace WHampson.Cascara
             if (localsMap.ContainsKey(varName))
             {
                 string msg = "Offset not defined for local variables.";
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
 
             // Handle variables tied to the binary data
@@ -894,7 +894,7 @@ namespace WHampson.Cascara
         {
             if (isEvalutingTypedef)
             {
-                throw new TemplateException("Variables cannot be used when defining a type.");
+                throw new LayoutException("Variables cannot be used when defining a type.");
             }
 
             string varName = m.Groups[1].Value;
@@ -903,7 +903,7 @@ namespace WHampson.Cascara
             if (localsMap.ContainsKey(varName))
             {
                 string msg = "Size not defined for local variables.";
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
 
             // Handle special 'sizeof type' operator
@@ -919,7 +919,7 @@ namespace WHampson.Cascara
                 if (!typeMap.TryGetValue(typeName, out TypeDefinition tDef))
                 {
                     string msg = string.Format("Invalid type '{0}'", typeName);
-                    throw new TemplateException(msg);
+                    throw new LayoutException(msg);
                 }
 
                 return tDef.Size + "";
@@ -930,7 +930,7 @@ namespace WHampson.Cascara
             if (!e.TypeInfo.IsFullyDefined)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
 
             return e.TypeInfo.Size + "";
@@ -941,7 +941,7 @@ namespace WHampson.Cascara
         /// the active symbol table. An exception is thrown if
         /// the symbol name is undefined.
         /// </summary>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// Thrown if the symbol name is undefined.
         /// </exception>
         private SymbolTableEntry GetSymbolInfo(string name)
@@ -950,7 +950,7 @@ namespace WHampson.Cascara
             if (!tabl.ContainsEntry(name))
             {
                 string msg = string.Format("Variable '{0}' not defined.", name);
-                throw new TemplateException(msg);
+                throw new LayoutException(msg);
             }
 
             return tabl.GetEntry(name);
@@ -974,7 +974,7 @@ namespace WHampson.Cascara
         /// Checks to make sure there are at least <paramref name="localOffset"/>
         /// bytes remaining in the file buffer from the current offset.
         /// </summary>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// Thrown if there are not enough bytes left in the buffer.
         /// </exception>
         private void EnsureCapacity(XElement elem, int localOffset)
@@ -984,12 +984,12 @@ namespace WHampson.Cascara
             {
                 string fmt = "Attempt to read data before the beginning of the file "
                     + "({0} bytes from beginning).";
-                throw TemplateException.Create(elem, fmt, absOffset, dataLen);
+                throw LayoutException.Create(elem, fmt, absOffset, dataLen);
             }
             else if (absOffset > dataLen)
             {
                 string fmt = "Reached end of file. Offset: {0}, length: {1}.";
-                throw TemplateException.Create(elem, fmt, absOffset, dataLen);
+                throw LayoutException.Create(elem, fmt, absOffset, dataLen);
             }
         }
 
@@ -1129,7 +1129,7 @@ namespace WHampson.Cascara
         /// <returns>
         /// The loaded XML data as an <see cref="XDocument"/>.
         /// </returns>
-        /// <exception cref="TemplateException">
+        /// <exception cref="LayoutException">
         /// Thrown if there is an error while loading the XML document.
         /// </exception>
         private static XDocument OpenXmlFile(string path)
@@ -1145,7 +1145,7 @@ namespace WHampson.Cascara
             }
             catch (XmlException e)
             {
-                throw new TemplateException(e.Message, e);
+                throw new LayoutException(e.Message, e);
             }
         }
     }
