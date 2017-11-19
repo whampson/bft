@@ -661,14 +661,12 @@ namespace WHampson.Cascara
         /// An object of type <typeparamref name="T"/> whose properties are
         /// set using data from the binary file.
         /// </returns>
-        public T ExtractData<T>() where T : new()
+        public T Deserialize<T>() where T : new()
         {
-            // TODO: Rename to Deserialize()?
-            // Perhaps Serialize() will become a function later in life...
-            return (T) ExtractData(symTabl, typeof(T));
+            return (T) Deserialize(symTabl, typeof(T));
         }
 
-        private object ExtractData(SymbolTable tabl, Type t)
+        private object Deserialize(SymbolTable tabl, Type t)
         {
             object o = Activator.CreateInstance(t);
             PropertyInfo[] props = t.GetProperties();
@@ -683,7 +681,6 @@ namespace WHampson.Cascara
                 
                 // TODO: Ensure AnArray[] gets set correctly (both refTypes and valTypes)
 
-                //bool isCascaraPrimitive = typeof(ICascaraType).IsAssignableFrom(p.PropertyType);
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
                 bool isStruct = sInfo.TypeInfo.IsStruct;
                 bool isArrayPointer = Pointer.IsArrayPointer(p.PropertyType);
@@ -713,7 +710,7 @@ namespace WHampson.Cascara
                     }
                     else
                     {
-                        object memb = ExtractData(sInfo.Child, p.PropertyType);
+                        object memb = Deserialize(sInfo.Child, p.PropertyType);
                         p.SetValue(o, memb);
                     }
                 }
@@ -739,7 +736,7 @@ namespace WHampson.Cascara
                 string elemName = string.Format("{0}[{1}]", p.Name, i);
                 SymbolTableEntry sInfo = tabl.GetEntry(elemName);
                 // TODO: watch out for sInfo == null
-                object memb = ExtractData(sInfo.Child, elemType);
+                object memb = Deserialize(sInfo.Child, elemType);
                 a.SetValue(memb, i);
             }
 

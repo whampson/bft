@@ -61,7 +61,7 @@ namespace WHampson.Cascara
                 Pointer valueBase = bFile.GetPointer("ValueBlock.BasePointer");
 
                 Dictionary<string, string> gxtData = new Dictionary<string, string>();
-                Gta3GxtFile gxt = bFile.ExtractData<Gta3GxtFile>();
+                Gta3GxtFile gxt = bFile.Deserialize<Gta3GxtFile>();
                 foreach (GxtKey key in gxt.KeyBlock.KeyArray)
                 {
                     Pointer<Char16> pVal = new Pointer<Char16>(valueBase + (int) key.ValueOffset.Value);
@@ -162,7 +162,7 @@ namespace WHampson.Cascara
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
                 bFile.ApplyTemplate(xmlPath);
-                Gta3PCSave gameSave = bFile.ExtractData<Gta3PCSave>();
+                Gta3PCSave gameSave = bFile.Deserialize<Gta3PCSave>();
 
                 string saveTitle = ReadString16(bFile.GetArrayPointer<Char16>("SimpleVars.SaveTitle"));
                 Console.WriteLine(saveTitle);
@@ -222,7 +222,7 @@ namespace WHampson.Cascara
                 Debug.Assert(bFile.GetValue<bool>("TestUnion.InnerStruct.Bool1") == true);
                 Debug.Assert(bFile.GetValue<int>("TestUnion.Int1") == 1065353216);
 
-                UnionTest ut = bFile.ExtractData<UnionTest>();
+                UnionTest ut = bFile.Deserialize<UnionTest>();
                 Debug.Assert(ut.TestUnion.Float1 == 1.0f);
                 Debug.Assert(ut.TestUnion.InnerStruct.Float1 == 1.0f);
                 Debug.Assert(ut.TestUnion.InnerStruct.Int1 == 1);
