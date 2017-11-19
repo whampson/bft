@@ -57,7 +57,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.ApplyTemplate(xmlPath);
+                bFile.SetLayout(xmlPath);
                 Pointer valueBase = bFile.GetPointer("ValueBlock.BasePointer");
 
                 Dictionary<string, string> gxtData = new Dictionary<string, string>();
@@ -161,7 +161,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.ApplyTemplate(xmlPath);
+                bFile.SetLayout(xmlPath);
                 Gta3PCSave gameSave = bFile.Deserialize<Gta3PCSave>();
 
                 string saveTitle = ReadString16(bFile.GetArrayPointer<Char16>("SimpleVars.SaveTitle"));
@@ -188,7 +188,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.ApplyTemplate(xmlPath);
+                bFile.SetLayout(xmlPath);
 
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.X") == 58.14f);
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.Y") == -42.41f);
@@ -204,7 +204,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.ApplyTemplate(xmlPath);
+                bFile.SetLayout(xmlPath);
 
                 Debug.Assert(bFile.GetOffset("TestUnion.Float1") == 0);
                 Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Float1") == 0);
