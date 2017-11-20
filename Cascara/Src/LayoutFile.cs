@@ -99,7 +99,7 @@ namespace WHampson.Cascara
         /// Gets the <see cref="XDocument"/> associated with
         /// this <see cref="LayoutFile"/> file.
         /// </summary>
-        internal XDocument Document
+        public XDocument Document
         {
             get;
         }
@@ -125,7 +125,7 @@ namespace WHampson.Cascara
 
         public override int GetHashCode()
         {
-            return Document.GetHashCode();
+            return XNode.EqualityComparer.GetHashCode(Document);
         }
 
         public override bool Equals(object obj)
@@ -136,7 +136,7 @@ namespace WHampson.Cascara
             }
 
             LayoutFile lf = (LayoutFile) obj;
-            return lf.Document.Equals(Document);
+            return XNode.DeepEquals(Document, lf.Document);
         }
 
         /// <summary>
