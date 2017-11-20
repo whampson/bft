@@ -778,6 +778,41 @@ namespace WHampson.Cascara
             }
         }
 
+        private int ProcessWidthAttribute(XAttribute attr)
+        {
+            const int MaxVal = 2;
+            string errMsg = "Value '{0}' must be a positive power of 2 less than or equal to {1}.";
+
+            try
+            {
+                string valStr = ResolveVariables(attr.Value);
+                double val = NumberUtils.EvaluateExpression(valStr);
+
+                if (val <= 0 || !NumberUtils.IsInteger(val))
+                {
+                    throw LayoutException.Create(attr, errMsg, val, MaxVal);
+                }
+
+                uint intVal = Convert.ToUInt32(val);
+                if (intVal > MaxVal || !NumberUtils.IsPowerOf2(intVal))
+                {
+                    throw LayoutException.Create(attr, errMsg, val, MaxVal);
+                }
+
+                return (int) intVal;
+            }
+            catch (Exception e)
+            {
+                if (e is ArithmeticException || e is OverflowException
+                    || e is FormatException || e is LayoutException)
+                {
+                    throw LayoutException.Create(e, attr, e.Message);
+                }
+
+                throw;
+            }
+        }
+
         private bool ProcessBooleanAttribute(XAttribute attr)
         {
             if (!bool.TryParse(attr.Value, out bool val))
@@ -1053,6 +1088,7 @@ namespace WHampson.Cascara
             attributeActionMap[Keywords.Path] = (AttributeProcessAction<string>) ProcessPathAttribute;
             attributeActionMap[Keywords.Raw] = (AttributeProcessAction<bool>) ProcessRawAttribute;
             attributeActionMap[Keywords.Value] = (AttributeProcessAction<double>) ProcessValueAttribute;
+            attributeActionMap[Keywords.Width] = (AttributeProcessAction<int>) ProcessWidthAttribute;
         }
 
         /// <summary>
