@@ -27,6 +27,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 using WHampson.Cascara.Types;
 
 using Pointer = WHampson.Cascara.Types.Pointer;
@@ -39,6 +41,8 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
+            Console.WriteLine("==== Running Include Test ====");
+            IncludeDirective();
             Console.WriteLine("==== Running Gta3Save ====");
             Gta3Save();
             Console.WriteLine("==== Running UnionType ====");
@@ -57,7 +61,8 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.SetLayout(xmlPath);
+                LayoutFile lf = LayoutFile.Load(xmlPath);
+                bFile.SetLayout(lf);
                 Pointer valueBase = bFile.GetPointer("ValueBlock.BasePointer");
 
                 Dictionary<string, string> gxtData = new Dictionary<string, string>();
@@ -161,7 +166,8 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.SetLayout(xmlPath);
+                LayoutFile lf = LayoutFile.Load(xmlPath);
+                bFile.SetLayout(lf);
                 Gta3PCSave gameSave = bFile.Deserialize<Gta3PCSave>();
 
                 string saveTitle = ReadString16(bFile.GetArrayPointer<Char16>("SimpleVars.SaveTitle"));
@@ -188,7 +194,8 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.SetLayout(xmlPath);
+                LayoutFile lf = LayoutFile.Load(xmlPath);
+                bFile.SetLayout(lf);
 
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.X") == 58.14f);
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.Y") == -42.41f);
@@ -204,7 +211,8 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                bFile.SetLayout(xmlPath);
+                LayoutFile lf = LayoutFile.Load(xmlPath);
+                bFile.SetLayout(lf);
 
                 Debug.Assert(bFile.GetOffset("TestUnion.Float1") == 0);
                 Debug.Assert(bFile.GetOffset("TestUnion.InnerStruct.Float1") == 0);
