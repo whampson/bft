@@ -52,6 +52,7 @@
     <None Include="TestData\Gta3Gxt\spanish.gxt" />
     <None Include="TestData\IncludeDirective\IncludeTest.bin" />
     <None Include="TestData\Gta3Save\Binaries\PC\GTA3sf1.B" />
+    <None Include="TestData\String\StringTest.bin" />
     <None Include="TestData\UnionType\UnionTest.bin" />
     <None Include="Cascara.Test.licenseheader" />
   </ItemGroup>
@@ -80,6 +81,9 @@
     </Content>
     <Content Include="TestData\Basic\Basic.xml" />
     <Content Include="TestData\Gta3Save\PCSave.xml" />
+    <Content Include="TestData\String\StringTest.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="TestData\UnionType\UnionTest.xml">
       <SubType>Designer</SubType>
     </Content>
