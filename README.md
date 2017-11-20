@@ -22,7 +22,7 @@ can be repeated to create arrays and named to become accessible by your program.
 
 Name                    | Description
 ----------------------- | ------------
-`cascaraBinaryTemplate` | All Layout Files must open with this element.
+`cascaraLayout` | All Layout Files must open with this element.
 
 #### Data Types
 
