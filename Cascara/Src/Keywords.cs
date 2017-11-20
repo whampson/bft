@@ -125,6 +125,7 @@ namespace WHampson.Cascara
             Long,
             Short,
             Single,
+            String,
             Struct,
             UInt,
             UInt8,
