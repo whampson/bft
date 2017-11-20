@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
-<cascaraBinaryTemplate>
+<cascaraLayout>
     <!--
         Operators
             ${...}          ->  'valueof' operator
@@ -15,7 +15,7 @@
             __OFFSET__      ->  the current offset in the file being processed
     -->
 
-    <!-- In ths structure, both members are the same distance from zero -->
+    <!-- In this structure, both members are the same distance from zero -->
     <typedef name="ZeroOffset" kind="struct">
         <int32 name="neg"/>
         <int32 name="pos"/>
@@ -36,4 +36,4 @@
     <echo message="${zArr[2].neg}"/>
     <echo message="${zArr[3].neg} = " newline="false" raw="true"/>
     <echo message="${zArr[3].neg}"/>
-</cascaraBinaryTemplate>
+</cascaraLayout>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<cascaraBinaryTemplate>
+<cascaraLayout>
     <typedef name="my_int" kind="int32" />
     <typedef name="my_int2" kind="my_int" />
     <typedef name="vect3d" kind="struct">
@@ -22,4 +22,4 @@
     <!-- <echo message="offset(PLYR.money) = $[PLYR.money]"/> -->
     <!-- <echo message="size(PLYR.money)   = $(PLYR.money)\n"/> -->
 
-</cascaraBinaryTemplate>
+</cascaraLayout>

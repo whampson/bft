@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<cascaraBinaryTemplate>
+<cascaraLayout>
     <!-- Custom types -->
     <typedef name="BlockHeader" kind="struct">
         <uint32 name="Size"/>
@@ -150,4 +150,4 @@
     <align count="${skipAmt}"/>
     
     <uint32 name="Checksum"/>
-</cascaraBinaryTemplate>
+</cascaraLayout>

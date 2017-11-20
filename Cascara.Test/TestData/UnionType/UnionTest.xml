@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 
-<cascaraBinaryTemplate>
+<cascaraLayout>
     <union name="TestUnion"             comment="0">
         <float name="Float1"            comment="0"/>
         <struct name="InnerStruct"      comment="0">
@@ -23,4 +23,4 @@
     <echo message="${TestUnion.InnerStruct.InnerUnion.Float1}"      comment="2.802597e-45"/>
     <echo message="${TestUnion.InnerStruct.Bool1}"                  comment="True"/>
     <echo message="${TestUnion.Int1}"                               comment="1065353216"/>
-</cascaraBinaryTemplate>
+</cascaraLayout>
