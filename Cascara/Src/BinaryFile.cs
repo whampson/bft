@@ -613,12 +613,17 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Runs a Cascara Binary Template on the file contents
-        /// and maps variable names to offsets in the file data
-        /// based on the layout of the template.
+        /// Analyzes a <see cref="LayoutFile"/> and applies the
+        /// layout to the binary file data.
         /// </summary>
+        /// <remarks>
+        /// Maps variable names to offsets in the file data
+        /// based on the format defined in the layout file.
+        /// The standard output stream is used for the
+        /// <code>echo</code> directive.
+        /// </remarks>
         /// <param name="layoutFile">
-        /// The path to the template to run.
+        /// The path to the <see cref="LayoutFile"/> to use.
         /// </param>
         public void SetLayout(LayoutFile layoutFile)
         {
@@ -626,12 +631,16 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Runs a Cascara Binary Template on the file contents
-        /// and maps variable names to offsets in the file data
-        /// based on the layout of the template.
+        /// Analyzes a <see cref="LayoutFile"/> and applies the
+        /// layout to the binary file data.
         /// </summary>
+        /// <remarks>
+        /// Maps variable names to offsets in the file data
+        /// based on the format defined in the layout file.
+        /// </remarks>
         /// <param name="layoutFile">
-        /// The path to the template to run.
+        /// <param name="layoutFile">
+        /// The path to the <see cref="LayoutFile"/> to use.
         /// </param>
         /// <param name="echoWriter">
         /// A <see cref="TextWriter"/> to use as the output stream
@@ -639,8 +648,10 @@ namespace WHampson.Cascara
         /// </param>
         public void SetLayout(LayoutFile layoutFile, TextWriter echoWriter)
         {
-            LayoutFileProcessor proc = new LayoutFileProcessor();
-            proc.EchoWriter = echoWriter;
+            LayoutFileProcessor proc = new LayoutFileProcessor
+            {
+                EchoWriter = echoWriter
+            };
             symTabl = proc.Process(layoutFile, dataPtr, dataLen);
         }
 

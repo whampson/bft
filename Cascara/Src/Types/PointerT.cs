@@ -61,8 +61,8 @@ namespace WHampson.Cascara.Types
         /// then dereferences the value at that address so it can be get or set.
         /// </summary>
         /// <param name="i">
-        /// The offset in units of the type <see cref="T"/>. This means that if
-        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// The offset in units of the type <typeparamref name="T"/>. This means that if
+        /// <typeparamref name="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
         /// </param>
         public T this[int i]
         {
@@ -112,11 +112,11 @@ namespace WHampson.Cascara.Types
 
         /// <summary>
         /// Adds an offset to the address pointed to by a <see cref="Pointer{T}"/>.
-        /// The offset is in units of <see cref="T"/>.
+        /// The offset is in units of <typeparamref name="T"/>.
         /// </summary>
         /// <remarks>
-        /// The offset in units of the type <see cref="T"/>. This means that if
-        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// The offset in units of the type <typeparamref name="T"/>. This means that if
+        /// <typeparamref name="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
         /// </remarks>
         /// <param name="ptr">
         /// The base address.
@@ -136,11 +136,11 @@ namespace WHampson.Cascara.Types
 
         /// <summary>
         /// Subtracts an offset from the address pointed to by a <see cref="Pointer{T}"/>.
-        /// The offset is in units of <see cref="T"/>.
+        /// The offset is in units of <typeparamref name="T"/>.
         /// </summary>
         /// <remarks>
-        /// The offset in units of the type <see cref="T"/>. This means that if
-        /// <see cref="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
+        /// The offset in units of the type <typeparamref name="T"/>. This means that if
+        /// <typeparamref name="T"/> is 4 bytes, an offset of "1" will add 4 bytes to the address.
         /// </remarks>
         /// <param name="ptr">
         /// The base address.
