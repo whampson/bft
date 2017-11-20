@@ -31,9 +31,9 @@ Name                    | Description
 Name     | Description
 -------- | ------------
 `byte`   | alias for `uint8`
-`char`   | 8-bit integer value; intended for use with characters
-`char8`  | 16-bit integer value; intended for use with characters
-`char16` | 32-bit integer value; intended for use with characters
+`char`   | alias for `char8`
+`char8`  | 8-bit integer value; intended for use with characters
+`char16` | 16-bit integer value; intended for use with characters
 `int`    | alias for `int32`
 `int8`   | 8-bit signed integer value
 `int16`  | 16-bit signed integer value
