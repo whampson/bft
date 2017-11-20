@@ -84,5 +84,25 @@ namespace WHampson.Cascara
         {
             return Math.Abs(d % 1) <= (Double.Epsilon * 100);
         }
+
+        /// <summary>
+        /// Checks whether a <see cref="uint"/> is a power of 2.
+        /// </summary>
+        /// <param name="i">
+        /// The <see cref="uint"/> to check.
+        /// </param>
+        /// <returns>
+        /// A value indicating whether <paramref name="i"/> is a
+        /// power of 2.
+        /// </returns>
+        public static bool IsPowerOf2(uint i)
+        {
+            if (i == 0)
+            {
+                return false;
+            }
+
+            return (i & (i - 1)) == 0;
+        }
     }
 }
