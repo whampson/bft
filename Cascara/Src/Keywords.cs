@@ -26,13 +26,13 @@ using System.Collections.Generic;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Convenience class that contains all valid keywords for the template
-    /// processor.
+    /// Convenience class that contains all valid keywords for the
+    /// layout file processor.
     /// </summary>
     internal static class Keywords
     {
         // Root element
-        public const string TemplateRoot = "cascaraBinaryTemplate";
+        public const string DocumentRoot = "cascaraLayout";
 
         // Data types
         public const string Bool = "bool";
@@ -93,7 +93,7 @@ namespace WHampson.Cascara
         public const string Offset = "__OFFSET__";
 
         /// <summary>
-        /// The list of reserved words for the template processor.
+        /// The list of reserved words for the layout file processor.
         /// </summary>
         /// <remarks>
         /// Reserved words are words that cannot be used as variable names.
@@ -101,7 +101,7 @@ namespace WHampson.Cascara
         public static readonly IEnumerable<string> ReservedWords = new List<string>()
         {
             // Root element
-            TemplateRoot,
+            DocumentRoot,
 
             // Data types
             Bool,
