@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -50,7 +51,12 @@ namespace WHampson.Cascara
         /// </exception>
         public static LayoutFile Load(string layoutFilePath)
         {
-            return new LayoutFile(OpenXmlFile(layoutFilePath));
+            LayoutFile lf = new LayoutFile(OpenXmlFile(layoutFilePath))
+            {
+                SourcePath = layoutFilePath
+            };
+
+            return lf;
         }
 
         /// <summary>
@@ -78,6 +84,15 @@ namespace WHampson.Cascara
         public LayoutFile(XDocument xDoc)
         {
             Document = xDoc ?? throw new ArgumentNullException("xDoc");
+            SourcePath = null;
+
+            ValidateRootElement();
+        }
+
+        public string SourcePath
+        {
+            get;
+            private set;
         }
 
         /// <summary>
@@ -87,6 +102,25 @@ namespace WHampson.Cascara
         internal XDocument Document
         {
             get;
+        }
+
+        /// <summary>
+        /// Ensures the root element of <see cref="Document"/> is correct.
+        /// </summary>
+        /// <exception cref="LayoutException">
+        /// If the root element is empty or has the wrong name.
+        /// </exception>
+        private void ValidateRootElement()
+        {
+            if (Document.Root.Name.LocalName != Keywords.DocumentRoot)
+            {
+                string fmt = "Layout Files must have a root element named '{0}'.";
+                throw LayoutException.Create(Document.Root, fmt, Keywords.DocumentRoot);
+            }
+            if (Document.Root.Elements().Count() == 0)
+            {
+                throw new LayoutException("Empty Layout File.");
+            }
         }
 
         public override int GetHashCode()

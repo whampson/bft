@@ -617,12 +617,12 @@ namespace WHampson.Cascara
         /// and maps variable names to offsets in the file data
         /// based on the layout of the template.
         /// </summary>
-        /// <param name="layoutFilePath">
+        /// <param name="layoutFile">
         /// The path to the template to run.
         /// </param>
-        public void SetLayout(string layoutFilePath)
+        public void SetLayout(LayoutFile layoutFile)
         {
-            SetLayout(layoutFilePath, Console.Out);
+            SetLayout(layoutFile, Console.Out);
         }
 
         /// <summary>
@@ -630,18 +630,18 @@ namespace WHampson.Cascara
         /// and maps variable names to offsets in the file data
         /// based on the layout of the template.
         /// </summary>
-        /// <param name="layoutFilePath">
+        /// <param name="layoutFile">
         /// The path to the template to run.
         /// </param>
         /// <param name="echoWriter">
         /// A <see cref="TextWriter"/> to use as the output stream
         /// for the <code>echo</code> directive.
         /// </param>
-        public void SetLayout(string layoutFilePath, TextWriter echoWriter)
+        public void SetLayout(LayoutFile layoutFile, TextWriter echoWriter)
         {
             LayoutFileProcessor proc = new LayoutFileProcessor();
             proc.EchoWriter = echoWriter;
-            symTabl = proc.Process(layoutFilePath, dataPtr, dataLen);
+            symTabl = proc.Process(layoutFile, dataPtr, dataLen);
         }
 
         /// <summary>
@@ -650,7 +650,7 @@ namespace WHampson.Cascara
         /// with the values of variables whose names match the properties'
         /// names. If a property's type is a reference type, it will be
         /// set recursively using the members of a struct variable with the
-        /// same name. This method requires that <see cref="SetLayout(string)"/>
+        /// same name. This method requires that <see cref="SetLayout(LayoutFile)"/>
         /// has been run.
         /// </summary>
         /// <typeparam name="T">

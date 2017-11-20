@@ -43,8 +43,6 @@ namespace WHampson.Cascara
         private delegate int DirectiveProcessAction(XElement elem);
         private delegate T AttributeProcessAction<T>(XAttribute attr);
 
-        //private XDocument templateDoc;
-
         private IntPtr dataPtr;
         private int dataLen;
         private int dataOffset;
@@ -56,8 +54,7 @@ namespace WHampson.Cascara
 
         private Stack<SymbolTable> symTablStack;
 
-        // TODO: Change into Stack<TemplateFile> after implemented
-        private Stack<string> pathStack;
+        private Stack<LayoutFile> layoutFileStack;
 
         private bool isEvaluatingUnion;
         private bool isEvalutingTypedef;
@@ -66,10 +63,8 @@ namespace WHampson.Cascara
 
         private TextWriter echoWriter;
 
-        public LayoutFileProcessor(/*XDocument doc*/)
+        public LayoutFileProcessor()
         {
-            //templateDoc = doc ?? throw new ArgumentNullException("doc");
-
             dataPtr = IntPtr.Zero;
             dataLen = 0;
             dataOffset = 0;
@@ -81,7 +76,7 @@ namespace WHampson.Cascara
 
             symTablStack = new Stack<SymbolTable>();
 
-            pathStack = new Stack<string>();
+            layoutFileStack = new Stack<LayoutFile>();
 
             isEvalutingTypedef = false;
             isConductingDryRun = false;
@@ -100,18 +95,17 @@ namespace WHampson.Cascara
             set { echoWriter = value ?? throw new ArgumentNullException(nameof(value)); }
         }
 
-        public SymbolTable Process(string templatePath, IntPtr dataPtr, int dataLen)
+        public SymbolTable Process(LayoutFile layoutFile, IntPtr dataPtr, int dataLen)
         {
             this.dataPtr = dataPtr;
             this.dataLen = dataLen;
 
             symTablStack.Push(new SymbolTable());
-            ProcessTemplate(templatePath);
+            ProcessLayout(layoutFile);
             return symTablStack.Pop();
         }
 
-        // TODO: create TemplateFile class and pass that here
-        private int ProcessTemplate(string templatePath)
+        private int ProcessLayout(LayoutFile layoutFile)
         {
             isEvalutingTypedef = false;
             isConductingDryRun = false;
@@ -119,27 +113,15 @@ namespace WHampson.Cascara
             dataOffset = 0;
 
             // Prevent 'include' cycles
-            if (pathStack.Contains(templatePath))
+            if (layoutFileStack.Contains(layoutFile))
             {
-                throw new LayoutException("Template inclusion cycle detected.");
+                throw new LayoutException("Layout File inclusion cycle detected.");
             }
 
-            pathStack.Push(Path.GetFullPath(templatePath));
-            XDocument doc = OpenXmlFile(templatePath);
+            layoutFileStack.Push(layoutFile);
 
-            // Validate root element
-            if (doc.Root.Name.LocalName != Keywords.TemplateRoot)
-            {
-                string fmt = "Template must have a root element named '{0}'.";
-                throw LayoutException.Create(doc.Root, fmt, Keywords.TemplateRoot);
-            }
-            if (!HasChildren(doc.Root))
-            {
-                throw new LayoutException("Empty binary file template.");
-            }
-
-            int bytesProcessed = ProcessStructMembers(doc.Root);
-            pathStack.Pop();
+            int bytesProcessed = ProcessStructMembers(layoutFile.Document.Root);
+            layoutFileStack.Pop();
 
             return bytesProcessed;
         }
@@ -505,7 +487,8 @@ namespace WHampson.Cascara
 
             try
             {
-                return ProcessTemplate(path);
+                LayoutFile lf = LayoutFile.Load(path);
+                return ProcessLayout(lf);
             }
             catch (LayoutException ex)
             {
@@ -756,7 +739,18 @@ namespace WHampson.Cascara
 
         private string ProcessPathAttribute(XAttribute attr)
         {
-            string parent = Path.GetDirectoryName(pathStack.Peek()); 
+            string parent;
+            LayoutFile top = layoutFileStack.Peek();
+
+            if (top.SourcePath == null)
+            {
+                parent = Path.GetDirectoryName(top.SourcePath);
+            }
+            else
+            {
+                parent = "";
+            }
+
             return Path.Combine(parent, attr.Value);
         }
 
@@ -1118,35 +1112,6 @@ namespace WHampson.Cascara
 
                 return esc;
             });
-        }
-
-        /// <summary>
-        /// Loads data from an XML file located at the specified path.
-        /// </summary>
-        /// <param name="path">
-        /// The path to the XML file to load.
-        /// </param>
-        /// <returns>
-        /// The loaded XML data as an <see cref="XDocument"/>.
-        /// </returns>
-        /// <exception cref="LayoutException">
-        /// Thrown if there is an error while loading the XML document.
-        /// </exception>
-        private static XDocument OpenXmlFile(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException("Path cannot be empty or null");
-            }
-
-            try
-            {
-                return XDocument.Load(path, LoadOptions.SetLineInfo);
-            }
-            catch (XmlException e)
-            {
-                throw new LayoutException(e.Message, e);
-            }
         }
     }
 }
