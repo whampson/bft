@@ -1,8 +1,10 @@
 ﻿<cascaraLayout>
     <uint32 name="Magic" comment="0xCAFEBABE"/>
-    <string name="Str1" count="8"/>
-    <string name="Str2" count="24" width="2"/>
+    <char8 name="Str1" count="8"/>
+    <char16 name="Str2" count="24"/>
 
+    <echo message="${Str1[0]}"/>
     <echo message="${Str1}"/>
+    <echo message="${Str2[1]}"/>
     <echo message="${Str2}"/>
 </cascaraLayout>
