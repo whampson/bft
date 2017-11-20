@@ -58,6 +58,7 @@ namespace WHampson.Cascara
         //public const string QWord = "qword";
         public const string Short = "short";
         public const string Single = "single";
+        public const string String = "string";
         public const string Struct = "struct";
         public const string UInt = "uint";
         public const string UInt8 = "uint8";
@@ -87,6 +88,7 @@ namespace WHampson.Cascara
         public const string Raw = "raw";
         //public const string Typename = "typename";
         public const string Value = "value";
+        public const string Width = "width";
 
         // Special variables
         public const string Filesize = "__FILESIZE__";
