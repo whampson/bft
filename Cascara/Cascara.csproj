@@ -68,6 +68,7 @@
   <ItemGroup>
     <Compile Include="Src\BinaryFile.cs" />
     <Compile Include="Src\Keywords.cs" />
+    <Compile Include="Src\LayoutFile.cs" />
     <Compile Include="Src\NumberUtils.cs" />
     <Compile Include="Src\TypeInfo.cs" />
     <Compile Include="Src\Types\ArrayPointer.cs" />
