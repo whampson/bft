@@ -45,7 +45,38 @@ namespace WHampson.Cascara
         public SymbolTableEntry(TypeInfo tInfo, SymbolTable child)
         {
             TypeInfo = tInfo;
-            Child = child;
+            Count = (child != null) ? 1 : 0;
+            Children = new SymbolTable[Count];
+            if (Count != 0)
+            {
+                Children[0] = child;
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="SymbolTableEntry"/> object containing the
+        /// given symbol, type, offset, and child table.
+        /// </summary>
+        /// <param name="tInfo">
+        /// The type of data that the symbol refers to.
+        /// </param>
+        /// <param name="count">
+        /// The number of consecutive elements that this symbol refers to.
+        /// </param>
+        /// <param name="children">
+        /// A <see cref="SymbolTable"/> array of symbol tables that stem from this entry.
+        /// </param>
+        public SymbolTableEntry(TypeInfo tInfo, int count, SymbolTable[] children)
+        {
+            if (children.Length != count)
+            {
+                throw new ArgumentException("Child symbol table array must have a length equal to 'count'.", "children");
+            }
+
+            TypeInfo = tInfo;
+            Count = count;
+            Children = new SymbolTable[count];
+            Array.Copy(children, Children, count);
         }
 
         /// <summary>
@@ -57,11 +88,24 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="SymbolTable"/> object containing all child symbols.
+        /// Gets the number of consecutive elements associated with the symbol.
         /// </summary>
-        public SymbolTable Child
+        public int Count
         {
             get;
+        }
+
+        /// <summary>
+        /// Gets the <see cref="SymbolTable"/> object containing all child symbols.
+        /// </summary>
+        public SymbolTable[] Children
+        {
+            get;
+        }
+
+        public SymbolTable FirstChild
+        {
+            get { return (HasChildren) ? Children[0] : null; }
         }
 
         /// <summary>
@@ -70,14 +114,14 @@ namespace WHampson.Cascara
         /// <remarks>
         /// This indicates whether the symbol refers to a struct.
         /// </remarks>
-        public bool HasChild
+        public bool HasChildren
         {
-            get { return Child != null; }
+            get { return Children.Length != 0; }
         }
 
         public override string ToString()
         {
-            return string.Format("[Type: {0}, HasChild: {1}]", TypeInfo, HasChild);
+            return string.Format("[Type: {0}, Count{1}, HasChildren: {2}]", TypeInfo, Count, HasChildren);
         }
     }
 }
