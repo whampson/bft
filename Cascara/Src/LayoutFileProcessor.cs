@@ -742,7 +742,7 @@ namespace WHampson.Cascara
             string parent;
             LayoutFile top = layoutFileStack.Peek();
 
-            if (top.SourcePath == null)
+            if (top.SourcePath != null)
             {
                 parent = Path.GetDirectoryName(top.SourcePath);
             }
