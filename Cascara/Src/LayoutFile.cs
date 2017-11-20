@@ -99,7 +99,7 @@ namespace WHampson.Cascara
         /// Gets the <see cref="XDocument"/> associated with
         /// this <see cref="LayoutFile"/> file.
         /// </summary>
-        public XDocument Document
+        internal XDocument Document
         {
             get;
         }
