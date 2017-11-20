@@ -29,7 +29,7 @@ using WHampson.Cascara.Types;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Contains information about a data type used during the processing of a template.
+    /// Contains information about a data type used during the processing of a Layout File.
     /// </summary>
     /// <remarks>
     /// This is different from <see cref="TypeInfo"/> in that this represents the
