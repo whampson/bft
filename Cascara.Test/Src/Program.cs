@@ -43,6 +43,8 @@ namespace WHampson.Cascara
         {
             Console.WriteLine("==== Running Include Test ====");
             IncludeDirective();
+            Console.WriteLine("=== Running String Test ===");
+            String();
             Console.WriteLine("==== Running Gta3Save ====");
             Gta3Save();
             Console.WriteLine("==== Running UnionType ====");
@@ -238,6 +240,19 @@ namespace WHampson.Cascara
                 Debug.Assert(ut.TestUnion.InnerStruct.InnerUnion.Float1 == 2.802597e-45f);
                 Debug.Assert(ut.TestUnion.InnerStruct.Bool1 == true);
                 Debug.Assert(ut.TestUnion.Int1 == 1065353216);
+            }
+        }
+
+        private static void String()
+        {
+            string testPath = TestDataPath + "/String";
+            string binPath = testPath + "/StringTest.bin";
+            string xmlPath = testPath + "/StringTest.xml";
+
+            using (BinaryFile bFile = BinaryFile.Open(binPath))
+            {
+                LayoutFile lf = LayoutFile.Load(xmlPath);
+                bFile.SetLayout(lf);
             }
         }
 
