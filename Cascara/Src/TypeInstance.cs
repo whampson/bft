@@ -30,11 +30,11 @@ namespace WHampson.Cascara
     /// Retains information regarding the data type represented
     /// by a contiguous set of bytes.
     /// </summary>
-    public sealed class TypeInfo
+    public sealed class TypeInstance
     {
 
         /// <summary>
-        /// Creates a new <see cref="TypeInfo"/> object using the specified
+        /// Creates a new <see cref="TypeInstance"/> object using the specified
         /// type, offset, and size.
         /// </summary>
         /// <param name="type">
@@ -52,7 +52,7 @@ namespace WHampson.Cascara
         /// This is needed when processing structs so we can the struct entry
         /// to the symbol table before its size is fully known.
         /// </param>
-        internal TypeInfo(Type type, int offset, int size, bool isFullyDefined)
+        internal TypeInstance(Type type, int offset, int size, bool isArray, int elemCount, bool isFullyDefined)
         {
             if (offset < 0)
             {
@@ -95,6 +95,16 @@ namespace WHampson.Cascara
         {
             get;
             internal set;
+        }
+
+        public int ElemCount
+        {
+            get;
+        }
+
+        public bool IsArray
+        {
+            get;
         }
 
         /// <summary>
