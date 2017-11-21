@@ -59,12 +59,12 @@ namespace WHampson.Cascara
 
             if (!t.IsValueType)
             {
-                throw new ArgumentException("Type must be a value type.");
+                throw new ArgumentException("Type must be a value type.", "t");
             }
 
             if(size < 0)
             {
-                throw new ArgumentException("Size must be a non-negative integer.");
+                throw new ArgumentException("Size must be a non-negative integer.", "size");
             }
 
             return new TypeDefinition(t, new List<XElement>(), size);
@@ -93,7 +93,7 @@ namespace WHampson.Cascara
 
             if (size < 0)
             {
-                throw new ArgumentException("Size must be a non-negative integer.");
+                throw new ArgumentException("Size must be a non-negative integer.", "size");
             }
 
             return new TypeDefinition(null, members, size);
