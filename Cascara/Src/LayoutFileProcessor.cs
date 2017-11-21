@@ -219,7 +219,7 @@ namespace WHampson.Cascara
 
                     // Create symbol table entry for this struct in the current table
                     // Type remains 'null' and size is 0 because we haven't processed the struct yet
-                    TypeInfo tInfo = new TypeInfo(null, dataOffset, 0, false);
+                    TypeInstance tInfo = new TypeInstance(null, dataOffset, 0, false);
                     entry = new SymbolTableEntry(tInfo, newSymTabl);
 
                     if (!curSymTabl.AddEntry(varName, entry))
@@ -307,7 +307,7 @@ namespace WHampson.Cascara
 
                     // Create symbol table entry for this struct in the current table
                     // Type remains 'null' and size is 0 because we haven't processed the struct yet
-                    TypeInfo tInfo = new TypeInfo(null, dataOffset, 0, false);
+                    TypeInstance tInfo = new TypeInstance(null, dataOffset, 0, false);
                     entry = new SymbolTableEntry(tInfo, newSymTabl);
 
                     if (!curSymTabl.AddEntry(varName, entry))
@@ -389,7 +389,7 @@ namespace WHampson.Cascara
 
                         // Create symbol table entry for this type
                         // It's not a struct so the child symbol table is 'null'
-                        TypeInfo tInfo = new TypeInfo(tDef.Kind, dataOffset, tDef.Size, true);
+                        TypeInstance tInfo = new TypeInstance(tDef.Kind, dataOffset, tDef.Size, true);
                         SymbolTableEntry e = new SymbolTableEntry(tInfo, null);
                         if (!symTablStack.Peek().AddEntry(varName, e))
                         {
@@ -1031,7 +1031,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Populates the map of built-in type names to <see cref="TypeInfo"/> definitions.
+        /// Populates the map of built-in type names to <see cref="TypeInstance"/> definitions.
         /// </summary>
         private void BuildTypeMap()
         {

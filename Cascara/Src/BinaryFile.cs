@@ -557,7 +557,7 @@ namespace WHampson.Cascara
         /// A <see cref="Dictionary{TKey, TValue}"/> containing the
         /// most immediate descendants to the top-level of the binary file.
         /// </returns>
-        public Dictionary<string, TypeInfo> GetChildren()
+        public Dictionary<string, TypeInstance> GetChildren()
         {
             return symTabl.GetChildren()
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
@@ -574,7 +574,7 @@ namespace WHampson.Cascara
         /// A <see cref="Dictionary{TKey, TValue}"/> containing all
         /// children of the specified variable, if any.
         /// </returns>
-        public Dictionary<string, TypeInfo> GetChildren(string name)
+        public Dictionary<string, TypeInstance> GetChildren(string name)
         {
             return symTabl.GetChildren(name)
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
@@ -589,7 +589,7 @@ namespace WHampson.Cascara
         /// A <see cref="Dictionary{TKey, TValue}"/> containing all
         /// descendants of the binary file, if any.
         /// </returns>
-        public Dictionary<string, TypeInfo> GetDescendants()
+        public Dictionary<string, TypeInstance> GetDescendants()
         {
             return symTabl.GetDescendants()
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
@@ -606,7 +606,7 @@ namespace WHampson.Cascara
         /// A <see cref="Dictionary{TKey, TValue}"/> containing all
         /// descendants of the specified variable, if any.
         /// </returns>
-        public Dictionary<string, TypeInfo> GetDescendants(string name)
+        public Dictionary<string, TypeInstance> GetDescendants(string name)
         {
             return symTabl.GetDescendants(name)
                 .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
