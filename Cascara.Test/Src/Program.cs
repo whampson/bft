@@ -41,14 +41,16 @@ namespace WHampson.Cascara
 
         static void Main(string[] args)
         {
-            Console.WriteLine("==== Running Include Test ====");
-            IncludeDirective();
-            Console.WriteLine("=== Running String Test ===");
-            String();
-            Console.WriteLine("==== Running Gta3Save ====");
-            Gta3Save();
-            Console.WriteLine("==== Running UnionType ====");
-            UnionType();
+            //Console.WriteLine("==== Running Include Test ====");
+            //IncludeDirective();
+            //Console.WriteLine("==== Running UnionType ====");
+            //UnionType();
+            //Console.WriteLine("=== Running String Test ===");
+            //String();
+            Console.WriteLine("==== Running Gta3Gxt ====");
+            Gta3Gxt();
+            //Console.WriteLine("==== Running Gta3Save ====");
+            //Gta3Save();
             Console.WriteLine("==== All tests passed! ====");
 
             // Pause
@@ -78,6 +80,13 @@ namespace WHampson.Cascara
 
                 Debug.Assert(gxtData["HM1_3"] == "~g~The 'Nines' walk their turf in Wichita Gardens.");
                 Debug.Assert(gxtData["TRAIN_1"] == "Kurowski Station");
+
+                Console.WriteLine(ReadString8(bFile.GetPointer<Char8>("KeyBlock.KeyArray[16].KeyName")));
+                List<string> keys = (List<string>) bFile.GetAllKeys();
+                foreach (string s in keys)
+                {
+                    Console.WriteLine(s);
+                }
 
                 //Console.WriteLine(bFile.GetValue<int>("KeyBlock.KeyArray[0].ValueOffset"));
 

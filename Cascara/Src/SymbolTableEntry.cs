@@ -32,65 +32,74 @@ namespace WHampson.Cascara
     /// </summary>
     internal sealed class SymbolTableEntry
     {
-        /// <summary>
-        /// Creates a new <see cref="SymbolTableEntry"/> object containing the
-        /// given symbol, type, offset, and child table.
-        /// </summary>
-        /// <param name="tInfo">
-        /// The type of data that the symbol refers to.
-        /// </param>
-        /// <param name="child">
-        /// A <see cref="SymbolTable"/> that stems from this entry.
-        /// </param>
-        public SymbolTableEntry(TypeInfo tInfo, SymbolTable child)
+        public SymbolTableEntry(TypeInstance dataType)
+            : this(dataType, (SymbolTable[]) null)
         {
-            TypeInfo = tInfo;
-            Count = (child != null) ? 1 : 0;
-            Children = new SymbolTable[Count];
-            if (Count != 0)
+        }
+
+        public SymbolTableEntry(TypeInstance dataType, SymbolTable child)
+        {
+            if (dataType == null)
             {
-                Children[0] = child;
+                throw new ArgumentNullException(nameof(dataType));
             }
+
+            if (dataType.IsArray)
+            {
+                string msg = "Cannot use non-array SymbolTableEntry constructor for " +
+                    "an array type.";
+                throw new ArgumentException(msg, nameof(dataType));
+            }
+
+            DataType = dataType;
+            ChildSymbols = new SymbolTable[] { child };
+            ChildTypes = new TypeInstance[1];
         }
 
         /// <summary>
         /// Creates a new <see cref="SymbolTableEntry"/> object containing the
         /// given symbol, type, offset, and child table.
         /// </summary>
-        /// <param name="tInfo">
+        /// <param name="dataType">
         /// The type of data that the symbol refers to.
-        /// </param>
-        /// <param name="count">
-        /// The number of consecutive elements that this symbol refers to.
         /// </param>
         /// <param name="children">
         /// A <see cref="SymbolTable"/> array of symbol tables that stem from this entry.
         /// </param>
-        public SymbolTableEntry(TypeInfo tInfo, int count, SymbolTable[] children)
+        public SymbolTableEntry(TypeInstance dataType, SymbolTable[] children)
         {
-            if (children.Length != count)
+            if (dataType == null)
             {
-                throw new ArgumentException("Child symbol table array must have a length equal to 'count'.", "children");
+                throw new ArgumentNullException(nameof(dataType));
             }
 
-            TypeInfo = tInfo;
-            Count = count;
-            Children = new SymbolTable[count];
-            Array.Copy(children, Children, count);
+            if (children == null)
+            {
+                children = new SymbolTable[dataType.Count];
+            }
+
+            if (children.Length != dataType.Count)
+            {
+                string msg = "Child symbol table array must have a length equal to " +
+                    "the number of elements in the type instance.";
+                throw new ArgumentException(msg, nameof(children));
+            }
+
+            DataType = dataType;
+            ChildSymbols = new SymbolTable[dataType.Count];
+            ChildTypes = new TypeInstance[dataType.Count];
+            Array.Copy(children, ChildSymbols, dataType.Count);
         }
 
         /// <summary>
-        /// Gets or sets the type information associated with the symbol.
+        /// Gets the type information associated with the symbol.
         /// </summary>
-        public TypeInfo TypeInfo
+        public TypeInstance DataType
         {
             get;
         }
 
-        /// <summary>
-        /// Gets the number of consecutive elements associated with the symbol.
-        /// </summary>
-        public int Count
+        public TypeInstance[] ChildTypes
         {
             get;
         }
@@ -98,30 +107,45 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets the <see cref="SymbolTable"/> object containing all child symbols.
         /// </summary>
-        public SymbolTable[] Children
+        public SymbolTable[] ChildSymbols
         {
             get;
         }
 
-        public SymbolTable FirstChild
+        public bool HasChildTypes
         {
-            get { return (HasChildren) ? Children[0] : null; }
+            get
+            {
+                foreach (TypeInstance child in ChildTypes)
+                {
+                    if (child != null)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether this symbol has a child table.
-        /// </summary>
-        /// <remarks>
-        /// This indicates whether the symbol refers to a struct.
-        /// </remarks>
-        public bool HasChildren
+        public bool HasChildSymbols
         {
-            get { return Children.Length != 0; }
+            get
+            {
+                foreach (SymbolTable child in ChildSymbols)
+                {
+                    if (child != null)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
 
         public override string ToString()
         {
-            return string.Format("[Type: {0}, Count{1}, HasChildren: {2}]", TypeInfo, Count, HasChildren);
+            return string.Format("[DataType: {0}, HasChildSymbols: {1}, HasChildTypes: {2}]",
+                DataType, HasChildSymbols, HasChildTypes);
         }
     }
 }

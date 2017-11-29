@@ -194,39 +194,39 @@ namespace WHampson.Cascara
             // Get attribute values
             int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
             string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
+            bool isArray = count > 1;
+
+            SymbolTable curSymTabl = symTablStack.Peek();
+
+            TypeInstance t = new StructInstance(dataOffset, 0, count, isArray, false);
+            SymbolTableEntry entry = new SymbolTableEntry(t);
+
+            if (!isConductingDryRun)
+            {
+                if (localsMap.ContainsKey(name))
+                {
+                    string fmt = "Variable '{0}' already defined as a local.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+                else if (!curSymTabl.AddEntry(name, entry))
+                {
+                    string fmt = "Variable '{0}' already defined.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+            }
 
             // Process the struct 'count' times
             int localOffset = 0;
             int elemSize = 0;
-            string varName;
             for (int i = 0; i < count; i++)
             {
-                // Tack on array index to var name so it's unique
-                varName = name + "[" + i + "]";
-
-                SymbolTableEntry entry = null;
-                SymbolTable curSymTabl = symTablStack.Peek();
                 if (!isConductingDryRun && name != null)
                 {
-                    if (localsMap.ContainsKey(name))
-                    {
-                        string fmt = "Variable '{0}' already defined as a local.";
-                        throw LayoutException.Create(elem, fmt, name);
-                    }
-
                     // Create new symbol table and make current table its parent
-                    SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
+                    SymbolTable newSymTabl = new SymbolTable(name, curSymTabl);
 
-                    // Create symbol table entry for this struct in the current table
-                    // Type remains 'null' and size is 0 because we haven't processed the struct yet
-                    TypeInstance tInfo = new TypeInstance(null, dataOffset, 0, false);
-                    entry = new SymbolTableEntry(tInfo, newSymTabl);
-
-                    if (!curSymTabl.AddEntry(varName, entry))
-                    {
-                        string fmt = "Variable '{0}' already defined.";
-                        throw LayoutException.Create(elem, fmt, name);
-                    }
+                    entry.ChildSymbols[i] = newSymTabl;
+                    entry.ChildTypes[i] = new StructInstance(dataOffset + localOffset, 0, false);
 
                     // Push new symbol table onto the stack to make it "active"
                     symTablStack.Push(newSymTabl);
@@ -246,13 +246,16 @@ namespace WHampson.Cascara
                 if (!isConductingDryRun && name != null)
                 {
                     // We've finished processing the struct, so now we can set the size
-                    entry.TypeInfo.Size = elemSize;
-                    entry.TypeInfo.IsFullyDefined = true;
+                    entry.ChildTypes[i].Size = elemSize;
+                    ((StructInstance) entry.ChildTypes[i]).IsFullyDefined = true;
 
                     // Make the previous table "active"
                     symTablStack.Pop();
                 }
             }
+
+            entry.DataType.Size = localOffset;
+            ((StructInstance) entry.DataType).IsFullyDefined = true;
 
             return localOffset;
         }
@@ -283,38 +286,39 @@ namespace WHampson.Cascara
 
             int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
             string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
+            bool isArray = count > 1;
 
+            SymbolTable curSymTabl = symTablStack.Peek();
+
+            TypeInstance t = new StructInstance(dataOffset, 0, count, isArray, false);
+            SymbolTableEntry entry = new SymbolTableEntry(t);
+
+            if (!isConductingDryRun)
+            {
+                if (localsMap.ContainsKey(name))
+                {
+                    string fmt = "Variable '{0}' already defined as a local.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+                else if (!curSymTabl.AddEntry(name, entry))
+                {
+                    string fmt = "Variable '{0}' already defined.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+            }
+
+            // Process the union 'count' times
             int localOffset = 0;
-            string varName;
+            int elemSize = 0;
             for (int i = 0; i < count; i++)
             {
-                /* ============= TODO: Put into own function ======== */
-                // Tack on array index to var name so it's unique
-                varName = name + "[" + i + "]";
-
-                SymbolTableEntry entry = null;
-                SymbolTable curSymTabl = symTablStack.Peek();
                 if (!isConductingDryRun && name != null)
                 {
-                    if (localsMap.ContainsKey(name))
-                    {
-                        string fmt = "Variable '{0}' already defined as a local.";
-                        throw LayoutException.Create(elem, fmt, name);
-                    }
-
                     // Create new symbol table and make current table its parent
-                    SymbolTable newSymTabl = new SymbolTable(varName, curSymTabl);
+                    SymbolTable newSymTabl = new SymbolTable(name, curSymTabl);
 
-                    // Create symbol table entry for this struct in the current table
-                    // Type remains 'null' and size is 0 because we haven't processed the struct yet
-                    TypeInstance tInfo = new TypeInstance(null, dataOffset, 0, false);
-                    entry = new SymbolTableEntry(tInfo, newSymTabl);
-
-                    if (!curSymTabl.AddEntry(varName, entry))
-                    {
-                        string fmt = "Variable '{0}' already defined.";
-                        throw LayoutException.Create(elem, fmt, name);
-                    }
+                    entry.ChildSymbols[i] = newSymTabl;
+                    entry.ChildTypes[i] = new StructInstance(dataOffset + localOffset, 0, false);
 
                     // Push new symbol table onto the stack to make it "active"
                     symTablStack.Push(newSymTabl);
@@ -343,9 +347,9 @@ namespace WHampson.Cascara
 
                 if (!isConductingDryRun && name != null)
                 {
-                    // We've finished processing the struct, so now we can set the size
-                    entry.TypeInfo.Size = size;
-                    entry.TypeInfo.IsFullyDefined = true;
+                    // We've finished processing the union, so now we can set the size
+                    entry.ChildTypes[i].Size = elemSize;
+                    ((StructInstance) entry.ChildTypes[i]).IsFullyDefined = true;
 
                     // Make the previous table "active"
                     symTablStack.Pop();
@@ -362,40 +366,43 @@ namespace WHampson.Cascara
             // Get attribute values
             int count = GetAttributeValue<int>(elem, Keywords.Count, false, 1);
             string name = GetAttributeValue<string>(elem, Keywords.Name, false, null);
+            bool isArray = count > 1;
 
             string elemName = elem.Name.LocalName;
             TypeDefinition tDef = typeMap[elemName];
 
+            SymbolTable curSymTabl = symTablStack.Peek();
+
+            TypeInstance t = new PrimitiveInstance(tDef.Kind, dataOffset, 0, count, isArray);
+            SymbolTableEntry entry = new SymbolTableEntry(t);
+
+            if (!isConductingDryRun)
+            {
+                if (localsMap.ContainsKey(name))
+                {
+                    string fmt = "Variable '{0}' already defined as a local.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+                else if (!curSymTabl.AddEntry(name, entry))
+                {
+                    string fmt = "Variable '{0}' already defined.";
+                    throw LayoutException.Create(elem, fmt, name);
+                }
+            }
+
             // Process primitive 'count' times
             int localOffset = 0;
-            string varName;
             for (int i = 0; i < count; i++)
             {
                 // Make sure we have enough bytes left in the buffer
                 EnsureCapacity(elem, tDef.Size);
 
-                // Tack on array index to var name so it's unique
-                varName = name + "[" + i + "]";
-
                 if (!isConductingDryRun)
                 {
                     if (name != null)
                     {
-                        if (localsMap.ContainsKey(name))
-                        {
-                            string fmt = "Variable '{0}' already defined as a local.";
-                            throw LayoutException.Create(elem, fmt, name);
-                        }
-
-                        // Create symbol table entry for this type
-                        // It's not a struct so the child symbol table is 'null'
-                        TypeInstance tInfo = new TypeInstance(tDef.Kind, dataOffset, tDef.Size, true);
-                        SymbolTableEntry e = new SymbolTableEntry(tInfo, null);
-                        if (!symTablStack.Peek().AddEntry(varName, e))
-                        {
-                            string fmt = "Variable '{0}' already defined.";
-                            throw LayoutException.Create(elem, fmt, name);
-                        }
+                        entry.ChildSymbols[i] = null;
+                        entry.ChildTypes[i] = new PrimitiveInstance(tDef.Kind, dataOffset, tDef.Size);
                     }
 
                     // Increment data pointer
@@ -877,17 +884,12 @@ namespace WHampson.Cascara
 
             // Handle variables tied to the binary data
             SymbolTableEntry e = GetSymbolInfo(varName);
-            if (!e.TypeInfo.IsFullyDefined)
-            {
-                string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
-                throw new LayoutException(msg);
-            }
-            else if (e.TypeInfo.IsStruct)
+            if (TypeInstance.IsStruct(e.DataType))
             {
                 throw new LayoutException("Cannot take the value of a struct.");
             }
 
-            return GetValue(e.TypeInfo.Type, e.TypeInfo.Offset).ToString();
+            return GetValue(e.DataType.Type, e.DataType.Offset).ToString();
         }
 
         /// <summary>
@@ -912,7 +914,7 @@ namespace WHampson.Cascara
 
             // Handle variables tied to the binary data
             SymbolTableEntry e = GetSymbolInfo(varName);
-            return e.TypeInfo.Offset + "";
+            return e.DataType.Offset + "";
         }
 
         /// <summary>
@@ -956,13 +958,13 @@ namespace WHampson.Cascara
 
             // Get size of variable value
             SymbolTableEntry e = GetSymbolInfo(varName);
-            if (!e.TypeInfo.IsFullyDefined)
+            if (TypeInstance.IsStruct(e.DataType) && !((StructInstance) e.DataType).IsFullyDefined)
             {
                 string msg = string.Format("Variable '{0}' is not yet fully defined.", varName);
                 throw new LayoutException(msg);
             }
 
-            return e.TypeInfo.Size + "";
+            return e.DataType.Size + "";
         }
 
         /// <summary>

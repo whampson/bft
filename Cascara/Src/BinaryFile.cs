@@ -192,13 +192,13 @@ namespace WHampson.Cascara
         public Type GetType(string name)
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            if (entry.TypeInfo.IsStruct)
+            if (TypeInstance.IsStruct(entry.DataType))
             {
                 string fmt = "Cannot the type of struct '{0}' as structs are made up of many types.";
                 throw new ArgumentException(string.Format(fmt, name));
             }
 
-            return entry.TypeInfo.Type;
+            return entry.DataType.Type;
         }
 
         /// <summary>
@@ -217,7 +217,7 @@ namespace WHampson.Cascara
         public int GetOffset(string name)
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            return entry.TypeInfo.Offset;
+            return entry.DataType.Offset;
         }
 
         /// <summary>
@@ -235,7 +235,7 @@ namespace WHampson.Cascara
         public int GetSize(string name)
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            return entry.TypeInfo.Size;
+            return entry.DataType.Size;
         }
 
         /// <summary>
@@ -257,7 +257,7 @@ namespace WHampson.Cascara
         {
             if (!RangeCheck(offset))
             {
-                throw new ArgumentOutOfRangeException("offset");
+                throw new ArgumentOutOfRangeException(nameof(offset));
             }
 
             return new Pointer(dataPtr + offset);
@@ -279,7 +279,7 @@ namespace WHampson.Cascara
         public Pointer GetPointer(string name)
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            return new Pointer(dataPtr + entry.TypeInfo.Offset);
+            return new Pointer(dataPtr + entry.DataType.Offset);
         }
 
         /// <summary>
@@ -305,7 +305,7 @@ namespace WHampson.Cascara
         {
             if (!RangeCheck(offset))
             {
-                throw new ArgumentOutOfRangeException("offset");
+                throw new ArgumentOutOfRangeException(nameof(offset));
             }
 
             return new Pointer<T>(dataPtr + offset);
@@ -332,13 +332,31 @@ namespace WHampson.Cascara
             where T : struct
         {
             SymbolTableEntry entry = GetSymbolTableEntry(name);
-            if (entry.TypeInfo.IsStruct && !typeof(T).IsValueType)
+            if (TypeInstance.IsStruct(entry.DataType) && !typeof(T).IsValueType)
             {
                 string fmt = "Cannot get a pointer to struct '{0}' using type '{1}'.";
                 throw new NotSupportedException(string.Format(fmt, name, typeof(T).Name));
             }
 
-            return new Pointer<T>(dataPtr + entry.TypeInfo.Offset);
+            // TODO: Do all of this shit for all other Get* functions
+            // or just do it once in GetOffset() and call that ;)
+            int offset;
+            if (entry.DataType.IsArray)
+            {
+                int index = SymbolTable.GetArrayIndex(name);
+                if (index == -1)
+                {
+                    // This means the name did not contain array brackets on the end
+                    index = 0;
+                }
+                offset = entry.ChildTypes[index].Offset;
+            }
+            else
+            {
+                offset = entry.DataType.Offset;
+            }
+
+            return new Pointer<T>(dataPtr + offset);
         }
 
         /// <summary>
@@ -365,7 +383,7 @@ namespace WHampson.Cascara
         {
             if (!RangeCheck(offset))
             {
-                throw new ArgumentOutOfRangeException("offset");
+                throw new ArgumentOutOfRangeException(nameof(offset));
             }
 
             return new ArrayPointer<T>(dataPtr + offset, count);
@@ -401,7 +419,7 @@ namespace WHampson.Cascara
                 count = GetElemCount(name);
             }
 
-            return new ArrayPointer<T>(dataPtr + entry.TypeInfo.Offset, count);
+            return new ArrayPointer<T>(dataPtr + entry.DataType.Offset, count);
         }
 
         /// <summary>
@@ -548,6 +566,11 @@ namespace WHampson.Cascara
             pValue.Value = value;
         }
 
+        public IEnumerable<string> GetAllKeys()
+        {
+            return symTabl.GetAllKeys();
+        }
+
         /// <summary>
         /// Gets a collection of the most immediate descendants to the
         /// top level of the binary file. That is, a collection
@@ -560,7 +583,7 @@ namespace WHampson.Cascara
         public Dictionary<string, TypeInstance> GetChildren()
         {
             return symTabl.GetChildren()
-                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+                .ToDictionary(k => k.Key, v => v.Value.DataType);
         }
 
         /// <summary>
@@ -577,7 +600,7 @@ namespace WHampson.Cascara
         public Dictionary<string, TypeInstance> GetChildren(string name)
         {
             return symTabl.GetChildren(name)
-                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+                .ToDictionary(k => k.Key, v => v.Value.DataType);
         }
 
         /// <summary>
@@ -592,7 +615,7 @@ namespace WHampson.Cascara
         public Dictionary<string, TypeInstance> GetDescendants()
         {
             return symTabl.GetDescendants()
-                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+                .ToDictionary(k => k.Key, v => v.Value.DataType);
         }
 
         /// <summary>
@@ -609,7 +632,7 @@ namespace WHampson.Cascara
         public Dictionary<string, TypeInstance> GetDescendants(string name)
         {
             return symTabl.GetDescendants(name)
-                .ToDictionary(k => k.Key, v => v.Value.TypeInfo);
+                .ToDictionary(k => k.Key, v => v.Value.DataType);
         }
 
         /// <summary>
@@ -638,7 +661,6 @@ namespace WHampson.Cascara
         /// Maps variable names to offsets in the file data
         /// based on the format defined in the layout file.
         /// </remarks>
-        /// <param name="layoutFile">
         /// <param name="layoutFile">
         /// The path to the <see cref="LayoutFile"/> to use.
         /// </param>
@@ -693,7 +715,7 @@ namespace WHampson.Cascara
                 // TODO: Ensure AnArray[] gets set correctly (both refTypes and valTypes)
 
                 bool isCascaraPointer = typeof(ICascaraPointer).IsAssignableFrom(p.PropertyType);
-                bool isStruct = sInfo.TypeInfo.IsStruct;
+                bool isStruct = TypeInstance.IsStruct(sInfo.DataType);
                 bool isArrayPointer = Pointer.IsArrayPointer(p.PropertyType);
                 bool isArray = p.PropertyType.IsArray;
 
@@ -721,7 +743,7 @@ namespace WHampson.Cascara
                     }
                     else
                     {
-                        object memb = Deserialize(sInfo.Child, p.PropertyType);
+                        object memb = Deserialize(sInfo.ChildSymbols[0], p.PropertyType);
                         p.SetValue(o, memb);
                     }
                 }
@@ -740,14 +762,18 @@ namespace WHampson.Cascara
             Type propType = p.PropertyType;
             Type elemType = propType.GetElementType();
 
+            SymbolTableEntry sInfo = tabl.GetEntry(p.Name);
+            if (sInfo == null)
+            {
+                // TODO: think about this
+                return;
+            }
+
             int elemCount = tabl.GetElemCount(p.Name);
             Array a = Array.CreateInstance(elemType, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
-                string elemName = string.Format("{0}[{1}]", p.Name, i);
-                SymbolTableEntry sInfo = tabl.GetEntry(elemName);
-                // TODO: watch out for sInfo == null
-                object memb = Deserialize(sInfo.Child, elemType);
+                object memb = Deserialize(sInfo.ChildSymbols[i], elemType);
                 a.SetValue(memb, i);
             }
 
@@ -756,20 +782,20 @@ namespace WHampson.Cascara
 
         private void SetPrimitiveValue(PropertyInfo p, object o, SymbolTableEntry sInfo)
         {
-            object val = GetValue(p.PropertyType, sInfo.TypeInfo.Offset);
+            object val = GetValue(p.PropertyType, sInfo.DataType.Offset);
             p.SetValue(o, Convert.ChangeType(val, p.PropertyType));
         }
 
         private void SetPointerValue(PropertyInfo p, object o, SymbolTableEntry sInfo)
         {
-            Pointer ptr = GetPointer(sInfo.TypeInfo.Offset);
+            Pointer ptr = GetPointer(sInfo.DataType.Offset);
 
             p.SetValue(o, Convert.ChangeType(ptr, p.PropertyType));
         }
 
         private void SetArrayPointerValue(PropertyInfo p, object o, SymbolTableEntry sInfo, int elemCount)
         {
-            object ptrVal = Activator.CreateInstance(p.PropertyType, dataPtr + sInfo.TypeInfo.Offset, elemCount);
+            object ptrVal = Activator.CreateInstance(p.PropertyType, dataPtr + sInfo.DataType.Offset, elemCount);
             p.SetValue(o, ptrVal);
         }
 

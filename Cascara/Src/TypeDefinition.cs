@@ -32,8 +32,8 @@ namespace WHampson.Cascara
     /// Contains information about a data type used during the processing of a Layout File.
     /// </summary>
     /// <remarks>
-    /// This is different from <see cref="TypeInfo"/> in that this represents the
-    /// type itself, whereas <see cref="TypeInfo"/> represents an instance of a type.
+    /// This is different from <see cref="TypeInstance"/> in that this represents the
+    /// type itself, whereas <see cref="TypeInstance"/> represents an instance of a type.
     /// </remarks>
     internal sealed class TypeDefinition
     {
@@ -54,17 +54,17 @@ namespace WHampson.Cascara
         {
             if (t == null)
             {
-                throw new ArgumentNullException("t");
+                throw new ArgumentNullException(nameof(t));
             }
 
             if (!t.IsValueType)
             {
-                throw new ArgumentException("Type must be a value type.", "t");
+                throw new ArgumentException("Type must be a value type.", nameof(t));
             }
 
             if(size < 0)
             {
-                throw new ArgumentException("Size must be a non-negative integer.", "size");
+                throw new ArgumentException("Size must be a non-negative integer.", nameof(size));
             }
 
             return new TypeDefinition(t, new List<XElement>(), size);

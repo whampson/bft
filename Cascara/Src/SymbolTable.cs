@@ -154,21 +154,28 @@ namespace WHampson.Cascara
                 return null;
             }
 
+            if (childIndex >= top.ChildSymbols.Length)
+            {
+                return null;
+            }
+
             // Traverse down from the top until we find the entry whose name
             // matches the last part of the provided name
             SymbolTableEntry result = top;
-            SymbolTable tabl = (childIndex != -1) ? result.Children[childIndex] : result.FirstChild;
+            SymbolTable tabl = (childIndex != -1) ? result.ChildSymbols[childIndex] : result.ChildSymbols[0];
             string sym;
 
             for (int i = 1; i < splitname.Length; i++)
             {
                 sym = splitname[i];
                 childIndex = GetArrayIndex(sym);
-                if (tabl == null || !tabl.entries.TryGetValue(sym, out result))
+                if (tabl == null
+                    || !tabl.entries.TryGetValue(StripArrayNotation(sym), out result)
+                    || childIndex >= result.ChildSymbols.Length)
                 {
                     return null;
                 }
-                tabl = (childIndex != -1) ? result.Children[childIndex] : result.FirstChild;
+                tabl = (childIndex != -1) ? result.ChildSymbols[childIndex] : result.ChildSymbols[0];
             }
 
             return result;
@@ -217,7 +224,7 @@ namespace WHampson.Cascara
             }
 
             Dictionary<string, SymbolTableEntry> children = new Dictionary<string, SymbolTableEntry>();
-            foreach (SymbolTable childTable in e.Children)
+            foreach (SymbolTable childTable in e.ChildSymbols)
             {
                 Dictionary<string, SymbolTableEntry> childEntries = GetChildren(childTable);
                 children = children.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);
@@ -258,7 +265,7 @@ namespace WHampson.Cascara
             }
 
             Dictionary<string, SymbolTableEntry> descendants = new Dictionary<string, SymbolTableEntry>();
-            foreach (SymbolTable childTable in e.Children)
+            foreach (SymbolTable childTable in e.ChildSymbols)
             {
                 Dictionary<string, SymbolTableEntry> childEntries = GetDescendants(childTable);
                 descendants = descendants.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);
@@ -281,10 +288,14 @@ namespace WHampson.Cascara
             }
 
             string localName = Name;
-            if (!Parent.IsArray(localName))
+            if (Parent.IsArray(localName))
             {
-                localName = StripArrayNotation(localName);
+                // TODO: append array index to 'localName'
             }
+            //if (!Parent.IsArray(localName))
+            //{
+            //    localName = StripArrayNotation(localName);
+            //}
 
             if (Parent.Name == null)
             {
@@ -311,10 +322,10 @@ namespace WHampson.Cascara
                 return null;
             }
 
-            if (!IsArray(name))
-            {
-                name = StripArrayNotation(name);
-            }
+            //if (!IsArray(name))
+            //{
+            //    name = StripArrayNotation(name);
+            //}
 
             string baseName = GetFullyQualifiedName();
             if (string.IsNullOrEmpty(baseName))
@@ -341,7 +352,9 @@ namespace WHampson.Cascara
         /// </returns>
         public bool IsPrimitive(string name)
         {
-            return ContainsEntry(name) && !IsStruct(name);
+            SymbolTableEntry e = GetEntry(name);
+
+            return e != null && TypeInstance.IsPrimitive(e.DataType);
         }
 
         /// <summary>
@@ -360,12 +373,9 @@ namespace WHampson.Cascara
         /// </returns>
         public bool IsStruct(string name)
         {
-            if (!ContainsEntry(name))
-            {
-                return false;
-            }
+            SymbolTableEntry e = GetEntry(name);
 
-            return GetEntry(name).TypeInfo.IsStruct;
+            return e != null && TypeInstance.IsStruct(e.DataType);
         }
 
         /// <summary>
@@ -381,10 +391,19 @@ namespace WHampson.Cascara
         /// </returns>
         public bool IsArray(string name)
         {
-            string sym = StripArrayNotation(name);
+            SymbolTableEntry e = GetEntry(name);
+            return e != null && e.DataType.IsArray;
+        }
 
-            SymbolTableEntry e = GetEntry(sym);
-            return e != null && e.TypeInfo.IsArray;
+        public int GetElemCount(string name)
+        {
+            SymbolTableEntry e = GetEntry(name);
+            if (e == null || !e.DataType.IsArray)
+            {
+                return -1;
+            }
+
+            return e.DataType.Count;
         }
 
         ///// <summary>
@@ -420,48 +439,6 @@ namespace WHampson.Cascara
 
         //    return count;
         //}
-
-        /// <summary>
-        /// Removes the array element brackets from a given symbol name.
-        /// </summary>
-        /// <param name="s">
-        /// The symbol to trim.
-        /// </param>
-        /// <returns>
-        /// The symbol name with array brackets removed from the
-        /// most immediate symbol name (i.e. last in a dot-separated list).
-        /// </returns>
-        private string StripArrayNotation(string s)
-        {
-            return Regex.Replace(s, ArrayNotationPattern, "");
-        }
-
-        /// <summary>
-        /// Gets the index of the array referred to by the given symbol
-        /// name. If the symbol does not refer to an array element,
-        /// -1 is returned.
-        /// </summary>
-        /// <param name="s">
-        /// The symbol to get the array index of.
-        /// </param>
-        /// <returns>
-        /// The index of the array referred to by the symbol.
-        /// -1 if the symbol does not refer to an array element.
-        /// </returns>
-        /// <exception cref="FormatException">
-        /// Thrown if the array index is not valid unsigned integer.
-        /// </exception>
-        private int GetArrayIndex(string s)
-        {
-            Match m = Regex.Match(s, ArrayNotationPattern);
-            string idxStr = m.Groups[1].Value;
-            if (string.IsNullOrEmpty(idxStr))
-            {
-                return -1;
-            }
-
-            return (int) uint.Parse(idxStr);
-        }
 
         public IEnumerator<KeyValuePair<string, SymbolTableEntry>> GetEnumerator()
         {
@@ -500,6 +477,48 @@ namespace WHampson.Cascara
 
         //    return name;
         //}
+
+        /// <summary>
+        /// Removes the array element brackets from a given symbol name.
+        /// </summary>
+        /// <param name="s">
+        /// The symbol to trim.
+        /// </param>
+        /// <returns>
+        /// The symbol name with array brackets removed from the
+        /// most immediate symbol name (i.e. last in a dot-separated list).
+        /// </returns>
+        public static string StripArrayNotation(string s)
+        {
+            return Regex.Replace(s, ArrayNotationPattern, "");
+        }
+
+        /// <summary>
+        /// Gets the index of the array referred to by the given symbol
+        /// name. If the symbol does not refer to an array element,
+        /// -1 is returned.
+        /// </summary>
+        /// <param name="s">
+        /// The symbol to get the array index of.
+        /// </param>
+        /// <returns>
+        /// The index of the array referred to by the symbol.
+        /// -1 if the symbol does not refer to an array element.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// Thrown if the array index is not valid unsigned integer.
+        /// </exception>
+        public static int GetArrayIndex(string s)
+        {
+            Match m = Regex.Match(s, ArrayNotationPattern);
+            string idxStr = m.Groups[1].Value;
+            if (string.IsNullOrEmpty(idxStr))
+            {
+                return -1;
+            }
+
+            return (int) uint.Parse(idxStr);
+        }
 
         /// <summary>
         /// Searches the parent tables for the given symbol.
@@ -542,13 +561,18 @@ namespace WHampson.Cascara
         private static IEnumerable<string> GetAllKeys(SymbolTable tabl)
         {
             List<string> keys = new List<string>();
+            if (tabl == null)
+            {
+                return keys;
+            }
+
             foreach (KeyValuePair<string, SymbolTableEntry> kvp in tabl)
             {
                 string name = tabl.GetFullyQualifiedName(kvp.Key);
                 keys.Add(name);
 
                 SymbolTableEntry entry = kvp.Value;
-                foreach (SymbolTable childTable in entry.Children)
+                foreach (SymbolTable childTable in entry.ChildSymbols)
                 {
                     keys.AddRange(GetAllKeys(childTable));
                 }
@@ -597,7 +621,7 @@ namespace WHampson.Cascara
                 SymbolTableEntry entry = kvp.Value;
                 descendants[name] = entry;
 
-                foreach (SymbolTable childTable in entry.Children)
+                foreach (SymbolTable childTable in entry.ChildSymbols)
                 {
                     Dictionary<string, SymbolTableEntry> childEntries = GetDescendants(childTable);
                     descendants = descendants.Concat(childEntries).ToDictionary(x => x.Key, y => y.Value);

@@ -71,6 +71,8 @@
     <Compile Include="Src\Keywords.cs" />
     <Compile Include="Src\LayoutFile.cs" />
     <Compile Include="Src\NumberUtils.cs" />
+    <Compile Include="Src\PrimitiveInstance.cs" />
+    <Compile Include="Src\StructInstance.cs" />
     <Compile Include="Src\TypeInstance.cs" />
     <Compile Include="Src\Types\ArrayPointer.cs" />
     <Compile Include="Src\Types\Bool16.cs" />
