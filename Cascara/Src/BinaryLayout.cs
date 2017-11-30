@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
@@ -29,99 +30,90 @@ using System.Xml.Linq;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Represents a Layout File, which is used for defining the structure of a binary file.
+    /// Contains information about the organization of a binary file.
     /// </summary>
-    public sealed class LayoutFile
+    /// <remarks>
+    /// A <see cref="BinaryLayout"/> is represented on disk with an XML file.
+    /// </remarks>
+    public sealed class BinaryLayout
     {
         /// <summary>
-        /// Loads a Layout File from the filesystem.
+        /// Creates a <see cref="BinaryLayout"/> object from the data stored in
+        /// the XML file located at the specified path.
         /// </summary>
-        /// <param name="layoutFilePath">
-        /// The path to the layout file.
+        /// <param name="xmlPath">
+        /// The path to the XML file containing the binary layout information.
         /// </param>
         /// <returns>
-        /// A <see cref="LayoutFile"/> object containing the layout information
-        /// from the provided file.
+        /// A <see cref="BinaryLayout"/> object containing the layout information
+        /// for a specific binary file format.
         /// </returns>
         /// <exception cref="ArgumentException">
         /// Thrown if the XML path is empty or null.
         /// </exception>
-        /// <exception cref="System.IO.FileNotFoundException">
+        /// <exception cref="FileNotFoundException">
         /// Thrown if the path provided does not exist.
         /// </exception>
         /// <exception cref="XmlException">
         /// Thrown if there is an error while loading the XML document.
         /// </exception>
-        public static LayoutFile Load(string layoutFilePath)
+        /// <exception cref="LayoutException">
+        /// Thrown if the binary layout XML data contains an error.
+        /// </exception>
+        public static BinaryLayout Load(string xmlPath)
         {
-            LayoutFile layout = new LayoutFile(OpenXmlFile(layoutFilePath))
+            if (string.IsNullOrWhiteSpace(xmlPath))
             {
-                SourcePath = layoutFilePath
-            };
-
-            return layout;
-        }
-
-        /// <summary>
-        /// Loads data from an XML file located at the specified path.
-        /// </summary>
-        /// <param name="path">
-        /// The path to the XML file to load.
-        /// </param>
-        /// <returns>
-        /// The loaded XML data as an <see cref="XDocument"/>.
-        /// </returns>
-        /// <exception cref="ArgumentException">
-        /// Thrown if the XML path is empty or null.
-        /// </exception>
-        /// <exception cref="System.IO.FileNotFoundException">
-        /// Thrown if the path provided does not exist.
-        /// </exception>
-        /// <exception cref="XmlException">
-        /// Thrown if there is an error while loading the XML document.
-        /// </exception>
-        private static XDocument OpenXmlFile(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                throw new ArgumentException("Path cannot be empty or null.", nameof(path));
+                throw new ArgumentException("Path cannot be empty or null.", nameof(xmlPath));
             }
-
-            return XDocument.Load(path, LoadOptions.SetLineInfo);
+            XDocument doc = XDocument.Load(xmlPath, LoadOptions.SetLineInfo);
+            
+            return new BinaryLayout(doc) { SourcePath = xmlPath };
         }
 
         /// <summary>
-        /// Creates a new <see cref="LayoutFile"/> object from an XML data string.
+        /// Creates a new <see cref="BinaryLayout"/> object from an XML data string.
         /// </summary>
         /// <param name="xmlData">
-        /// The contents of an XML file containing the layout information.
+        /// An XML string containing the binary layout information.
         /// </param>
-        public LayoutFile(string xmlData)
+        /// <exception cref="XmlException">
+        /// Thrown if there is an error while loading the XML document.
+        /// </exception>
+        /// <exception cref="LayoutException">
+        /// Thrown if the binary layout XML data contains an error.
+        /// </exception>
+        public BinaryLayout(string xmlData)
             : this(XDocument.Parse(xmlData))
         {
         }
 
         /// <summary>
-        /// Creates a new <see cref="LayoutFile"/> object from an existing
-        /// <see cref="XDocument"/> object.
+        /// Creates a new <see cref="BinaryLayout"/> object from the XML data
+        /// contained within an <see cref="XDocument"/>.
         /// </summary>
         /// <param name="xDoc">
-        /// An <see cref="XDocument"/> object containing th Layout File XML data.
+        /// An <see cref="XDocument"/> containing the binary layout XML data.
         /// </param>
         /// <exception cref="ArgumentNullException">
-        /// Thrown if the provided <see cref="XDocument"/> object is <code>Null</code>.
+        /// Thrown if the provided <see cref="XDocument"/> object is <code>null</code>.
         /// </exception>
-        public LayoutFile(XDocument xDoc)
+        /// <exception cref="LayoutException">
+        /// Thrown if the binary layout XML data contains an error.
+        /// </exception>
+        public BinaryLayout(XDocument xDoc)
         {
             Document = xDoc ?? throw new ArgumentNullException(nameof(xDoc));
             ValidateRootElement();
 
             SourcePath = null;
             Name = Document.Root.Attribute(Keywords.Name).Value;
+
+            // TODO: Check entire layout for invalid names and syntax errors
         }
 
         /// <summary>
-        /// Gets the name of this <see cref="LayoutFile"/>.
+        /// Gets the name of this <see cref="BinaryLayout"/>.
         /// </summary>
         public string Name
         {
@@ -129,7 +121,8 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the file path used to load the <see cref="LayoutFile"/>.
+        /// Gets the file path used to load this <see cref="BinaryLayout"/>.
+        /// Returns <code>null</code> if the Layout File was not loaded 
         /// </summary>
         public string SourcePath
         {
@@ -138,8 +131,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="XDocument"/> associated with this
-        /// <see cref="LayoutFile"/> file.
+        /// Gets the <see cref="XDocument"/> associated with this <see cref="BinaryLayout"/>.
         /// </summary>
         internal XDocument Document
         {
@@ -185,7 +177,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Compares an <see cref="object"/> against this <see cref="LayoutException"/>
+        /// Compares an <see cref="object"/> against this <see cref="BinaryLayout"/>
         /// for equality.
         /// </summary>
         /// <param name="obj">
@@ -197,12 +189,12 @@ namespace WHampson.Cascara
         /// </returns>
         public override bool Equals(object obj)
         {
-            if (!(obj is LayoutFile))
+            if (!(obj is BinaryLayout))
             {
                 return false;
             }
 
-            return XNode.DeepEquals(Document, ((LayoutFile) obj).Document);
+            return XNode.DeepEquals(Document, ((BinaryLayout) obj).Document);
         }
     }
 }
