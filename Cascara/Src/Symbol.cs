@@ -61,15 +61,65 @@ namespace WHampson.Cascara
         /// Creates a nameless, parentless <see cref="Symbol"/> for use
         /// as the root in a <see cref="Symbol"/> tree.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// The newly-created <see cref="Symbol"/> object.
+        /// </returns>
         internal static Symbol CreateRootSymbol()
         {
             return new Symbol(null, null);
         }
 
+        /// <summary>
+        /// Creates a nameless <see cref="Symbol"/> with the specified parent <see cref="Symbol"/>.
+        /// An entry for this <see cref="Symbol"/> does not exist in the parent.
+        /// </summary>
+        /// <param name="parent">
+        /// The <see cref="Symbol"/> that this <see cref="Symbol"/> stems from.
+        /// </param>
+        /// <returns>
+        /// The newly-created <see cref="Symbol"/> object.
+        /// </returns>
         internal static Symbol CreateNamelessSymbol(Symbol parent)
         {
             return new Symbol(null, parent);
+        }
+
+        /// <summary>
+        /// Checks whether a given string satisfies the requirements
+        /// for a <see cref="Symbol"/> name.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Symbol"/> names must consist of only alphabetic characters
+        /// (any case), decimal digits, or underscores. <see cref="Symbol"/> names
+        /// cannot begin with a decimal digit.
+        /// </remarks>
+        /// <param name="name">
+        /// The string to validate.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the specified string meets the criteria for a
+        /// valid <see cref="Symbol"/> name, <code>False</code> otherwise.
+        /// </returns>
+        internal static bool IsNameValid(string name)
+        {
+            // Don't allow names to start with a digit.
+            // This is because we use numbers as the names of collection element
+            // symbol tables.
+            if (string.IsNullOrWhiteSpace(name) || char.IsDigit(name[0]))
+            {
+                return false;
+            }
+
+            foreach (char c in name)
+            {
+                // Only allow alphanumeric characters and underscores.
+                if (!char.IsLetterOrDigit(c) && c != '_')
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -169,7 +219,7 @@ namespace WHampson.Cascara
 
             if (isSearchingForCollection)
             {
-                if (!entry.IsCollection || index >= entry.ElemCount)
+                if (!entry.IsCollection || index >= entry.ElementCount)
                 {
                     return null;
                 }
@@ -186,44 +236,6 @@ namespace WHampson.Cascara
 
             // Continue searching down the tree for the rest of the name
             return SearchDown(splitName[1], entry);
-        }
-
-        /// <summary>
-        /// Checks whether a given string satisfies the requirements
-        /// for a <see cref="Symbol"/> name.
-        /// </summary>
-        /// <remarks>
-        /// <see cref="Symbol"/> names must consist of only alphabetic characters
-        /// (any case), decimal digits, or underscores. <see cref="Symbol"/> names
-        /// cannot begin with a decimal digit.
-        /// </remarks>
-        /// <param name="name">
-        /// The string to validate.
-        /// </param>
-        /// <returns>
-        /// <code>True</code> if the specified string meets the criteria for a
-        /// valid <see cref="Symbol"/> name, <code>False</code> otherwise.
-        /// </returns>
-        private static bool IsNameValid(string name)
-        {
-            // Don't allow names to start with a digit.
-            // This is because we use numbers as the names of collection element
-            // symbol tables.
-            if (char.IsDigit(name[0]))
-            {
-                return false;
-            }
-
-            foreach (char c in name)
-            {
-                // Only allow alphanumeric characters and underscores.
-                if (!char.IsLetterOrDigit(c) && c != '_')
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
 
         /// <summary>
@@ -325,7 +337,9 @@ namespace WHampson.Cascara
         /// Indexer for selecting the <see cref="Symbol"/> of an element of a collection.
         /// </summary>
         /// <param name="index"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// The <see cref="Symbol"/> object at the specified collection index.
+        /// </returns>
         /// <exception cref="NotSupportedException">
         /// Thrown if this indexer is used when the <see cref="Symbol"/> it is being used on
         /// does not represent a collection.
@@ -343,7 +357,7 @@ namespace WHampson.Cascara
                     throw new NotSupportedException("Cannot access the element of a symbol that does not represent a collection.");
                 }
 
-                if (index < 0 || index >= ElemCount)
+                if (index < 0 || index >= ElementCount)
                 {
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
@@ -388,7 +402,7 @@ namespace WHampson.Cascara
         /// Gets the number of elements in the collection.
         /// Returns -1 if the <see cref="Symbol"/> does not represent a collection.
         /// </summary>
-        public int ElemCount
+        public int ElementCount
         {
             get { return (IsCollection) ? collectionSymbols.Count : -1; }
         }
@@ -586,6 +600,11 @@ namespace WHampson.Cascara
             string collectionElemSymbol = null;
             Symbol curr = this;
 
+            if (curr.Name == null)
+            {
+                return fqName;
+            }
+
             // Iterate to top of tree
             while (curr != null && curr.Name != null)
             {
@@ -602,8 +621,9 @@ namespace WHampson.Cascara
                 {
                     if (!curr.IsCollection)
                     {
-                        // Should never be thrown...
-                        throw new Exception("Bug!");
+                        // Bug! Should never be thrown...
+                        string msg = "Internal name for collections used on a symbol that does not represent a collection!";
+                        throw new InvalidOperationException(msg);
                     }
 
                     // Append collection element index to collection name
@@ -759,19 +779,6 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the string representation of this <see cref="Symbol"/>.
-        /// </summary>
-        /// <returns>
-        /// The string representation of this object.
-        /// </returns>
-        public override string ToString()
-        {
-            string elemCountStr = string.Format(", ElemCount = {0}", ElemCount);
-            return string.Format("Symbol: [ FullyQualifiedName = {0}, IsCollection = {1}{2} ]",
-                FullyQualifiedName, IsCollection, (IsCollection) ? elemCountStr : "");
-        }
-
-        /// <summary>
         /// Returns an enumerator that iterates through all <see cref="Symbol"/>s in the collection.
         /// </summary>
         /// <returns>
@@ -793,6 +800,29 @@ namespace WHampson.Cascara
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        //public override int GetHashCode()
+        //{
+        //    return base.GetHashCode();
+        //}
+
+        //public override bool Equals(object obj)
+        //{
+        //    return base.Equals(obj);
+        //}
+
+        /// <summary>
+        /// Gets the string representation of this <see cref="Symbol"/>.
+        /// </summary>
+        /// <returns>
+        /// The string representation of this object.
+        /// </returns>
+        public override string ToString()
+        {
+            string elemCountStr = string.Format(", ElementCount = {0}", ElementCount);
+            return string.Format("Symbol: [ FullyQualifiedName = {0}, IsCollection = {1}{2} ]",
+                FullyQualifiedName, IsCollection, (IsCollection) ? elemCountStr : "");
         }
     }
 }
