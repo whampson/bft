@@ -10,17 +10,17 @@ namespace WHampson.Cascara.Tests
         [TestMethod]
         public void Create_AllNull()
         {
-            // Expected results
-            string expectedMessage = "";
-            int expectedLineNum = 0;
-            int expectedLinePos = 0;
-            Exception expectedInnerException = null;
-
             // Inputs
             BinaryLayout layout = null;
             XObject obj = null;
             string msg = null;
             Exception innerException = null;
+
+            // Expected results
+            string expectedMessage = "";
+            int expectedLineNum = 0;
+            int expectedLinePos = 0;
+            Exception expectedInnerException = null;
 
             // Execution
             LayoutException ex = LayoutException.Create(layout, innerException, obj, msg);
@@ -35,17 +35,17 @@ namespace WHampson.Cascara.Tests
         [TestMethod]
         public void Create_Message()
         {
-            // Expected results
-            string expectedMessage = "Test.";
-            int expectedLineNum = 0;
-            int expectedLinePos = 0;
-            Exception expectedInnerException = null;
-
             // Inputs
             BinaryLayout layout = null;
             XObject obj = null;
             string msg = "Test.";
             Exception innerException = null;
+
+            // Expected results
+            string expectedMessage = "Test.";
+            int expectedLineNum = 0;
+            int expectedLinePos = 0;
+            Exception expectedInnerException = null;
 
             // Execution
             LayoutException ex = LayoutException.Create(layout, innerException, obj, msg);
@@ -60,6 +60,12 @@ namespace WHampson.Cascara.Tests
         [TestMethod]
         public void Create_InnerExceptionWithMessage()
         {
+            // Inputs
+            BinaryLayout layout = null;
+            XObject obj = null;
+            string msg = "Failed to process layout.";
+            Exception innerException = new ArgumentNullException("foo", "The parameter was null."); ;
+
             // Expected results
             string expectedMessage = @"Failed to process layout.
 Caused by:
@@ -67,13 +73,7 @@ Caused by:
     Parameter name: foo";
             int expectedLineNum = 0;
             int expectedLinePos = 0;
-            Exception expectedInnerException = new ArgumentNullException("foo", "The parameter was null.");
-
-            // Inputs
-            BinaryLayout layout = null;
-            XObject obj = null;
-            string msg = "Failed to process layout.";
-            Exception innerException = expectedInnerException;
+            Exception expectedInnerException = innerException;
 
             // Execution
             LayoutException ex = LayoutException.Create(layout, innerException, obj, msg);
