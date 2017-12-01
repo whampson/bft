@@ -23,6 +23,7 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 [assembly: AssemblyTitle("WHampson.Cascara")]
 [assembly: AssemblyProduct("WHampson.Cascara")]
@@ -33,6 +34,8 @@ using System.Runtime.InteropServices;
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("2cc76928-f34e-4a9b-8623-1ccc543005c0")]
 
-[assembly: AssemblyFileVersion("0.15.0.0")]
-[assembly: AssemblyVersion("0.15.0.0")]
-[assembly: AssemblyInformationalVersion("0.15")]
+[assembly: InternalsVisibleTo("Cascara.Tests")]
+
+[assembly: AssemblyFileVersion("0.16.0.0")]
+[assembly: AssemblyVersion("0.16.0.0")]
+[assembly: AssemblyInformationalVersion("0.16")]
