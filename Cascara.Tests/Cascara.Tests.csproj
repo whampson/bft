@@ -61,6 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Src\BinaryLayoutTests.cs" />
     <Compile Include="Src\LayoutExceptionTests.cs" />
+    <Compile Include="Src\SymbolTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
