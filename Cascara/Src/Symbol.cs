@@ -62,9 +62,14 @@ namespace WHampson.Cascara
         /// as the root in a <see cref="Symbol"/> tree.
         /// </summary>
         /// <returns></returns>
-        public static Symbol CreateRootSymbol()
+        internal static Symbol CreateRootSymbol()
         {
             return new Symbol(null, null);
+        }
+
+        internal static Symbol CreateNamelessSymbol(Symbol parent)
+        {
+            return new Symbol(null, parent);
         }
 
         /// <summary>
@@ -388,22 +393,23 @@ namespace WHampson.Cascara
             get { return (IsCollection) ? collectionSymbols.Count : -1; }
         }
 
-        /* === Keep for reference === */
+        public int Size
+        {
+            get;
+            internal set;
+        }
 
-        //public int Size
-        //{
-        //    get;
-        //}
+        public int Offset
+        {
+            get;
+            internal set;
+        }
 
-        //public int Offset
-        //{
-        //    get;
-        //}
-
-        //public Type NativeType
-        //{
-        //    get;
-        //}
+        public Type NativeType
+        {
+            get;
+            internal set;
+        }
 
 
         /// <summary>
