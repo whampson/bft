@@ -65,7 +65,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                LayoutFile lf = LayoutFile.Load(xmlPath);
+                BinaryLayout lf = BinaryLayout.Load(xmlPath);
                 bFile.SetLayout(lf);
                 Pointer valueBase = bFile.GetPointer("ValueBlock.BasePointer");
 
@@ -177,7 +177,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                LayoutFile lf = LayoutFile.Load(xmlPath);
+                BinaryLayout lf = BinaryLayout.Load(xmlPath);
                 bFile.SetLayout(lf);
                 Gta3PCSave gameSave = bFile.Deserialize<Gta3PCSave>();
 
@@ -205,7 +205,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                LayoutFile lf = LayoutFile.Load(xmlPath);
+                BinaryLayout lf = BinaryLayout.Load(xmlPath);
                 bFile.SetLayout(lf);
 
                 Debug.Assert(bFile.GetValue<float>("CircleData[0].Center.X") == 58.14f);
@@ -222,7 +222,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                LayoutFile lf = LayoutFile.Load(xmlPath);
+                BinaryLayout lf = BinaryLayout.Load(xmlPath);
                 bFile.SetLayout(lf);
 
                 Debug.Assert(bFile.GetOffset("TestUnion.Float1") == 0);
@@ -260,7 +260,7 @@ namespace WHampson.Cascara
 
             using (BinaryFile bFile = BinaryFile.Open(binPath))
             {
-                LayoutFile lf = LayoutFile.Load(xmlPath);
+                BinaryLayout lf = BinaryLayout.Load(xmlPath);
                 bFile.SetLayout(lf);
             }
         }

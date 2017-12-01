@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
-<cascaraLayout>
+<cascaraLayout name="Basic">
     <typedef name="my_int" kind="int32" />
     <typedef name="my_int2" kind="my_int" />
     <typedef name="vect3d" kind="struct">
