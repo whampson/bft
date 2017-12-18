@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml;
@@ -95,6 +96,19 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Gets metadata associated with this <see cref="BinaryLayout"/>.
+        /// </summary>
+        /// <remarks>
+        /// Metadata is encoded as XML attributes in the root element.
+        /// </remarks>
+        /// <param name="key">
+        /// The name of the metadata element to retrieve.
+        /// </param>
+        /// <returns>
+        /// The data associated with the specified <paramref name="key"/>.
+        /// An empty string if such metadata does not exist.
+        /// </returns>
         public string this[string key]
         {
             get
@@ -184,15 +198,24 @@ namespace WHampson.Cascara
             bool isDirective = Keywords.Directives.ContainsKey(elemName);
             if (!isUserDefinedType && !isDirective)
             {
-                string fmt = "Unknown type or directive '{0}'.";
-                throw LayoutException.Create(this, elem, fmt, elemName);
+                if (!BuiltinTypes.TryGetValue(elemName, out typeDef))
+                {
+                    string fmt = "Unknown type or directive '{0}'.";
+                    throw LayoutException.Create(this, elem, fmt, elemName);
+                }
             }
+
+#if DEBUG
+            Debug.Assert((typeDef == null && isDirective) || (typeDef != null && !isDirective));
+#endif
 
             if (isDirective)
             {
                 // AnalyzeDirective(elem);
                 return;
             }
+
+            Console.WriteLine("Processing type '{0}' ({1})", elemName, typeDef);
 
             // Ensure element has no child elements (only allowed on structures)
             if (HasChildren(elem))
@@ -208,11 +231,10 @@ namespace WHampson.Cascara
                 XElement copy = new XElement(elem);
                 copy.Add(typeDef.Members);
                 AnalyzeStruct(copy);
+                return;
             }
-            else
-            {
-                AnalyzePrimitiveType(elem);
-            }
+            
+            AnalyzePrimitiveType(elem);
         }
 
         private void AnalyzeStruct(XElement elem)
@@ -347,5 +369,13 @@ namespace WHampson.Cascara
             return Name == other.Name
                 && XNode.DeepEquals(Document, other.Document);
         }
+
+        internal static Dictionary<string, TypeDefinition> BuiltinTypes = new Dictionary<string, TypeDefinition>()
+        {
+            { "bool", TypeDefinition.CreatePrimitive(typeof(Types.Bool8), 1) },
+            { "char", TypeDefinition.CreatePrimitive(typeof(Types.Char8), 1) },
+            { "float", TypeDefinition.CreatePrimitive(typeof(float), 4) },
+            { "int", TypeDefinition.CreatePrimitive(typeof(int), 4) },
+        };
     }
 }
