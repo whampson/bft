@@ -389,12 +389,6 @@ namespace WHampson.Cascara.Tests
         }
 
         [TestMethod]
-        public void Insert_IntoCollectionElement()
-        {
-            Assert.Inconclusive();
-        }
-
-        [TestMethod]
         public void Lookup()
         {
             // Inputs
@@ -517,5 +511,40 @@ namespace WHampson.Cascara.Tests
             Assert.AreEqual(expectedFQName, sym.FullyQualifiedName);
             Assert.AreEqual(expectedParent, sym.Parent);
         }
+
+        [TestMethod]
+        public void IsLeaf()
+        {
+            // Inputs
+            string name1 = "fruit";
+            string name2 = "pear";
+
+            // Execution
+            Symbol notLeaf = root.Insert(name1);
+            Symbol leaf = notLeaf.Insert(name2);
+
+            // Assertion
+            Assert.IsFalse(notLeaf.IsLeaf);
+            Assert.IsTrue(leaf.IsLeaf);
+        }
+
+        //[TestMethod]
+        //public void Equals_Self()
+        //{
+        //    // Inputs
+        //    string name = "someVar";
+
+        //    // Setup
+        //    Symbol sym = root.Insert(name);
+
+        //    // Expected results
+        //    bool expectedEquality = true;
+
+        //    // Execution
+        //    bool equality = sym.Equals(sym);
+
+        //    // Assertion
+        //    Assert.AreEqual(equality, expectedEquality);
+        //}
     }
 }
