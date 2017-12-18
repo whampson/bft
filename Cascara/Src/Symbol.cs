@@ -398,6 +398,11 @@ namespace WHampson.Cascara
             get;
         }
 
+        public bool IsLeaf
+        {
+            get { return symbolTable.Count == 0 && collectionSymbols.Count == 0; }
+        }
+
         /// <summary>
         /// Gets the number of elements in the collection.
         /// Returns -1 if the <see cref="Symbol"/> does not represent a collection.
@@ -809,7 +814,24 @@ namespace WHampson.Cascara
 
         //public override bool Equals(object obj)
         //{
-        //    return base.Equals(obj);
+        //    if (!(obj is Symbol))
+        //    {
+        //        return false;
+        //    }
+
+        //    Symbol sym = (Symbol) obj;
+
+        //    if (IsLeaf)
+        //    {
+        //        if (!sym.IsLeaf)
+        //        {
+        //            return false;
+        //        }
+
+        //        return Name == sym.Name;
+        //    }
+
+        //    return false;
         //}
 
         /// <summary>
