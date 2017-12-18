@@ -24,7 +24,6 @@
 using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
-using WHampson.Cascara.Types;
 
 namespace WHampson.Cascara
 {
@@ -101,7 +100,7 @@ namespace WHampson.Cascara
 
         private TypeDefinition(Type t, IEnumerable<XElement> members, int size)
         {
-            Kind = t;
+            SystemType = t;
             Members = new List<XElement>(members);
             Size = size;
         }
@@ -110,7 +109,7 @@ namespace WHampson.Cascara
         /// Gets the .NET <see cref="Type"/> represented.
         /// If the data represents a struct, then this value is <code>null</code>.
         /// </summary>
-        public Type Kind
+        public Type SystemType
         {
             get;
         }
@@ -139,13 +138,13 @@ namespace WHampson.Cascara
         /// </summary>
         public bool IsStruct
         {
-            get { return Kind == null; }
+            get { return SystemType == null; }
         }
 
         public override string ToString()
         {
-            return string.Format("[Kind: {0}, Size: {1}, IsStruct: {2}]",
-                Kind, Size, IsStruct);
+            return string.Format("TypeDefinition: [ SystemType: {0}, Size: {1}, IsStruct: {2} ]",
+                SystemType, Size, IsStruct);
         }
     }
 }
