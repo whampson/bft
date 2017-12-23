@@ -24,10 +24,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Xml;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Xml.Linq;
+
+[assembly: InternalsVisibleTo("Cascara.Tests")]
 
 namespace WHampson.Cascara
 {
@@ -53,7 +55,7 @@ namespace WHampson.Cascara
             }
             catch (Exception e)
             {
-                throw LayoutException.Create(null, e, null, "Failed to load layout.");
+                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout.");
             }
         }
 
@@ -71,6 +73,11 @@ namespace WHampson.Cascara
         {
         }
 
+        private BinaryLayout(XDocument xDoc, out Dictionary<string, BinaryLayout> includes)
+        {
+            includes = null;
+        }
+
         private BinaryLayout(XDocument xDoc, string sourcePath)
         {
             Document = xDoc ?? throw new ArgumentNullException(nameof(xDoc));
@@ -82,18 +89,11 @@ namespace WHampson.Cascara
 
             SourcePath = sourcePath;
             Name = Document.Root.Attribute(Keywords.Name).Value;
-            UserDefinedTypes = new Dictionary<string, TypeDefinition>();
+            UserDefinedTypes = new Dictionary<string, CascaraType>();
 
             // TODO: Check entire layout for invalid names and syntax errors
 
-            try
-            {
-                AnalyzeLayout(Document);
-            }
-            catch (Exception e)
-            {
-                throw LayoutException.Create(null, e, null, "Layout validation failure.");
-            }
+            AnalyzeLayout(Document);
         }
 
         /// <summary>
@@ -141,7 +141,7 @@ namespace WHampson.Cascara
             get;
         }
 
-        internal Dictionary<string, TypeDefinition> UserDefinedTypes
+        internal Dictionary<string, CascaraType> UserDefinedTypes
         {
             get;
         }
@@ -156,26 +156,33 @@ namespace WHampson.Cascara
             if (Document.Root.Name.LocalName != Keywords.DocumentRoot)
             {
                 string fmt = "Must have a root element named '{0}'.";
-                throw LayoutException.Create(this, Document.Root, fmt, Keywords.DocumentRoot);
+                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.DocumentRoot);
             }
 
             if (Document.Root.Attribute(Keywords.Name) == null)
             {
                 string fmt = "Missing required attribute '{0}'.";
-                throw LayoutException.Create(this, Document.Root, fmt, Keywords.Name);
+                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.Name);
             }
 
             if (Document.Root.Elements().Count() == 0)
             {
-                throw LayoutException.Create(this, Document.Root, "Empty layout.");
+                throw LayoutException.Create<LayoutException>(this, Document.Root, "Empty layout.");
             }
         }
 
         private void AnalyzeLayout(XDocument doc)
         {
-            //ValidateRootElement();
+            XAttribute nameAttr = doc.Root.Attribute(Keywords.Name);
+            string layoutName = nameAttr.Value;
 
-            // TODO: handle 'include' cycles
+            if (includedLayouts.ContainsKey(layoutName))
+            {
+                string fmt = "A layout named '{0}' already exists in the namespace.";
+                throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, layoutName);
+            }
+
+            includedLayouts[layoutName] = this;
 
             symbolStack.Push(Symbol.CreateRootSymbol());
             AnalyzeStructMembers(doc.Root);
@@ -185,56 +192,54 @@ namespace WHampson.Cascara
         {
             string elemName = elem.Name.LocalName;
 
-            // Analyze 'struct' and 'union'
-            if (elemName == Keywords.Struct || elemName == Keywords.Union)
-            {
-                AnalyzeStruct(elem);
-                return;
-            }
 
-            // Ensure element name corresponds to either a primitive type,
-            // user-defined type, or directive
-            bool isUserDefinedType = UserDefinedTypes.TryGetValue(elemName, out TypeDefinition typeDef);
-            bool isDirective = Keywords.Directives.ContainsKey(elemName);
-            if (!isUserDefinedType && !isDirective)
-            {
-                if (!BuiltinTypes.TryGetValue(elemName, out typeDef))
-                {
-                    string fmt = "Unknown type or directive '{0}'.";
-                    throw LayoutException.Create(this, elem, fmt, elemName);
-                }
-            }
 
-#if DEBUG
-            Debug.Assert((typeDef == null && isDirective) || (typeDef != null && !isDirective));
-#endif
+            //if (Keywords.Directives.ContainsKey(elemName))
+            //{
+            //    // AnalyzeDirective(elem);
+            //    return;
+            //}
 
-            if (isDirective)
-            {
-                // AnalyzeDirective(elem);
-                return;
-            }
+            //// Analyze 'struct' and 'union'
+            //if (elemName == Keywords.Struct || elemName == Keywords.Union)
+            //{
+            //    AnalyzeStruct(elem);
+            //    return;
+            //}
 
-            Console.WriteLine("Processing type '{0}' ({1})", elemName, typeDef);
+            //// Ensure element name corresponds to either a primitive type,
+            //// user-defined type, or directive
+            //bool isBuiltinType = Keywords.DataTypes.ContainsKey(elemName);
+            //bool isUserDefinedType = UserDefinedTypes.TryGetValue(elemName, out CascaraType userType);
+            //if (!isBuiltinType && !isUserDefinedType)
+            //{
+            //    string fmt = "Unknown type or directive '{0}'.";
+            //    throw LayoutException.Create<LayoutException>(this, elem, fmt, elemName);
+            //}
 
-            // Ensure element has no child elements (only allowed on structures)
-            if (HasChildren(elem))
-            {
-                string fmt = "Type '{0}' cannot contain child elements.";
-                throw LayoutException.Create(this, elem, fmt, elemName);
-            }
+            //Console.WriteLine("Processing {0}type '{1}' ({2})",
+            //    (isUserDefinedType) ? "user " : "",
+            //    elemName,
+            //    (isUserDefinedType) ? userType.ToString() : BuiltinTypes[elemName].ToString());
 
-            if (isUserDefinedType && typeDef.IsStruct)
-            {
-                // Analuze user-defined structure type
-                // "Copy and paste" members from type definition into copy of current element
-                XElement copy = new XElement(elem);
-                copy.Add(typeDef.Members);
-                AnalyzeStruct(copy);
-                return;
-            }
-            
-            AnalyzePrimitiveType(elem);
+            //if (isUserDefinedType && userType.IsStruct)
+            //{
+            //    // Analuze user-defined structure type
+            //    // "Copy and paste" members from type definition into copy of current element
+            //    XElement copy = new XElement(elem);
+            //    copy.Add(userType.Members);
+            //    AnalyzeStruct(copy);
+            //    return;
+            //}
+
+            //// Ensure element has no child elements (only allowed on structures)
+            //if (HasChildren(elem))
+            //{
+            //    string fmt = "Type '{0}' cannot contain child elements.";
+            //    throw LayoutException.Create<LayoutException>(this, elem, fmt, elemName);
+            //}
+
+            //AnalyzePrimitiveType(elem);
         }
 
         private void AnalyzeStruct(XElement elem)
@@ -253,7 +258,7 @@ namespace WHampson.Cascara
                 if (IsDefined(name))
                 {
                     string fmt = "Variable '{0}' previously defined.";
-                    throw LayoutException.Create(this, elem, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, elem, fmt, name);
                 }
 
                 newTable = CurrentSymbolTable.Insert(name);
@@ -291,7 +296,7 @@ namespace WHampson.Cascara
                 if (IsDefined(name))
                 {
                     string fmt = "Variable '{0}' previously defined.";
-                    throw LayoutException.Create(this, elem, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, elem, fmt, name);
                 }
 
                 CurrentSymbolTable.Insert(name);
@@ -306,12 +311,12 @@ namespace WHampson.Cascara
                 if (!validAttributes.Contains(name))
                 {
                     string fmt = "Unknown attribute '{0}'.";
-                    throw LayoutException.Create(this, attr, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, attr, fmt, name);
                 }
                 else if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Attribute '{0}' cannot have an empty value.";
-                    throw LayoutException.Create(this, attr, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, attr, fmt, name);
                 }
 
                 // TODO: ensure attribute values have the correct type snd varnames are correct
@@ -370,12 +375,12 @@ namespace WHampson.Cascara
                 && XNode.DeepEquals(Document, other.Document);
         }
 
-        internal static Dictionary<string, TypeDefinition> BuiltinTypes = new Dictionary<string, TypeDefinition>()
+        internal static Dictionary<string, CascaraType> BuiltinTypes = new Dictionary<string, CascaraType>()
         {
-            { "bool", TypeDefinition.CreatePrimitive(typeof(Types.Bool8), 1) },
-            { "char", TypeDefinition.CreatePrimitive(typeof(Types.Char8), 1) },
-            { "float", TypeDefinition.CreatePrimitive(typeof(float), 4) },
-            { "int", TypeDefinition.CreatePrimitive(typeof(int), 4) },
+            { Keywords.Bool, CascaraType.CreatePrimitive(typeof(bool), 1) },
+            { Keywords.Char, CascaraType.CreatePrimitive(typeof(char), 1) },
+            { Keywords.Float, CascaraType.CreatePrimitive(typeof(float), 4) },
+            { Keywords.Int, CascaraType.CreatePrimitive(typeof(int), 4) },
         };
     }
 }

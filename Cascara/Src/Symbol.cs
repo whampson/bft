@@ -24,7 +24,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+
+[assembly: InternalsVisibleTo("Cascara.Tests")]
 
 namespace WHampson.Cascara
 {

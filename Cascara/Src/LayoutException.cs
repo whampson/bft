@@ -22,82 +22,141 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+
+[assembly: InternalsVisibleTo("Cascara.Tests")]
 
 namespace WHampson.Cascara
 {
     /// <summary>
     /// The exception that is thrown when an error occurs while processing a <see cref="BinaryLayout"/>.
     /// </summary>
-    public sealed class LayoutException : Exception
+    public class LayoutException : Exception
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
+        /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="obj">The <see cref="XObject"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static LayoutException Create(BinaryLayout layout, XObject obj, string msg)
+        internal static T Create<T>(BinaryLayout layout, XObject obj, string msg)
+            where T : LayoutException
         {
-            GetLineInfo(obj, out int lineNum, out int linePos);
-            msg = BuildMessage(msg, null, layout, lineNum, linePos);
+            string detailedMsg;
 
-            return new LayoutException(layout, msg, lineNum, linePos);
+            GetLineInfo(obj, out int lineNum, out int linePos);
+            detailedMsg = BuildDetailedMessage(msg, null, layout, lineNum, linePos);
+
+            return CreateException<T>(layout, msg, detailedMsg, null, lineNum, linePos);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
+        /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="obj">The <see cref="XObject"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static LayoutException Create(BinaryLayout layout, XObject obj, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(BinaryLayout layout, XObject obj, string msgFmt, params object[] fmtArgs)
+            where T : LayoutException
         {
+            string msg;
+            string simpleMsg;
+
             GetLineInfo(obj, out int lineNum, out int linePos);
 
-            string msg = string.Format(msgFmt, fmtArgs);
-            msg = BuildMessage(msg, null, layout, lineNum, linePos);
+            simpleMsg = string.Format(msgFmt, fmtArgs);
+            msg = BuildDetailedMessage(simpleMsg, null, layout, lineNum, linePos);
 
-            return new LayoutException(layout, msg, lineNum, linePos);
+            return CreateException<T>(layout, msg, simpleMsg, null, lineNum, linePos);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
+        /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         /// <param name="obj">The <see cref="XObject"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static LayoutException Create(BinaryLayout layout, Exception innerException, XObject obj, string msg)
+        internal static T Create<T>(BinaryLayout layout, Exception innerException, XObject obj, string msg)
+            where T : LayoutException
         {
-            GetLineInfo(obj, out int lineNum, out int linePos);
-            msg = BuildMessage(msg, innerException, layout, lineNum, linePos);
+            string simpleMsg;
 
-            return new LayoutException(layout, msg, innerException, lineNum, linePos);
+            GetLineInfo(obj, out int lineNum, out int linePos);
+            simpleMsg = msg;
+            msg = BuildDetailedMessage(msg, innerException, layout, lineNum, linePos);
+
+            return CreateException<T>(layout, msg, simpleMsg, innerException, lineNum, linePos);
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
+        /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         /// <param name="obj">The <see cref="XObject"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static LayoutException Create(BinaryLayout layout, Exception innerException, XObject obj, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(BinaryLayout layout, Exception innerException, XObject obj, string msgFmt, params object[] fmtArgs)
+            where T : LayoutException
         {
+            string msg;
+            string simpleMsg;
+
             GetLineInfo(obj, out int lineNum, out int linePos);
 
-            string msg = string.Format(msgFmt, fmtArgs);
-            msg = BuildMessage(msg, innerException, layout, lineNum, linePos);
+            simpleMsg = string.Format(msgFmt, fmtArgs);
+            msg = BuildDetailedMessage(simpleMsg, innerException, layout, lineNum, linePos);
 
-            return new LayoutException(layout, msg, innerException, lineNum, linePos);
+            return CreateException<T>(layout, msg, simpleMsg, innerException, lineNum, linePos);
+        }
+
+        /// <summary>
+        /// Factory method for creating <see cref="LayoutException"/> instances.
+        /// </summary>
+
+
+
+        /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
+        /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
+        /// <param name="msg">A brief message that describes the error.</param>
+        /// <param name="detailedMsg">A detailed message that describes the error.</param>
+        /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
+        /// <param name="lineNum">The line in the XML data on which the error occurred.</param>
+        /// <param name="linePos">The line position in the XML data at which the error occurred.</param>
+        /// <returns></returns>
+        protected static T CreateException<T>(
+            BinaryLayout layout, string msg, string detailedMsg, Exception innerException, int lineNum, int linePos)
+            where T : LayoutException
+        {
+            T ex = (T) Activator.CreateInstance(
+                typeof(T),
+                BindingFlags.NonPublic | BindingFlags.Instance,
+                null,
+                new object[] { msg, innerException },
+                CultureInfo.InvariantCulture);
+
+            ex.LayoutFile = layout;
+            ex.LineNumber = lineNum;
+            ex.LinePosition = linePos;
+            ex.DetailedMessage = detailedMsg;
+
+            return ex;
         }
 
         /// <summary>
@@ -111,7 +170,7 @@ namespace WHampson.Cascara
         /// was enabled when loading the XML data with <see cref="XDocument.Load(string)"/>.
         /// Otherwise, this method will output 0.
         /// </remarks>
-        private static void GetLineInfo(XObject obj, out int lineNumber, out int linePosition)
+        protected static void GetLineInfo(XObject obj, out int lineNumber, out int linePosition)
         {
             if (obj == null)
             {
@@ -134,7 +193,8 @@ namespace WHampson.Cascara
         /// <param name="lineNumber">The line in the XML data on which the error occurred.</param>
         /// <param name="linePosition">The line position in the XML data at which the error occurred.</param>
         /// <returns>The newly-created error message.</returns>
-        private static string BuildMessage(string exceptionMessage, Exception innerException, BinaryLayout layout, int lineNumber, int linePosition)
+        protected static string BuildDetailedMessage(
+            string exceptionMessage, Exception innerException, BinaryLayout layout, int lineNumber, int linePosition)
         {
             if (exceptionMessage == null)
             {
@@ -189,46 +249,37 @@ namespace WHampson.Cascara
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
-        /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
-        /// <param name="lineNumber">The line in the XML data on which the error occurred.</param>
-        /// <param name="linePosition">The line position in the XML data at which the error occurred.</param>
-        private LayoutException(BinaryLayout layout, int lineNumber, int linePosition)
+        protected LayoutException()
             : base()
         {
-            LayoutFile = layout;
-            LineNumber = lineNumber;
-            LinePosition = linePosition;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
-        /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="message">A message that describes the error.</param>
-        /// <param name="lineNumber">The line in the XML data on which the error occurred.</param>
-        /// <param name="linePosition">The line position in the XML data at which the error occurred.</param>
-        private LayoutException(BinaryLayout layout, string message, int lineNumber, int linePosition)
+        protected LayoutException(string message)
             : base(message)
         {
-            LayoutFile = layout;
-            LineNumber = lineNumber;
-            LinePosition = linePosition;
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
-        /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
         /// <param name="message">A message that describes the error.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
-        /// <param name="lineNumber">The line in the XML data on which the error occurred.</param>
-        /// <param name="linePosition">The line position in the XML data at which the error occurred.</param>
-        private LayoutException(BinaryLayout layout, string message, Exception innerException, int lineNumber, int linePosition)
+        protected LayoutException(string message, Exception innerException)
             : base(message, innerException)
         {
-            LayoutFile = layout;
-            LineNumber = lineNumber;
-            LinePosition = linePosition;
+        }
+
+        /// <summary>
+        /// Gets a descriptive message of the error that occurred.
+        /// </summary>
+        public string DetailedMessage
+        {
+            get;
+            protected set;
         }
 
         /// <summary>
@@ -237,6 +288,7 @@ namespace WHampson.Cascara
         public BinaryLayout LayoutFile
         {
             get;
+            protected set;
         }
 
         /// <summary>
@@ -250,6 +302,7 @@ namespace WHampson.Cascara
         public int LineNumber
         {
             get;
+            protected set;
         }
 
         /// <summary>
@@ -263,6 +316,7 @@ namespace WHampson.Cascara
         public int LinePosition
         {
             get;
+            protected set;
         }
     }
 }
