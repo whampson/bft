@@ -3,9 +3,9 @@ solution: ./Cascara.sln
 mono: none
 dotnet: 2.0.0
 script:
-  - dotnet restore
-install:
   - dotnet build
 # - dotnet test ...
+install:
+  - dotnet restore
 
 # TODO: Add mono support
