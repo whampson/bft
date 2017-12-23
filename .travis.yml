@@ -1,2 +1,8 @@
 language: csharp
 solution: ./Cascara.sln
+mono: none
+dotnet: 2.0.0
+script:
+  - dotnet restore
+
+# TODO: Add mono support
