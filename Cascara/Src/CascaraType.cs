@@ -33,7 +33,7 @@ using System.Xml.Linq;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Represents a data type used in <see cref="BinaryLayout"/>s.
+    /// Represents a data type used in a <see cref="BinaryLayout"/>.
     /// </summary>
     internal sealed class CascaraType
     {

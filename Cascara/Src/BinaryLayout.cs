@@ -27,6 +27,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 
 [assembly: InternalsVisibleTo("Cascara.Tests")]
@@ -41,6 +42,22 @@ namespace WHampson.Cascara
     /// </remarks>
     public sealed class BinaryLayout
     {
+        /// <summary>
+        /// Creates a new <see cref="BinaryLayout"/> object using data from
+        /// an existing XML file.
+        /// </summary>
+        /// <param name="xmlPath">
+        /// The path to the XML file to load.
+        /// </param>
+        /// <returns>
+        /// The newly-created <see cref="BinaryLayout"/> object.
+        /// </returns>
+        /// <exception cref="XmlException">
+        /// Thrown if the XML data is malformatted.
+        /// </exception>
+        /// <exception cref="LayoutException">
+        /// Thrown if the XML data does not contain valid <see cref="BinaryLayout"/> information.
+        /// </exception>
         public static BinaryLayout Load(string xmlPath)
         {
             if (string.IsNullOrWhiteSpace(xmlPath))
@@ -48,50 +65,79 @@ namespace WHampson.Cascara
                 throw new ArgumentException("Path cannot be empty or null.", nameof(xmlPath));
             }
 
+            XDocument doc;
             try
             {
-                XDocument doc = XDocument.Load(xmlPath, LoadOptions.SetLineInfo);
-                return new BinaryLayout(doc, xmlPath);
+                doc = XDocument.Load(xmlPath, LoadOptions.SetLineInfo);
             }
-            catch (Exception e)
+            catch (XmlException e)
             {
-                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout.");
+                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout XML data.");
             }
+
+            return new BinaryLayout(doc, null);
         }
+
+        /// <summary>
+        /// Creates a new <see cref="BinaryLayout"/> from the given XML string.
+        /// </summary>
+        /// <param name="xmlData">
+        /// The XML string to parse.
+        /// </param>
+        /// <returns>
+        /// The newly-created <see cref="BinaryLayout"/> object.
+        /// </returns>
+        /// <exception cref="XmlException">
+        /// Thrown if the XML data is malformatted.
+        /// </exception>
+        /// <exception cref="LayoutException">
+        /// Thrown if the XML data does not contain valid <see cref="BinaryLayout"/> information.
+        /// </exception>
+        public static BinaryLayout Create(string xmlData)
+        {
+            if (string.IsNullOrWhiteSpace(xmlData))
+            {
+                throw new ArgumentException("XML data cannot be empty or null.", nameof(xmlData));
+            }
+
+            XDocument doc;
+            try
+            {
+                doc = XDocument.Parse(xmlData, LoadOptions.SetLineInfo);
+            }
+            catch (XmlException e)
+            {
+                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout XML data.");
+            }
+
+            return new BinaryLayout(doc, null);
+        }
+
+        private delegate void ElementAnalysisAction(CascaraElement e, XElement xe);
+        private delegate void ModifierAnalysisAction(CascaraModifier m, XAttribute xa);
 
         private Dictionary<string, BinaryLayout> includedLayouts;
         private Dictionary<string, double> locals;
         private Stack<Symbol> symbolStack;
 
-        public BinaryLayout(string xmlData)
-            : this(XDocument.Parse(xmlData))
-        {
-        }
-
-        public BinaryLayout(XDocument xDoc)
-            : this(xDoc, null)
-        {
-        }
-
-        private BinaryLayout(XDocument xDoc, out Dictionary<string, BinaryLayout> includes)
-        {
-            includes = null;
-        }
-
         private BinaryLayout(XDocument xDoc, string sourcePath)
         {
             Document = xDoc ?? throw new ArgumentNullException(nameof(xDoc));
-            ValidateRootElement();
 
             includedLayouts = new Dictionary<string, BinaryLayout>();
             locals = new Dictionary<string, double>();
             symbolStack = new Stack<Symbol>();
 
             SourcePath = sourcePath;
-            Name = Document.Root.Attribute(Keywords.Name).Value;
-            UserDefinedTypes = new Dictionary<string, CascaraType>();
+            ElementDefinitions = new Dictionary<string, CascaraElement>();
+            //UserDefinedTypes = new Dictionary<string, CascaraType>();
+            ElementAnalysisActions = new Dictionary<string, ElementAnalysisAction>();
 
-            // TODO: Check entire layout for invalid names and syntax errors
+            InitializeValidElementsMap();
+            InitializeElementAnalysisActionMap();
+
+            ValidateRootElement();
+            Name = Document.Root.Attribute(Keywords.Name).Value;
 
             AnalyzeLayout(Document);
         }
@@ -125,23 +171,48 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Gets the name of this <see cref="BinaryLayout"/>.
+        /// </summary>
         public string Name
         {
             get;
+            private set;
         }
 
+        /// <summary>
+        /// Gets the path to the file from which this <see cref="BinaryLayout"/> was loaded.
+        /// Will return <c>null</c> if the <see cref="BinaryLayout"/> was not loaded from
+        /// a file on disk.
+        /// </summary>
         public string SourcePath
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Gets the XML document containing the layout information.
+        /// </summary>
         internal XDocument Document
         {
             get;
         }
 
-        internal Dictionary<string, CascaraType> UserDefinedTypes
+        ///// <summary>
+        ///// Gets all user-defined types defined in this <see cref="BinaryLayout"/>.
+        ///// </summary>
+        //internal Dictionary<string, CascaraType> UserDefinedTypes
+        //{
+        //    get;
+        //}
+
+        internal Dictionary<string, CascaraElement> ElementDefinitions
+        {
+            get;
+        }
+
+        private Dictionary<string, ElementAnalysisAction> ElementAnalysisActions
         {
             get;
         }
@@ -173,153 +244,70 @@ namespace WHampson.Cascara
 
         private void AnalyzeLayout(XDocument doc)
         {
-            XAttribute nameAttr = doc.Root.Attribute(Keywords.Name);
-            string layoutName = nameAttr.Value;
-
-            if (includedLayouts.ContainsKey(layoutName))
+            if (includedLayouts.ContainsKey(Name))
             {
+                XAttribute nameAttr = doc.Root.Attribute(Keywords.Name);
                 string fmt = "A layout named '{0}' already exists in the namespace.";
-                throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, layoutName);
+                throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, Name);
             }
 
-            includedLayouts[layoutName] = this;
+            includedLayouts[Name] = this;
 
             symbolStack.Push(Symbol.CreateRootSymbol());
             AnalyzeStructMembers(doc.Root);
-        }
-
-        private void AnalyzeElement(XElement elem)
-        {
-            string elemName = elem.Name.LocalName;
-
-
-
-            //if (Keywords.Directives.ContainsKey(elemName))
-            //{
-            //    // AnalyzeDirective(elem);
-            //    return;
-            //}
-
-            //// Analyze 'struct' and 'union'
-            //if (elemName == Keywords.Struct || elemName == Keywords.Union)
-            //{
-            //    AnalyzeStruct(elem);
-            //    return;
-            //}
-
-            //// Ensure element name corresponds to either a primitive type,
-            //// user-defined type, or directive
-            //bool isBuiltinType = Keywords.DataTypes.ContainsKey(elemName);
-            //bool isUserDefinedType = UserDefinedTypes.TryGetValue(elemName, out CascaraType userType);
-            //if (!isBuiltinType && !isUserDefinedType)
-            //{
-            //    string fmt = "Unknown type or directive '{0}'.";
-            //    throw LayoutException.Create<LayoutException>(this, elem, fmt, elemName);
-            //}
-
-            //Console.WriteLine("Processing {0}type '{1}' ({2})",
-            //    (isUserDefinedType) ? "user " : "",
-            //    elemName,
-            //    (isUserDefinedType) ? userType.ToString() : BuiltinTypes[elemName].ToString());
-
-            //if (isUserDefinedType && userType.IsStruct)
-            //{
-            //    // Analuze user-defined structure type
-            //    // "Copy and paste" members from type definition into copy of current element
-            //    XElement copy = new XElement(elem);
-            //    copy.Add(userType.Members);
-            //    AnalyzeStruct(copy);
-            //    return;
-            //}
-
-            //// Ensure element has no child elements (only allowed on structures)
-            //if (HasChildren(elem))
-            //{
-            //    string fmt = "Type '{0}' cannot contain child elements.";
-            //    throw LayoutException.Create<LayoutException>(this, elem, fmt, elemName);
-            //}
-
-            //AnalyzePrimitiveType(elem);
-        }
-
-        private void AnalyzeStruct(XElement elem)
-        {
-            AnalyzeAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
-
-            string name = null;
-            if (elem.Attribute(Keywords.Name) != null)
-            {
-                name = elem.Attribute(Keywords.Name).Value;
-            }
-
-            Symbol newTable;
-            if (name != null)
-            {
-                if (IsDefined(name))
-                {
-                    string fmt = "Variable '{0}' previously defined.";
-                    throw LayoutException.Create<LayoutException>(this, elem, fmt, name);
-                }
-
-                newTable = CurrentSymbolTable.Insert(name);
-            }
-            else
-            {
-                newTable = Symbol.CreateNamelessSymbol(CurrentSymbolTable);
-            }
-
-            symbolStack.Push(newTable);
-            AnalyzeStructMembers(elem);
-            symbolStack.Pop();
         }
 
         private void AnalyzeStructMembers(XElement elem)
         {
             foreach (XElement memberElem in elem.Elements())
             {
-                AnalyzeElement(memberElem);
-            }
-        }
+                string elemName = memberElem.Name.LocalName;
 
-        private void AnalyzePrimitiveType(XElement elem)
-        {
-            AnalyzeAttributes(elem, Keywords.Comment, Keywords.Count, Keywords.Name);
-
-            string name = null;
-            if (elem.Attribute(Keywords.Name) != null)
-            {
-                name = elem.Attribute(Keywords.Name).Value;
-            }
-
-            if (name != null)
-            {
-                if (IsDefined(name))
+                // Check for valid element
+                bool isValidElem = ElementDefinitions.TryGetValue(elemName, out CascaraElement e);
+                if (!isValidElem)
                 {
-                    string fmt = "Variable '{0}' previously defined.";
-                    throw LayoutException.Create<LayoutException>(this, elem, fmt, name);
+                    string fmt = "Unknown type or directive '{0}'.";
+                    throw LayoutException.Create<LayoutException>(this, memberElem, fmt, elemName);
                 }
 
-                CurrentSymbolTable.Insert(name);
+                // Resolve aliases
+                while (e.IsAlias)
+                {
+                    e = ElementDefinitions[e.AliasTarget];
+                }
+
+                // Analyze element
+                ElementAnalysisAction elementAnalyzer = ElementAnalysisActions[e.Name];
+                elementAnalyzer(e, memberElem);
             }
         }
 
-        private void AnalyzeAttributes(XElement elem, params string[] validAttributes)
+        private void AnalyzeGenericElement(CascaraElement e, XElement xe)
         {
-            foreach (XAttribute attr in elem.Attributes())
+            Console.WriteLine("Analyzing element '{0}'", e.Name);
+        }
+
+        private void ValidateAttributes(IEnumerable<XAttribute> attrs, CascaraModifier[] validAttrs)
+        {
+            // TODO: Ensure required attributes are present
+
+            foreach (XAttribute attr in attrs)
             {
-                string name = attr.Name.LocalName;
-                if (!validAttributes.Contains(name))
+                string attrName = attr.Name.LocalName;
+                Console.WriteLine("Validating attribute '{0}'", attrName);
+
+                bool isAttrValid = validAttrs.Any(m => m.Name == attrName);
+                if (!isAttrValid)
                 {
                     string fmt = "Unknown attribute '{0}'.";
-                    throw LayoutException.Create<LayoutException>(this, attr, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, attr, fmt, attrName);
                 }
                 else if (string.IsNullOrWhiteSpace(attr.Value))
                 {
                     string fmt = "Attribute '{0}' cannot have an empty value.";
-                    throw LayoutException.Create<LayoutException>(this, attr, fmt, name);
+                    throw LayoutException.Create<LayoutException>(this, attr, fmt, attrName);
                 }
-
-                // TODO: ensure attribute values have the correct type snd varnames are correct
             }
         }
 
@@ -375,12 +363,49 @@ namespace WHampson.Cascara
                 && XNode.DeepEquals(Document, other.Document);
         }
 
-        internal static Dictionary<string, CascaraType> BuiltinTypes = new Dictionary<string, CascaraType>()
+        private void InitializeElementAnalysisActionMap()
         {
-            { Keywords.Bool, CascaraType.CreatePrimitive(typeof(bool), 1) },
-            { Keywords.Char, CascaraType.CreatePrimitive(typeof(char), 1) },
-            { Keywords.Float, CascaraType.CreatePrimitive(typeof(float), 4) },
-            { Keywords.Int, CascaraType.CreatePrimitive(typeof(int), 4) },
-        };
+            ElementAnalysisActions[Keywords.Bool8] = AnalyzeGenericElement;
+            ElementAnalysisActions[Keywords.Align] = AnalyzeGenericElement;
+            ElementAnalysisActions[Keywords.Echo] = AnalyzeGenericElement;
+            ElementAnalysisActions[Keywords.Include] = AnalyzeGenericElement;
+            ElementAnalysisActions[Keywords.Local] = AnalyzeGenericElement;
+            ElementAnalysisActions[Keywords.Typedef] = AnalyzeGenericElement;
+        }
+
+        private void InitializeValidElementsMap()
+        {
+            // Data types
+            ElementDefinitions[Keywords.Bool8] = CascaraElement.CreateDataType(Keywords.Bool8,
+                CascaraType.CreatePrimitive(typeof(bool), 1),
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.Create(Keywords.Count, true),
+                CascaraModifier.Create(Keywords.Name, false));
+
+            // Data type aliases
+            ElementDefinitions[Keywords.Bool] = CascaraElement.CreateDataTypeAlias(Keywords.Bool, Keywords.Bool8);
+
+            // Directives
+            ElementDefinitions[Keywords.Align] = CascaraElement.CreateDirective(Keywords.Align,
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.Create(Keywords.Count, true),
+                CascaraModifier.Create(Keywords.Kind, false));
+            ElementDefinitions[Keywords.Echo] = CascaraElement.CreateDirective(Keywords.Echo,
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.CreateRequired(Keywords.Message, true),
+                CascaraModifier.Create(Keywords.Raw, false));
+            ElementDefinitions[Keywords.Include] = CascaraElement.CreateDirective(Keywords.Include,
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.CreateRequired(Keywords.Path, false));
+            ElementDefinitions[Keywords.Local] = CascaraElement.CreateDirective(Keywords.Local,
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.CreateRequired(Keywords.Name, false),
+                CascaraModifier.CreateRequired(Keywords.Value, true));
+            ElementDefinitions[Keywords.Typedef] = CascaraElement.CreateDirective(Keywords.Typedef,
+                CascaraModifier.Create(Keywords.Comment, true),
+                CascaraModifier.CreateRequired(Keywords.Kind, false),
+                CascaraModifier.CreateRequired(Keywords.Name, false));
+
+        }
     }
 }
