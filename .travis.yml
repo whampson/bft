@@ -1,10 +1,9 @@
 language: csharp
-solution: ./Cascara.sln
 mono: none
 dotnet: 2.0.0
 script:
   - dotnet build
-  - dotnet test
+  - dotnet test ./Cascara.Tests/Cascara.Tests.csproj
 install:
   - dotnet restore
 
