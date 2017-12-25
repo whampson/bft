@@ -27,8 +27,6 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
-[assembly: InternalsVisibleTo("Cascara.Tests")]
-
 namespace WHampson.Cascara
 {
     /// <summary>
@@ -357,7 +355,7 @@ namespace WHampson.Cascara
             {
                 if (!IsCollection)
                 {
-                    throw new NotSupportedException("Cannot access the element of a symbol that does not represent a collection.");
+                    throw new NotSupportedException(Resources.NotSupportedExceptionElementAccess);
                 }
 
                 if (index < 0 || index >= ElementCount)
@@ -630,8 +628,7 @@ namespace WHampson.Cascara
                     if (!curr.IsCollection)
                     {
                         // Bug! Should never be thrown...
-                        string msg = "Internal name for collections used on a symbol that does not represent a collection!";
-                        throw new InvalidOperationException(msg);
+                        throw new InvalidOperationException(Resources.InvalidOperationExceptionReservedSymbolName);
                     }
 
                     // Append collection element index to collection name

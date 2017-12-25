@@ -62,7 +62,7 @@ namespace WHampson.Cascara
         {
             if (string.IsNullOrWhiteSpace(xmlPath))
             {
-                throw new ArgumentException("Path cannot be empty or null.", nameof(xmlPath));
+                throw new ArgumentException(Resources.ArgumentExceptionEmptyPath, nameof(xmlPath));
             }
 
             XDocument doc;
@@ -72,7 +72,7 @@ namespace WHampson.Cascara
             }
             catch (XmlException e)
             {
-                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout XML data.");
+                throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionXmlLoadFailure);
             }
 
             return new BinaryLayout(doc, null);
@@ -97,7 +97,7 @@ namespace WHampson.Cascara
         {
             if (string.IsNullOrWhiteSpace(xmlData))
             {
-                throw new ArgumentException("XML data cannot be empty or null.", nameof(xmlData));
+                throw new ArgumentException(Resources.ArgumentExceptionEmptyXmlData, nameof(xmlData));
             }
 
             XDocument doc;
@@ -107,7 +107,7 @@ namespace WHampson.Cascara
             }
             catch (XmlException e)
             {
-                throw LayoutException.Create<LayoutException>(null, e, null, "Failed to load layout XML data.");
+                throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionXmlLoadFailure);
             }
 
             return new BinaryLayout(doc, null);
@@ -226,19 +226,19 @@ namespace WHampson.Cascara
         {
             if (Document.Root.Name.LocalName != Keywords.DocumentRoot)
             {
-                string fmt = "Must have a root element named '{0}'.";
+                string fmt = Resources.LayoutExceptionInvalidRootElement;
                 throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.DocumentRoot);
             }
 
             if (Document.Root.Attribute(Keywords.Name) == null)
             {
-                string fmt = "Missing required attribute '{0}'.";
+                string fmt = Resources.LayoutExceptionMissingRequiredAttribute;
                 throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.Name);
             }
 
             if (Document.Root.Elements().Count() == 0)
             {
-                throw LayoutException.Create<LayoutException>(this, Document.Root, "Empty layout.");
+                throw LayoutException.Create<LayoutException>(this, Document.Root, Resources.LayoutExceptionEmptyLayout);
             }
         }
 
@@ -247,7 +247,7 @@ namespace WHampson.Cascara
             if (includedLayouts.ContainsKey(Name))
             {
                 XAttribute nameAttr = doc.Root.Attribute(Keywords.Name);
-                string fmt = "A layout named '{0}' already exists in the namespace.";
+                string fmt = Resources.LayoutExceptionLayoutExists;
                 throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, Name);
             }
 
@@ -267,7 +267,7 @@ namespace WHampson.Cascara
                 bool isValidElem = ElementDefinitions.TryGetValue(elemName, out CascaraElement e);
                 if (!isValidElem)
                 {
-                    string fmt = "Unknown type or directive '{0}'.";
+                    string fmt = Resources.LayoutExceptionUnknownType;
                     throw LayoutException.Create<LayoutException>(this, memberElem, fmt, elemName);
                 }
 
@@ -300,12 +300,12 @@ namespace WHampson.Cascara
                 bool isAttrValid = validAttrs.Any(m => m.Name == attrName);
                 if (!isAttrValid)
                 {
-                    string fmt = "Unknown attribute '{0}'.";
+                    string fmt = Resources.LayoutExceptionUnknownAttribute;
                     throw LayoutException.Create<LayoutException>(this, attr, fmt, attrName);
                 }
                 else if (string.IsNullOrWhiteSpace(attr.Value))
                 {
-                    string fmt = "Attribute '{0}' cannot have an empty value.";
+                    string fmt = Resources.LayoutExceptionEmptyAttribute;
                     throw LayoutException.Create<LayoutException>(this, attr, fmt, attrName);
                 }
             }

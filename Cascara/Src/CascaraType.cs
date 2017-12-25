@@ -28,8 +28,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml.Linq;
 
-[assembly: InternalsVisibleTo("Cascara.Tests")]
-
 namespace WHampson.Cascara
 {
     /// <summary>
@@ -86,12 +84,12 @@ namespace WHampson.Cascara
 
             if (!systemType.IsValueType)
             {
-                throw new ArgumentException("Must be a value type.", nameof(systemType));
+                throw new ArgumentException(Resources.ArgumentExceptionValueType, nameof(systemType));
             }
 
             if (size < 0)
             {
-                throw new ArgumentException("Size must be a non-negative integer.", nameof(size));
+                throw new ArgumentException(Resources.ArgumentExceptionNonNegativeInteger, nameof(size));
             }
 
             return new CascaraType(systemType, new List<XElement>(), size);
@@ -116,12 +114,12 @@ namespace WHampson.Cascara
 
             if (members.Count() == 0)
             {
-                throw new ArgumentException("Members list cannot be empty.", nameof(members));
+                throw new ArgumentException(Resources.ArgumentExceptionEmptyList, nameof(members));
             }
 
             if (size < 0)
             {
-                throw new ArgumentException("Size must be a non-negative integer.", nameof(size));
+                throw new ArgumentException(Resources.ArgumentExceptionNonNegativeInteger, nameof(size));
             }
 
             return new CascaraType(null, members, size);

@@ -30,8 +30,6 @@ using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
-[assembly: InternalsVisibleTo("Cascara.Tests")]
-
 namespace WHampson.Cascara
 {
     /// <summary>
@@ -71,14 +69,14 @@ namespace WHampson.Cascara
             where T : LayoutException
         {
             string msg;
-            string simpleMsg;
+            string detailedMsg;
 
             GetLineInfo(obj, out int lineNum, out int linePos);
 
-            simpleMsg = string.Format(msgFmt, fmtArgs);
-            msg = BuildDetailedMessage(simpleMsg, null, layout, lineNum, linePos);
+            msg = string.Format(msgFmt, fmtArgs);
+            detailedMsg = BuildDetailedMessage(msg, null, layout, lineNum, linePos);
 
-            return CreateException<T>(layout, msg, simpleMsg, null, lineNum, linePos);
+            return CreateException<T>(layout, msg, detailedMsg, null, lineNum, linePos);
         }
 
         /// <summary>
@@ -93,13 +91,12 @@ namespace WHampson.Cascara
         internal static T Create<T>(BinaryLayout layout, Exception innerException, XObject obj, string msg)
             where T : LayoutException
         {
-            string simpleMsg;
+            string detailedMsg;
 
             GetLineInfo(obj, out int lineNum, out int linePos);
-            simpleMsg = msg;
-            msg = BuildDetailedMessage(msg, innerException, layout, lineNum, linePos);
+            detailedMsg = BuildDetailedMessage(msg, innerException, layout, lineNum, linePos);
 
-            return CreateException<T>(layout, msg, simpleMsg, innerException, lineNum, linePos);
+            return CreateException<T>(layout, msg, detailedMsg, innerException, lineNum, linePos);
         }
 
         /// <summary>
@@ -116,14 +113,14 @@ namespace WHampson.Cascara
             where T : LayoutException
         {
             string msg;
-            string simpleMsg;
+            string detailedMsg;
 
             GetLineInfo(obj, out int lineNum, out int linePos);
 
-            simpleMsg = string.Format(msgFmt, fmtArgs);
-            msg = BuildDetailedMessage(simpleMsg, innerException, layout, lineNum, linePos);
+            msg = string.Format(msgFmt, fmtArgs);
+            detailedMsg = BuildDetailedMessage(msg, innerException, layout, lineNum, linePos);
 
-            return CreateException<T>(layout, msg, simpleMsg, innerException, lineNum, linePos);
+            return CreateException<T>(layout, msg, detailedMsg, innerException, lineNum, linePos);
         }
 
         /// <summary>
@@ -154,7 +151,7 @@ namespace WHampson.Cascara
             ex.LayoutFile = layout;
             ex.LineNumber = lineNum;
             ex.LinePosition = linePos;
-            ex.DetailedMessage = detailedMsg;
+            ex.DetailedMessage = !string.IsNullOrWhiteSpace(detailedMsg) ? detailedMsg : ex.Message;
 
             return ex;
         }
