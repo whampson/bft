@@ -246,6 +246,3 @@ ModelManifest.xml
 
 # Visual Studio Code workspace configuration
 .vscode/
-
-# Resource Designer
-**/Resources.Designer.cs
