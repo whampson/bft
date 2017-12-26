@@ -133,6 +133,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Empty struct..
+        /// </summary>
+        internal static string LayoutExceptionEmptyStruct {
+            get {
+                return ResourceManager.GetString("LayoutExceptionEmptyStruct", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Must have a root element named &apos;{0}&apos;..
         /// </summary>
         internal static string LayoutExceptionInvalidRootElement {

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using WHampson.Cascara;
 using Xunit;
 using Xunit.Abstractions;
@@ -44,6 +46,25 @@ namespace Cascara.Tests
         private ITestOutputHelper Output
         {
             get;
+        }
+
+        [Fact]
+        public void ScratchArea()
+        {
+            string data = CreateLayout(@"
+<align/>
+<bool8/>
+<bool/>
+<typedef kind='a' name='k'/>
+<struct>
+  <single/>
+</struct>");
+
+            BinaryLayout bl = BinaryLayout.Create(data);
+            foreach (var kvp in bl.DataTypes)
+            {
+                Output.WriteLine("{0} => {1}", kvp.Key, kvp.Value);
+            }
         }
 
         [Fact]

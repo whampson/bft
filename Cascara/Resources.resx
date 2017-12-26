@@ -142,6 +142,9 @@
   <data name="LayoutExceptionEmptyLayout" xml:space="preserve">
     <value>Empty Binary Layout.</value>
   </data>
+  <data name="LayoutExceptionEmptyStruct" xml:space="preserve">
+    <value>Empty struct.</value>
+  </data>
   <data name="LayoutExceptionInvalidRootElement" xml:space="preserve">
     <value>Invalid root element name for Binary Layout. Must have a root element named '{0}'.</value>
     <comment>{0} - root element name</comment>

@@ -24,27 +24,12 @@ namespace WHampson.Cascara
                 throw new ArgumentNullException(nameof(name));
             }
 
-            return new DataTypeElement(name, null, type, modifiers);
+            return new DataTypeElement(name, type, modifiers);
         }
 
-        public static CascaraElement CreateDataTypeAlias(string name, string target)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-            if (string.IsNullOrWhiteSpace(target))
-            {
-                throw new ArgumentNullException(nameof(target));
-            }
-
-            return new DataTypeElement(name, target, null);
-        }
-
-        protected CascaraElement(string name, string aliasTarget, params CascaraModifier[] modifiers)
+        protected CascaraElement(string name, params CascaraModifier[] modifiers)
         {
             Name = name;
-            AliasTarget = aliasTarget;
             Modifiers = new List<CascaraModifier>(modifiers);
         }
 
@@ -57,22 +42,12 @@ namespace WHampson.Cascara
         {
             get;
         }
-
-        public bool IsAlias
-        {
-            get { return !string.IsNullOrWhiteSpace(AliasTarget) && Modifiers.Count() == 0; }
-        }
-
-        public string AliasTarget
-        {
-            get;
-        }
     }
 
     internal sealed class DataTypeElement : CascaraElement
     {
-        public DataTypeElement(string name, string aliasTarget, CascaraType type, params CascaraModifier[] modifiers)
-            : base(name, aliasTarget, modifiers)
+        public DataTypeElement(string name, CascaraType type, params CascaraModifier[] modifiers)
+            : base(name, modifiers)
         {
             Type = type;
         }
@@ -84,15 +59,15 @@ namespace WHampson.Cascara
 
         public override string ToString()
         {
-            return string.Format("DirectiveElement: [ Name: {0}, ModifierCount: {1}, Type: {2}, IsAlias: {3}, AliasTarget: {4} ]",
-                Name, Modifiers.Count(), Type, IsAlias, AliasTarget);
+            return string.Format("DataTypeElement: [ Name: {0}, ModifierCount: {1}, Type: {2} ]",
+                Name, Modifiers.Count(), Type);
         }
     }
 
     internal sealed class DirectiveElement : CascaraElement
     {
         public DirectiveElement(string name, params CascaraModifier[] modifiers)
-            : base(name, null, modifiers)
+            : base(name, modifiers)
         {
         }
 
