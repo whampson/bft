@@ -29,6 +29,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using static WHampson.Cascara.ReservedWords;
 
 [assembly: InternalsVisibleTo("Cascara.Tests")]
 
@@ -138,7 +139,7 @@ namespace WHampson.Cascara
             InitializeAttributeAnalysisActionMap();
 
             ValidateRootElement();
-            Name = Document.Root.Attribute(Keywords.Name).Value;
+            Name = Document.Root.Attribute(Parameters.Name).Value;
 
             Preprocess(Document);
         }
@@ -243,10 +244,10 @@ namespace WHampson.Cascara
             }
 
             // Ensure 'name' attribute exists
-            if (Document.Root.Attribute(Keywords.Name) == null)
+            if (Document.Root.Attribute(Parameters.Name) == null)
             {
                 string fmt = Resources.LayoutExceptionMissingRequiredAttribute;
-                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.Name);
+                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Parameters.Name);
             }
 
             // Ensure layout is not empty
@@ -260,7 +261,7 @@ namespace WHampson.Cascara
         {
             if (includedLayouts.ContainsKey(Name))
             {
-                XAttribute nameAttr = doc.Root.Attribute(Keywords.Name);
+                XAttribute nameAttr = doc.Root.Attribute(Parameters.Name);
                 string fmt = Resources.LayoutExceptionLayoutExists;
                 throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, Name);
             }
@@ -422,209 +423,208 @@ namespace WHampson.Cascara
 
         private void InitializeElementAnalysisActionMap()
         {
-            // Primitive types
-            foreach (string typeName in Keywords.DataTypes.Select(x => x.Key))
-            {
-                ElementAnalysisActions[typeName] = AnalyzeGenericElement;
-            }
+            //// Primitive types
+            //foreach (string typeName in Keywords.DataTypes.Select(x => x.Key))
+            //{
+            //    ElementAnalysisActions[typeName] = AnalyzeGenericElement;
+            //}
 
-            // Structure types
-            ElementAnalysisActions[Keywords.Struct] = AnalyzeStructElement;
-            ElementAnalysisActions[Keywords.Union] = AnalyzeStructElement;
+            //// Structure types
+            //ElementAnalysisActions[Keywords.Struct] = AnalyzeStructElement;
+            //ElementAnalysisActions[Keywords.Union] = AnalyzeStructElement;
 
-            // Directives
-            ElementAnalysisActions[Keywords.Align] = AnalyzeGenericElement;
-            ElementAnalysisActions[Keywords.Echo] = AnalyzeGenericElement;
-            ElementAnalysisActions[Keywords.Include] = AnalyzeGenericElement;
-            ElementAnalysisActions[Keywords.Local] = AnalyzeGenericElement;
-            ElementAnalysisActions[Keywords.Typedef] = AnalyzeGenericElement;
+            //// Directives
+            //ElementAnalysisActions[Keywords.Align] = AnalyzeGenericElement;
+            //ElementAnalysisActions[Keywords.Echo] = AnalyzeGenericElement;
+            //ElementAnalysisActions[Keywords.Include] = AnalyzeGenericElement;
+            //ElementAnalysisActions[Keywords.Local] = AnalyzeGenericElement;
+            //ElementAnalysisActions[Keywords.Typedef] = AnalyzeGenericElement;
         }
 
         private void InitializeAttributeAnalysisActionMap()
         {
-            AttributeAnalysisActions[Keywords.Comment] = null;
-            AttributeAnalysisActions[Keywords.Count] = null;    // ensure it is a non-negative integer
-            AttributeAnalysisActions[Keywords.Kind] = null;     // ensure it is a valid type
-            AttributeAnalysisActions[Keywords.Message] = null;
-            AttributeAnalysisActions[Keywords.Name] = null;     // ensrue adheres follows naming constraints
-            AttributeAnalysisActions[Keywords.Path] = null;
-            AttributeAnalysisActions[Keywords.Raw] = null;      // "true" or "false"
-            AttributeAnalysisActions[Keywords.Value] = null;
+            //AttributeAnalysisActions[Keywords.Comment] = null;
+            //AttributeAnalysisActions[Keywords.Count] = null;    // ensure it is a non-negative integer
+            //AttributeAnalysisActions[Keywords.Kind] = null;     // ensure it is a valid type
+            //AttributeAnalysisActions[Keywords.Message] = null;
+            //AttributeAnalysisActions[Keywords.Name] = null;     // ensrue adheres follows naming constraints
+            //AttributeAnalysisActions[Keywords.Path] = null;
+            //AttributeAnalysisActions[Keywords.Raw] = null;      // "true" or "false"
+            //AttributeAnalysisActions[Keywords.Value] = null;
         }
 
         private void InitializeValidElementsMap()
         {
-            /* ===== Data types ===== */
+            ///* ===== Data types ===== */
 
-            // struct
-            ValidElements[Keywords.Struct] = CascaraElement.CreateDataType(Keywords.Struct,
-                null,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// struct
+            //ValidElements[Keywords.Struct] = CascaraElement.CreateDataType(Keywords.Struct,
+            //    null,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // union
-            ValidElements[Keywords.Union] = CascaraElement.CreateDataType(Keywords.Union,
-                null,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// union
+            //ValidElements[Keywords.Union] = CascaraElement.CreateDataType(Keywords.Union,
+            //    null,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // bool8
-            ValidElements[Keywords.Bool8] = CascaraElement.CreateDataType(Keywords.Bool8,
-                CascaraType.CreatePrimitive(typeof(System.Boolean), 1),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// bool8
+            //ValidElements[Keywords.Bool8] = CascaraElement.CreateDataType(Keywords.Bool8,
+            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 1),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // bool16
-            ValidElements[Keywords.Bool16] = CascaraElement.CreateDataType(Keywords.Bool16,
-                CascaraType.CreatePrimitive(typeof(System.Boolean), 2),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// bool16
+            //ValidElements[Keywords.Bool16] = CascaraElement.CreateDataType(Keywords.Bool16,
+            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 2),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // bool32
-            ValidElements[Keywords.Bool32] = CascaraElement.CreateDataType(Keywords.Bool32,
-                CascaraType.CreatePrimitive(typeof(System.Boolean), 4),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// bool32
+            //ValidElements[Keywords.Bool32] = CascaraElement.CreateDataType(Keywords.Bool32,
+            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 4),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // bool64
-            ValidElements[Keywords.Bool64] = CascaraElement.CreateDataType(Keywords.Bool64,
-                CascaraType.CreatePrimitive(typeof(System.Boolean), 8),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// bool64
+            //ValidElements[Keywords.Bool64] = CascaraElement.CreateDataType(Keywords.Bool64,
+            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 8),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // char8
-            ValidElements[Keywords.Char8] = CascaraElement.CreateDataType(Keywords.Char8,
-                CascaraType.CreatePrimitive(typeof(System.Char), 1),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// char8
+            //ValidElements[Keywords.Char8] = CascaraElement.CreateDataType(Keywords.Char8,
+            //    CascaraType.CreatePrimitive(typeof(System.Char), 1),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // char16
-            ValidElements[Keywords.Char16] = CascaraElement.CreateDataType(Keywords.Char16,
-                CascaraType.CreatePrimitive(typeof(System.Char), 2),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// char16
+            //ValidElements[Keywords.Char16] = CascaraElement.CreateDataType(Keywords.Char16,
+            //    CascaraType.CreatePrimitive(typeof(System.Char), 2),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // double
-            ValidElements[Keywords.Double] = CascaraElement.CreateDataType(Keywords.Double,
-                CascaraType.CreatePrimitive(typeof(double), 8),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// double
+            //ValidElements[Keywords.Double] = CascaraElement.CreateDataType(Keywords.Double,
+            //    CascaraType.CreatePrimitive(typeof(double), 8),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // int8
-            ValidElements[Keywords.Int8] = CascaraElement.CreateDataType(Keywords.Int8,
-                CascaraType.CreatePrimitive(typeof(System.SByte), 1),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// int8
+            //ValidElements[Keywords.Int8] = CascaraElement.CreateDataType(Keywords.Int8,
+            //    CascaraType.CreatePrimitive(typeof(System.SByte), 1),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // int16
-            ValidElements[Keywords.Int16] = CascaraElement.CreateDataType(Keywords.Int16,
-                CascaraType.CreatePrimitive(typeof(System.Int16), 2),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// int16
+            //ValidElements[Keywords.Int16] = CascaraElement.CreateDataType(Keywords.Int16,
+            //    CascaraType.CreatePrimitive(typeof(System.Int16), 2),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // int32
-            ValidElements[Keywords.Int32] = CascaraElement.CreateDataType(Keywords.Int32,
-                CascaraType.CreatePrimitive(typeof(System.Int32), 4),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// int32
+            //ValidElements[Keywords.Int32] = CascaraElement.CreateDataType(Keywords.Int32,
+            //    CascaraType.CreatePrimitive(typeof(System.Int32), 4),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // int64
-            ValidElements[Keywords.Int64] = CascaraElement.CreateDataType(Keywords.Int64,
-                CascaraType.CreatePrimitive(typeof(System.Int64), 8),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// int64
+            //ValidElements[Keywords.Int64] = CascaraElement.CreateDataType(Keywords.Int64,
+            //    CascaraType.CreatePrimitive(typeof(System.Int64), 8),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // single
-            ValidElements[Keywords.Single] = CascaraElement.CreateDataType(Keywords.Single,
-                CascaraType.CreatePrimitive(typeof(System.Single), 4),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// single
+            //ValidElements[Keywords.Single] = CascaraElement.CreateDataType(Keywords.Single,
+            //    CascaraType.CreatePrimitive(typeof(System.Single), 4),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // uint8
-            ValidElements[Keywords.UInt8] = CascaraElement.CreateDataType(Keywords.UInt8,
-                CascaraType.CreatePrimitive(typeof(System.Byte), 1),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// uint8
+            //ValidElements[Keywords.UInt8] = CascaraElement.CreateDataType(Keywords.UInt8,
+            //    CascaraType.CreatePrimitive(typeof(System.Byte), 1),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // uint16
-            ValidElements[Keywords.UInt16] = CascaraElement.CreateDataType(Keywords.UInt16,
-                CascaraType.CreatePrimitive(typeof(System.UInt16), 2),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// uint16
+            //ValidElements[Keywords.UInt16] = CascaraElement.CreateDataType(Keywords.UInt16,
+            //    CascaraType.CreatePrimitive(typeof(System.UInt16), 2),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // uint32
-            ValidElements[Keywords.UInt32] = CascaraElement.CreateDataType(Keywords.UInt32,
-                CascaraType.CreatePrimitive(typeof(System.UInt32), 4),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// uint32
+            //ValidElements[Keywords.UInt32] = CascaraElement.CreateDataType(Keywords.UInt32,
+            //    CascaraType.CreatePrimitive(typeof(System.UInt32), 4),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            // uint64
-            ValidElements[Keywords.UInt64] = CascaraElement.CreateDataType(Keywords.UInt64,
-                CascaraType.CreatePrimitive(typeof(System.UInt64), 8),
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Name, false));
+            //// uint64
+            //ValidElements[Keywords.UInt64] = CascaraElement.CreateDataType(Keywords.UInt64,
+            //    CascaraType.CreatePrimitive(typeof(System.UInt64), 8),
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Name, false));
 
-            /* ===== Data type aliases ===== */
-            ValidElements[Keywords.Bool] = ValidElements[Keywords.Bool8];
-            ValidElements[Keywords.Byte] = ValidElements[Keywords.UInt8];
-            ValidElements[Keywords.Char] = ValidElements[Keywords.Char8];
-            ValidElements[Keywords.Float] = ValidElements[Keywords.Single];
-            ValidElements[Keywords.Int] = ValidElements[Keywords.Int32];
-            ValidElements[Keywords.Long] = ValidElements[Keywords.Int64];
-            ValidElements[Keywords.Short] = ValidElements[Keywords.Int16];
-            ValidElements[Keywords.UInt] = ValidElements[Keywords.UInt32];
-            ValidElements[Keywords.ULong] = ValidElements[Keywords.UInt64];
-            ValidElements[Keywords.UShort] = ValidElements[Keywords.UInt16];
+            ///* ===== Data type aliases ===== */
+            //ValidElements[Keywords.Bool] = ValidElements[Keywords.Bool8];
+            //ValidElements[Keywords.Byte] = ValidElements[Keywords.UInt8];
+            //ValidElements[Keywords.Char] = ValidElements[Keywords.Char8];
+            //ValidElements[Keywords.Float] = ValidElements[Keywords.Single];
+            //ValidElements[Keywords.Int] = ValidElements[Keywords.Int32];
+            //ValidElements[Keywords.Long] = ValidElements[Keywords.Int64];
+            //ValidElements[Keywords.Short] = ValidElements[Keywords.Int16];
+            //ValidElements[Keywords.UInt] = ValidElements[Keywords.UInt32];
+            //ValidElements[Keywords.ULong] = ValidElements[Keywords.UInt64];
+            //ValidElements[Keywords.UShort] = ValidElements[Keywords.UInt16];
 
-            /* ===== Directives ===== */
+            ///* ===== Directives ===== */
 
-            // align
-            ValidElements[Keywords.Align] = CascaraElement.CreateDirective(Keywords.Align,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.Create(Keywords.Count, true),
-                CascaraModifier.Create(Keywords.Kind, false));
+            //// align
+            //ValidElements[Keywords.Align] = CascaraElement.CreateDirective(Keywords.Align,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.Create(Keywords.Count, true),
+            //    CascaraModifier.Create(Keywords.Kind, false));
 
-            // echo
-            ValidElements[Keywords.Echo] = CascaraElement.CreateDirective(Keywords.Echo,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.CreateRequired(Keywords.Message, true),
-                CascaraModifier.Create(Keywords.Raw, false));
+            //// echo
+            //ValidElements[Keywords.Echo] = CascaraElement.CreateDirective(Keywords.Echo,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.CreateRequired(Keywords.Message, true),
+            //    CascaraModifier.Create(Keywords.Raw, false));
 
-            // include
-            ValidElements[Keywords.Include] = CascaraElement.CreateDirective(Keywords.Include,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.CreateRequired(Keywords.Path, false));
+            //// include
+            //ValidElements[Keywords.Include] = CascaraElement.CreateDirective(Keywords.Include,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.CreateRequired(Keywords.Path, false));
 
-            // local
-            ValidElements[Keywords.Local] = CascaraElement.CreateDirective(Keywords.Local,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.CreateRequired(Keywords.Name, false),
-                CascaraModifier.CreateRequired(Keywords.Value, true));
+            //// local
+            //ValidElements[Keywords.Local] = CascaraElement.CreateDirective(Keywords.Local,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.CreateRequired(Keywords.Name, false),
+            //    CascaraModifier.CreateRequired(Keywords.Value, true));
 
-            // typedef
-            ValidElements[Keywords.Typedef] = CascaraElement.CreateDirective(Keywords.Typedef,
-                CascaraModifier.Create(Keywords.Comment, true),
-                CascaraModifier.CreateRequired(Keywords.Kind, false),
-                CascaraModifier.CreateRequired(Keywords.Name, false));
-
+            //// typedef
+            //ValidElements[Keywords.Typedef] = CascaraElement.CreateDirective(Keywords.Typedef,
+            //    CascaraModifier.Create(Keywords.Comment, true),
+            //    CascaraModifier.CreateRequired(Keywords.Kind, false),
+            //    CascaraModifier.CreateRequired(Keywords.Name, false));
         }
     }
 }
