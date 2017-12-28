@@ -27,15 +27,21 @@ using System.Linq;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Defines all strings that have special meaning in the interpreter.
+    /// </summary>
+    /// <remarks>
+    /// Reserved words cannot be used as symbols.
+    /// </remarks>
     internal static partial class ReservedWords
     {
         public static readonly HashSet<string> AllReservedWords = new HashSet<string>(
-            CombineWords(
+            CombineAll(
                 Keywords.AllKeywords,
                 SpecialVariables.AllSpecialVariables,
                 Parameters.AllParameters));
 
-        private static IEnumerable<string> CombineWords(params HashSet<string>[] sets)
+        private static IEnumerable<string> CombineAll(params HashSet<string>[] sets)
         {
             IEnumerable<string> bigSet = new List<string>();
             foreach (HashSet<string> set in sets)
