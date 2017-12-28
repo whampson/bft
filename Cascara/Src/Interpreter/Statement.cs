@@ -96,6 +96,11 @@ namespace WHampson.Cascara
             protected set;
         }
 
+        public bool HasParameters
+        {
+            get { return _parameters.Any(); }
+        }
+
         /// <summary>
         /// Gets a map of all <see cref="Statement"/> parameters.
         /// </summary>
@@ -110,7 +115,7 @@ namespace WHampson.Cascara
         /// </summary>
         public bool HasNestedStatements
         {
-            get { return !_nestedStatements.Any(); }
+            get { return _nestedStatements.Any(); }
         }
 
         /// <summary>
@@ -181,10 +186,13 @@ namespace WHampson.Cascara
                 int hash = 13;
                 hash = (hash * 37) ^ Keyword.GetHashCode();
 
+                int paramHash = 17;
                 foreach (var kvp in _parameters)
                 {
-                    hash = (hash * 37) ^ (kvp.Key.GetHashCode() ^ kvp.Value.GetHashCode());
+                    // Order doesn't matter here, so we add onto a separate hash
+                     paramHash += (kvp.Key.GetHashCode() ^ kvp.Value.GetHashCode());
                 }
+                hash = (hash * 37) ^ paramHash;
 
                 foreach (Statement stmt in _nestedStatements)
                 {
