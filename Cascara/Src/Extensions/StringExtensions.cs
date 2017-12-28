@@ -22,35 +22,33 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Extension methods for the <see cref="System.Type"/> class.
+    /// Extension methods for the <see cref="string"/> class.
     /// </summary>
-    internal static class TypeExtensions
+    internal static class StringExtensions
     {
+        private const string EllipesString = "...";
+
         /// <summary>
-        /// Gets the values of all public constants of the specified type.
+        /// Truncates a string with ellipses (...) if the string is
+        /// longer than the specified length. The resulting string
+        /// will have a length less than or equal to the specified
+        /// length.
         /// </summary>
-        /// <typeparam name="T">The type of the constants to get.</typeparam>
-        /// <param name="clazz">The class to get constants from.</param>
-        /// <returns>An <see cref="IEnumerable{T}"/> of the values of all constants.</returns>
-        public static IEnumerable<T> GetPublicConstants<T>(this Type clazz)
-            where T : IConvertible
+        /// <param name="s">The string to truncate.</param>
+        /// <param name="length">The maximum desired length of the string.</param>
+        /// <returns></returns>
+        public static string Ellipses(this string s, int length)
         {
-            if (clazz == null)
+            if (s.Length > length)
             {
-                throw new ArgumentNullException(nameof(clazz));
+                s = s.Substring(0, length - EllipesString.Length) + EllipesString;
             }
 
-            return clazz.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
-                .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(T))
-                .Select(f => (T) f.GetRawConstantValue())
-                .Concat(clazz.GetNestedTypes(BindingFlags.Public).SelectMany(GetPublicConstants<T>));
+            return s;
         }
     }
 }
