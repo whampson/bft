@@ -25,13 +25,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 using static WHampson.Cascara.ReservedWords;
-
-[assembly: InternalsVisibleTo("Cascara.Tests")]
 
 namespace WHampson.Cascara
 {
@@ -41,7 +38,7 @@ namespace WHampson.Cascara
     /// <remarks>
     /// A <see cref="BinaryLayout"/> is represented on disk with an XML file.
     /// </remarks>
-    public sealed class BinaryLayout
+    public sealed class BinaryLayout : IEquatable<BinaryLayout>
     {
         /// <summary>
         /// Creates a new <see cref="BinaryLayout"/> object using data from
@@ -114,34 +111,16 @@ namespace WHampson.Cascara
             return new BinaryLayout(doc, null);
         }
 
-        private delegate void ElementAnalysisAction(CascaraElement e, XElement xe);
-        private delegate void AttributeAnalysisAction(CascaraModifier m, XAttribute xa);
-
-        private Dictionary<string, BinaryLayout> includedLayouts;
-        private Dictionary<string, double> locals;
-        private Stack<Symbol> symbolStack;
-
         private BinaryLayout(XDocument xDoc, string sourcePath)
         {
-            Document = xDoc ?? throw new ArgumentNullException(nameof(xDoc));
-
-            includedLayouts = new Dictionary<string, BinaryLayout>();
-            locals = new Dictionary<string, double>();
-            symbolStack = new Stack<Symbol>();
-
             SourcePath = sourcePath;
-            ValidElements = new Dictionary<string, CascaraElement>();
-            ElementAnalysisActions = new Dictionary<string, ElementAnalysisAction>();
-            AttributeAnalysisActions = new Dictionary<string, AttributeAnalysisAction>();
+            LayoutData = new XmlStatement(xDoc.Root);
 
-            InitializeValidElementsMap();
-            InitializeElementAnalysisActionMap();
-            InitializeAttributeAnalysisActionMap();
-
-            ValidateRootElement();
-            Name = Document.Root.Attribute(Parameters.Name).Value;
-
-            Preprocess(Document);
+            if (!LayoutData.Parameters.TryGetValue(Parameters.Name, out string name))
+            {
+                throw LayoutException.Create<LayoutException>(this, xDoc, Resources.LayoutExceptionMissingRequiredAttribute, Parameters.Name);
+            }
+            Name = name;
         }
 
         /// <summary>
@@ -161,14 +140,13 @@ namespace WHampson.Cascara
         {
             get
             {
-                XAttribute attr;
-                if ((attr = Document.Root.Attribute(key)) == null)
+                if (LayoutData.Parameters.TryGetValue(key, out string value))
                 {
-                    return "";
+                    return value;
                 }
                 else
                 {
-                    return attr.Value;
+                    return "";
                 }
             }
         }
@@ -179,7 +157,6 @@ namespace WHampson.Cascara
         public string Name
         {
             get;
-            private set;
         }
 
         /// <summary>
@@ -190,441 +167,151 @@ namespace WHampson.Cascara
         public string SourcePath
         {
             get;
-            private set;
         }
 
-        /// <summary>
-        /// Gets the XML document containing the layout information.
-        /// </summary>
-        internal XDocument Document
+        internal LayoutVersion Version
         {
             get;
         }
 
-        internal Dictionary<string, CascaraElement> ValidElements
+        internal Statement LayoutData
         {
             get;
         }
 
-        internal Dictionary<string, CascaraType> DataTypes
+        private void Initialize()
+
+        { }
+
+        public bool Equals(BinaryLayout other)
         {
-            get
+            if (other == null)
             {
-                return ValidElements
-                    .Where(p => p.Value is DataTypeElement && ((DataTypeElement) p.Value).Type != null)
-                    .ToDictionary(p => p.Key, q => ((DataTypeElement) q.Value).Type);
-            }
-        }
-
-        private Dictionary<string, ElementAnalysisAction> ElementAnalysisActions
-        {
-            get;
-        }
-
-        private Dictionary<string, AttributeAnalysisAction> AttributeAnalysisActions
-        {
-            get;
-        }
-
-        private Symbol CurrentSymbolTable
-        {
-            get
-            {
-                return (symbolStack.Count == 0) ? null : symbolStack.Peek();
-            }
-        }
-
-        private void ValidateRootElement()
-        {
-            // Ensure correct element name
-            if (Document.Root.Name.LocalName != Keywords.DocumentRoot)
-            {
-                string fmt = Resources.LayoutExceptionInvalidRootElement;
-                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Keywords.DocumentRoot);
+                return false;
             }
 
-            // Ensure 'name' attribute exists
-            if (Document.Root.Attribute(Parameters.Name) == null)
-            {
-                string fmt = Resources.LayoutExceptionMissingRequiredAttribute;
-                throw LayoutException.Create<LayoutException>(this, Document.Root, fmt, Parameters.Name);
-            }
-
-            // Ensure layout is not empty
-            if (!HasChildren(Document.Root))
-            {
-                throw LayoutException.Create<LayoutException>(this, Document.Root, Resources.LayoutExceptionEmptyLayout);
-            }
+            return LayoutData.Equals(other.LayoutData);
         }
 
-        private void Preprocess(XDocument doc)
-        {
-            if (includedLayouts.ContainsKey(Name))
-            {
-                XAttribute nameAttr = doc.Root.Attribute(Parameters.Name);
-                string fmt = Resources.LayoutExceptionLayoutExists;
-                throw LayoutException.Create<LayoutException>(this, nameAttr, fmt, Name);
-            }
-
-            includedLayouts[Name] = this;
-
-            symbolStack.Push(Symbol.CreateRootSymbol());
-            AnalyzeStructMembers(doc.Root);
-        }
-
-        private void AnalyzeStructElement(CascaraElement e, XElement xe)
-        {
-            if (!HasChildren(xe))
-            {
-                throw LayoutException.Create<LayoutException>(this, xe, Resources.LayoutExceptionEmptyStruct);
-            }
-
-            AnalyzeAttributes(e, xe);
-            AnalyzeStructMembers(xe);
-        }
-
-        private void AnalyzeStructMembers(XElement elem)
-        {
-            foreach (XElement memberElem in elem.Elements())
-            {
-                string elemName = memberElem.Name.LocalName;
-
-                // Check for valid element
-                bool isValidElem = ValidElements.TryGetValue(elemName, out CascaraElement e);
-                if (!isValidElem)
-                {
-                    string fmt = Resources.LayoutExceptionUnknownType;
-                    throw LayoutException.Create<LayoutException>(this, memberElem, fmt, elemName);
-                }
-
-                // Analyze element
-                ElementAnalysisAction elementAnalyzer = ElementAnalysisActions[e.Name];
-                elementAnalyzer(e, memberElem);
-            }
-        }
-
-        private void AnalyzeGenericElement(CascaraElement e, XElement xe)
-        {
-            if (HasChildren(xe))
-            {
-                //string fmt
-            }
-            AnalyzeAttributes(e, xe);
-        }
-
-        private void AnalyzeAttributes(CascaraElement e, XElement xe)
-        {
-            List<string> attrsSeen = new List<string>();
-
-            foreach (CascaraModifier m in e.Modifiers)
-            {
-                XAttribute attr = xe.Attribute(m.Name);
-
-                // Ensure required attributes are present
-                if (attr == null)
-                {
-                    if (m.IsRequired)
-                    {
-                        string fmt = Resources.LayoutExceptionMissingRequiredAttribute;
-                        throw LayoutException.Create<LayoutException>(this, xe, fmt, m.Name);
-                    }
-                    continue;
-                }
-
-                // Ensure attribute values are not whitespace
-                if (string.IsNullOrWhiteSpace(attr.Value))
-                {
-                    string fmt = Resources.LayoutExceptionEmptyAttribute;
-                    throw LayoutException.Create<LayoutException>(this, attr, fmt, m.Name);
-                }
-
-                // Check if attribute value contains variables.
-                // Make sure they're allowed for this attribute and exist in the namespace
-                if (m.CanContainVariables)
-                {
-
-                }
-
-                attrsSeen.Add(m.Name);
-
-                // Analyze attribute
-                AttributeAnalysisAction attributeAnalyzer = AttributeAnalysisActions[m.Name];
-                if (attributeAnalyzer == null)
-                {
-                    continue;
-                }
-
-                attributeAnalyzer(m, attr);
-            }
-
-            // Look for unknwon attributes
-            IEnumerable<XAttribute> unknownAttrs = xe.Attributes()
-                .Where(x => !attrsSeen.Any(y => x.Name.LocalName == y));
-
-            if (unknownAttrs.Count() != 0)
-            {
-                XAttribute attr = unknownAttrs.ElementAt(0);
-                string fmt = Resources.LayoutExceptionUnknownAttribute;
-                throw LayoutException.Create<LayoutException>(this, attr, fmt, attr.Name.LocalName);
-            }
-        }
-
-        private bool IsDefined(string variableName)
-        {
-            return locals.ContainsKey(variableName) || CurrentSymbolTable.Contains(variableName);
-        }
-
-        private bool HasChildren(XElement elem)
-        {
-            return elem != null && elem.Elements().Count() != 0;
-        }
-
-        /// <summary>
-        /// Returns a unique hash code of this object based on its contents.
-        /// </summary>
-        /// <returns>
-        /// A unique hash code of this object based on its contents.
-        /// </returns>
-        public override int GetHashCode()
-        {
-            return Name.GetHashCode() * 17
-                + XNode.EqualityComparer.GetHashCode(Document);
-        }
-
-        /// <summary>
-        /// Compares an <see cref="object"/> against this <see cref="BinaryLayout"/>
-        /// for equality.
-        /// </summary>
-        /// <param name="obj">
-        /// The <see cref="object"/> to compare against.
-        /// </param>
-        /// <returns>
-        /// <code>True</code> if the objects are equal,
-        /// <code>False</code> otherwise
-        /// </returns>
         public override bool Equals(object obj)
         {
-            // TODO: LONG TERM: define equality as describing
-            // the same file structure, not as having the same XML contents
-            // To do this, verify equality of:
-            //   - symbols
-            //   - user-defined types
-            //   - min. size of data being described
-
             if (!(obj is BinaryLayout))
             {
                 return false;
             }
-            BinaryLayout other = (BinaryLayout) obj;
+            else if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
 
-            return Name == other.Name
-                && XNode.DeepEquals(Document, other.Document);
+            return Equals(obj as BinaryLayout);
+        }
+    }
+
+    internal struct LayoutVersion : IComparable<LayoutVersion>
+    {
+        public LayoutVersion(int major, int minor)
+        {
+            Major = major;
+            Minor = minor;
         }
 
-        private void InitializeElementAnalysisActionMap()
+        public int Major { get; }
+        public int Minor { get; }
+
+        public override bool Equals(object obj)
         {
-            //// Primitive types
-            //foreach (string typeName in Keywords.DataTypes.Select(x => x.Key))
-            //{
-            //    ElementAnalysisActions[typeName] = AnalyzeGenericElement;
-            //}
+            if (!(obj is LayoutVersion))
+            {
+                return false;
+            }
 
-            //// Structure types
-            //ElementAnalysisActions[Keywords.Struct] = AnalyzeStructElement;
-            //ElementAnalysisActions[Keywords.Union] = AnalyzeStructElement;
+            LayoutVersion other = (LayoutVersion) obj;
 
-            //// Directives
-            //ElementAnalysisActions[Keywords.Align] = AnalyzeGenericElement;
-            //ElementAnalysisActions[Keywords.Echo] = AnalyzeGenericElement;
-            //ElementAnalysisActions[Keywords.Include] = AnalyzeGenericElement;
-            //ElementAnalysisActions[Keywords.Local] = AnalyzeGenericElement;
-            //ElementAnalysisActions[Keywords.Typedef] = AnalyzeGenericElement;
+            return Major == other.Major && Minor == other.Minor;
         }
 
-        private void InitializeAttributeAnalysisActionMap()
+        public override int GetHashCode()
         {
-            //AttributeAnalysisActions[Keywords.Comment] = null;
-            //AttributeAnalysisActions[Keywords.Count] = null;    // ensure it is a non-negative integer
-            //AttributeAnalysisActions[Keywords.Kind] = null;     // ensure it is a valid type
-            //AttributeAnalysisActions[Keywords.Message] = null;
-            //AttributeAnalysisActions[Keywords.Name] = null;     // ensrue adheres follows naming constraints
-            //AttributeAnalysisActions[Keywords.Path] = null;
-            //AttributeAnalysisActions[Keywords.Raw] = null;      // "true" or "false"
-            //AttributeAnalysisActions[Keywords.Value] = null;
+            unchecked
+            {
+                int hash = 17;
+                hash = (hash * 37) ^ Major;
+                hash = (hash * 37) ^ Minor;
+
+                return hash;
+            }
         }
 
-        private void InitializeValidElementsMap()
+        public override string ToString()
         {
-            ///* ===== Data types ===== */
+            return string.Format("{0}: [ {1} = {2}, {3} = {4} ]",
+                GetType().Name,
+                nameof(Major), Major,
+                nameof(Minor), Minor);
+        }
 
-            //// struct
-            //ValidElements[Keywords.Struct] = CascaraElement.CreateDataType(Keywords.Struct,
-            //    null,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public int CompareTo(LayoutVersion other)
+        {
+            if (this > other)
+            {
+                return -1;
+            }
 
-            //// union
-            //ValidElements[Keywords.Union] = CascaraElement.CreateDataType(Keywords.Union,
-            //    null,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+            if (this == other)
+            {
+                return 0;
+            }
 
-            //// bool8
-            //ValidElements[Keywords.Bool8] = CascaraElement.CreateDataType(Keywords.Bool8,
-            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 1),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+            return 1;
+        }
 
-            //// bool16
-            //ValidElements[Keywords.Bool16] = CascaraElement.CreateDataType(Keywords.Bool16,
-            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 2),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public static bool operator ==(LayoutVersion a, LayoutVersion b)
+        {
+            return a.Major == b.Major && a.Minor == b.Minor;
+        }
 
-            //// bool32
-            //ValidElements[Keywords.Bool32] = CascaraElement.CreateDataType(Keywords.Bool32,
-            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 4),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public static bool operator !=(LayoutVersion a, LayoutVersion b)
+        {
+            return !(a == b);
+        }
 
-            //// bool64
-            //ValidElements[Keywords.Bool64] = CascaraElement.CreateDataType(Keywords.Bool64,
-            //    CascaraType.CreatePrimitive(typeof(System.Boolean), 8),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public static bool operator >(LayoutVersion a, LayoutVersion b)
+        {
+            if (a.Major > b.Major)
+            {
+                return true;
+            }
+            else if (a.Major < b.Major)
+            {
+                return false;
+            }
 
-            //// char8
-            //ValidElements[Keywords.Char8] = CascaraElement.CreateDataType(Keywords.Char8,
-            //    CascaraType.CreatePrimitive(typeof(System.Char), 1),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+            return a.Minor > b.Minor;
+        }
 
-            //// char16
-            //ValidElements[Keywords.Char16] = CascaraElement.CreateDataType(Keywords.Char16,
-            //    CascaraType.CreatePrimitive(typeof(System.Char), 2),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public static bool operator <(LayoutVersion a, LayoutVersion b)
+        {
+            if (a.Major < b.Major)
+            {
+                return true;
+            }
+            else if (a.Major > b.Major)
+            {
+                return false;
+            }
 
-            //// double
-            //ValidElements[Keywords.Double] = CascaraElement.CreateDataType(Keywords.Double,
-            //    CascaraType.CreatePrimitive(typeof(double), 8),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+            return a.Minor < b.Minor;
+        }
 
-            //// int8
-            //ValidElements[Keywords.Int8] = CascaraElement.CreateDataType(Keywords.Int8,
-            //    CascaraType.CreatePrimitive(typeof(System.SByte), 1),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
+        public static bool operator >=(LayoutVersion a, LayoutVersion b)
+        {
+            return a > b || a == b;
+        }
 
-            //// int16
-            //ValidElements[Keywords.Int16] = CascaraElement.CreateDataType(Keywords.Int16,
-            //    CascaraType.CreatePrimitive(typeof(System.Int16), 2),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// int32
-            //ValidElements[Keywords.Int32] = CascaraElement.CreateDataType(Keywords.Int32,
-            //    CascaraType.CreatePrimitive(typeof(System.Int32), 4),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// int64
-            //ValidElements[Keywords.Int64] = CascaraElement.CreateDataType(Keywords.Int64,
-            //    CascaraType.CreatePrimitive(typeof(System.Int64), 8),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// single
-            //ValidElements[Keywords.Single] = CascaraElement.CreateDataType(Keywords.Single,
-            //    CascaraType.CreatePrimitive(typeof(System.Single), 4),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// uint8
-            //ValidElements[Keywords.UInt8] = CascaraElement.CreateDataType(Keywords.UInt8,
-            //    CascaraType.CreatePrimitive(typeof(System.Byte), 1),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// uint16
-            //ValidElements[Keywords.UInt16] = CascaraElement.CreateDataType(Keywords.UInt16,
-            //    CascaraType.CreatePrimitive(typeof(System.UInt16), 2),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// uint32
-            //ValidElements[Keywords.UInt32] = CascaraElement.CreateDataType(Keywords.UInt32,
-            //    CascaraType.CreatePrimitive(typeof(System.UInt32), 4),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            //// uint64
-            //ValidElements[Keywords.UInt64] = CascaraElement.CreateDataType(Keywords.UInt64,
-            //    CascaraType.CreatePrimitive(typeof(System.UInt64), 8),
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Name, false));
-
-            ///* ===== Data type aliases ===== */
-            //ValidElements[Keywords.Bool] = ValidElements[Keywords.Bool8];
-            //ValidElements[Keywords.Byte] = ValidElements[Keywords.UInt8];
-            //ValidElements[Keywords.Char] = ValidElements[Keywords.Char8];
-            //ValidElements[Keywords.Float] = ValidElements[Keywords.Single];
-            //ValidElements[Keywords.Int] = ValidElements[Keywords.Int32];
-            //ValidElements[Keywords.Long] = ValidElements[Keywords.Int64];
-            //ValidElements[Keywords.Short] = ValidElements[Keywords.Int16];
-            //ValidElements[Keywords.UInt] = ValidElements[Keywords.UInt32];
-            //ValidElements[Keywords.ULong] = ValidElements[Keywords.UInt64];
-            //ValidElements[Keywords.UShort] = ValidElements[Keywords.UInt16];
-
-            ///* ===== Directives ===== */
-
-            //// align
-            //ValidElements[Keywords.Align] = CascaraElement.CreateDirective(Keywords.Align,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.Create(Keywords.Count, true),
-            //    CascaraModifier.Create(Keywords.Kind, false));
-
-            //// echo
-            //ValidElements[Keywords.Echo] = CascaraElement.CreateDirective(Keywords.Echo,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.CreateRequired(Keywords.Message, true),
-            //    CascaraModifier.Create(Keywords.Raw, false));
-
-            //// include
-            //ValidElements[Keywords.Include] = CascaraElement.CreateDirective(Keywords.Include,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.CreateRequired(Keywords.Path, false));
-
-            //// local
-            //ValidElements[Keywords.Local] = CascaraElement.CreateDirective(Keywords.Local,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.CreateRequired(Keywords.Name, false),
-            //    CascaraModifier.CreateRequired(Keywords.Value, true));
-
-            //// typedef
-            //ValidElements[Keywords.Typedef] = CascaraElement.CreateDirective(Keywords.Typedef,
-            //    CascaraModifier.Create(Keywords.Comment, true),
-            //    CascaraModifier.CreateRequired(Keywords.Kind, false),
-            //    CascaraModifier.CreateRequired(Keywords.Name, false));
+        public static bool operator <=(LayoutVersion a, LayoutVersion b)
+        {
+            return a < b || a == b;
         }
     }
 }
