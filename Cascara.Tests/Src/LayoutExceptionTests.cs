@@ -2,11 +2,17 @@
 using System.Xml.Linq;
 using WHampson.Cascara;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Cascara.Tests
 {
-    public class LayoutExceptionTests
+    public class LayoutExceptionTests : CascaraTestFramework
     {
+        public LayoutExceptionTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
         [Fact]
         public void Create_AllNull()
         {

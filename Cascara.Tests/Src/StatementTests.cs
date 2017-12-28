@@ -1,11 +1,17 @@
 ﻿using System.Xml.Linq;
 using WHampson.Cascara;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Cascara.Tests
 {
-    public class StatementTests
+    public class StatementTests : CascaraTestFramework
     {
+        public Statement(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
         private Statement CreateXmlStatement(string xml)
         {
             XDocument doc = XDocument.Parse(xml, LoadOptions.SetLineInfo);

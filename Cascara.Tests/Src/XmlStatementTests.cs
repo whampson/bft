@@ -3,11 +3,17 @@ using System.Linq;
 using System.Xml.Linq;
 using WHampson.Cascara;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Cascara.Tests
 {
-    public class XmlStatementTests
+    public class XmlStatementTests : CascaraTestFramework
     {
+        public XmlStatementTests(ITestOutputHelper output)
+            : base(output)
+        {
+        }
+
         private XElement CreateXmlElement(string data)
         {
             XDocument doc = XDocument.Parse(data, LoadOptions.SetLineInfo);
@@ -28,6 +34,7 @@ namespace Cascara.Tests
 
             // Act
             Statement stmt = new XmlStatement(elem);
+            Output.WriteLine(stmt.ToString());
 
             // Assert
             Assert.Equal(stmt.Keyword, expectedKeyword);
@@ -52,6 +59,7 @@ namespace Cascara.Tests
 
             // Act
             Statement stmt = new XmlStatement(elem);
+            Output.WriteLine(stmt.ToString());
 
             // Assert
             Assert.Equal(stmt.Keyword, expectedKeyword);
@@ -77,6 +85,7 @@ namespace Cascara.Tests
 
             // Act
             Statement stmt = new XmlStatement(elem);
+            Output.WriteLine(stmt.ToString());
 
             // Assert
             Assert.Equal(stmt.Keyword, expectedKeywordParent);
