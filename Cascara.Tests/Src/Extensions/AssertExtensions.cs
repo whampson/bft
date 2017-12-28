@@ -3,7 +3,7 @@ using Xunit;
 
 namespace Cascara.Tests
 {
-    public class AssertExtension : Assert
+    public class AssertExtensions : Assert
     {
         public static T ThrowsWithMessage<T>(Func<object> testCode, string message)
             where T : Exception
