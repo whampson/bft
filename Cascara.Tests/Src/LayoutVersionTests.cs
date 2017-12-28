@@ -58,5 +58,39 @@ namespace Cascara.Tests
             Assert.Equal(eq4, expectedEQ);
             Assert.Equal(compareTo, expectedCompareTo);
         }
+
+        [Theory]
+        [InlineData(null,           0, 0, 0, false)]
+        [InlineData("",             0, 0, 0, false)]
+        [InlineData("1",            1, 0, 0, true)]
+        [InlineData("1 ",           1, 0, 0, true)]
+        [InlineData(" 1",           1, 0, 0, true)]
+        [InlineData(" 1 ",          1, 0, 0, true)]
+        [InlineData("-1",           0, 0, 0, false)]
+        [InlineData("1.",           0, 0, 0, false)]
+        [InlineData("1.0",          1, 0, 0, true)]
+        [InlineData("1.0.",         0, 0, 0, false)]
+        [InlineData("1.0.0",        1, 0, 0, true)]
+        [InlineData("1.1",          1, 1, 0, true)]
+        [InlineData("1.15",         1, 15, 0, true)]
+        [InlineData("1.15.1",       1, 15, 1, true)]
+        [InlineData("0.15.1",       0, 15, 1, true)]
+        [InlineData("43.57.62",     43, 57, 62, true)]
+        [InlineData("-1.15.1",      0, 0, 0, false)]
+        [InlineData("2147483647",   int.MaxValue, 0, 0, true)]
+        [InlineData("2147483648",   0, 0, 0, false)]
+        [InlineData("garbage",      0, 0, 0, false)]
+        [InlineData("1.0.garbage",  0, 0, 0, false)]
+        public void TryParse(string verString, int exMajor, int exMinor, int exPatch, bool exResult)
+        {
+            // Act
+            bool result = LayoutVersion.TryParse(verString, out LayoutVersion ver);
+
+            // Assert
+            Assert.Equal(result, exResult);
+            Assert.Equal(ver.Major, exMajor);
+            Assert.Equal(ver.Minor, exMinor);
+            Assert.Equal(ver.Patch, exPatch);
+        }
     }
 }
