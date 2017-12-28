@@ -25,7 +25,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -122,12 +121,6 @@ namespace WHampson.Cascara
 
             return CreateException<T>(layout, msg, detailedMsg, innerException, lineNum, linePos);
         }
-
-        /// <summary>
-        /// Factory method for creating <see cref="LayoutException"/> instances.
-        /// </summary>
-
-
 
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>

@@ -21,7 +21,6 @@
  */
 #endregion
 
-using System;
 using System.Xml.Linq;
 
 namespace WHampson.Cascara

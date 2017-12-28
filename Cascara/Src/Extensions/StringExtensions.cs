@@ -21,8 +21,6 @@
  */
 #endregion
 
-using System;
-
 namespace WHampson.Cascara
 {
     /// <summary>
