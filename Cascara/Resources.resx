@@ -126,6 +126,9 @@
   <data name="ArgumentExceptionEmptyXmlData" xml:space="preserve">
     <value>XML data cannot be empty or null.</value>
   </data>
+  <data name="ArgumentExceptionNestedStatementReference" xml:space="preserve">
+    <value>Nested statement cannot be the same object reference as the current statement.</value>
+  </data>
   <data name="ArgumentExceptionNonNegativeInteger" xml:space="preserve">
     <value>Must be a non-negative integer.</value>
   </data>
@@ -161,6 +164,10 @@
     <value>Unknown attribute '{0}'.</value>
     <comment>{0} - attribute name</comment>
   </data>
+  <data name="LayoutExceptionUnknownIdentifier" xml:space="preserve">
+    <value>Unknown identifier '{0}'.</value>
+    <comment>{0} - identifier</comment>
+  </data>
   <data name="LayoutExceptionUnknownType" xml:space="preserve">
     <value>Unknown type or directive '{0}'.</value>
     <comment>{0} - element name</comment>
@@ -170,5 +177,10 @@
   </data>
   <data name="NotSupportedExceptionElementAccess" xml:space="preserve">
     <value>Cannot access the element of a symbol that does not represent a collection.</value>
+  </data>
+  <data name="SyntaxExceptionXmlUnexpectedText" xml:space="preserve">
+    <value>Unexpected text '{0}' in element '{1}'.</value>
+    <comment>{0} - text
+{1} - element name</comment>
   </data>
 </root>

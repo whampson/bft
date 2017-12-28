@@ -88,6 +88,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nested statement cannot be the same object reference as the current statement..
+        /// </summary>
+        internal static string ArgumentExceptionNestedStatementReference {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionNestedStatementReference", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Must be a non-negative integer..
         /// </summary>
         internal static string ArgumentExceptionNonNegativeInteger {
@@ -178,6 +187,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unknown identifier &apos;{0}&apos;..
+        /// </summary>
+        internal static string LayoutExceptionUnknownIdentifier {
+            get {
+                return ResourceManager.GetString("LayoutExceptionUnknownIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unknown type or directive &apos;{0}&apos;..
         /// </summary>
         internal static string LayoutExceptionUnknownType {
@@ -201,6 +219,15 @@ namespace WHampson.Cascara {
         internal static string NotSupportedExceptionElementAccess {
             get {
                 return ResourceManager.GetString("NotSupportedExceptionElementAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unexpected text &apos;{0}&apos; in element &apos;{1}&apos;..
+        /// </summary>
+        internal static string SyntaxExceptionXmlUnexpectedText {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionXmlUnexpectedText", resourceCulture);
             }
         }
     }
