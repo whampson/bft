@@ -7,7 +7,7 @@ namespace Cascara.Tests
 {
     public class StatementTests : CascaraTestFramework
     {
-        public Statement(ITestOutputHelper output)
+        public StatementTests(ITestOutputHelper output)
             : base(output)
         {
         }
