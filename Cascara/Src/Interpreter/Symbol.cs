@@ -26,7 +26,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// Represents an identifier given to some type of data.
@@ -186,7 +186,7 @@ namespace WHampson.Cascara
         /// for the given filly qualified symbol name.
         /// </summary>
         /// <param name="name">
-        /// The fully qualified name of the <see cref="Symbol"/> search for.
+        /// The fully-qualified name of the <see cref="Symbol"/> search for.
         /// </param>
         /// <param name="sym">
         /// The root of the <see cref="Symbol"/> tree to begin the search.
@@ -383,11 +383,11 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the fully qualified name of this <see cref="Symbol"/>.
+        /// Gets the fully-qualified name of this <see cref="Symbol"/>.
         /// </summary>
-        public string FullyQualifiedName
+        public string FullName
         {
-            get { return GetFullyQualifiedName(); }
+            get { return GetFullName(); }
         }
 
         /// <summary>
@@ -593,12 +593,12 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the fully qualified name of this <see cref="Symbol"/>.
+        /// Gets the fully-qualified name of this <see cref="Symbol"/>.
         /// </summary>
         /// <returns>
-        /// The fully qualified name of this <see cref="Symbol"/>.
+        /// The fully-qualified name of this <see cref="Symbol"/>.
         /// </returns>
-        public string GetFullyQualifiedName()
+        public string GetFullName()
         {
             string fqName = "";
             string currName;
@@ -635,7 +635,7 @@ namespace WHampson.Cascara
                     collectionElemSymbol = null;
                 }
 
-                // Prepend current name to fully qualified name and move up a level
+                // Prepend current name to fully-qualified name and move up a level
                 fqName = currName + StructureReferenceOperatorChar + fqName;
                 curr = curr.Parent;
             }
@@ -645,10 +645,10 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets a list of all fully qualified names descending from and including
+        /// Gets a list of all fully-qualified names descending from and including
         /// this <see cref="Symbol"/>.
         /// </summary>
-        public List<string> GetAllFullyQualifiedNames()
+        public List<string> GetAllFullNames()
         {
             // TODO: this is SLOW!
             // Rather than getting the FQ name for every element
@@ -660,8 +660,8 @@ namespace WHampson.Cascara
             {
                 foreach (Symbol sym in collectionSymbols)
                 {
-                    names.Add(sym.FullyQualifiedName);
-                    names.AddRange(sym.GetAllFullyQualifiedNames());
+                    names.Add(sym.FullName);
+                    names.AddRange(sym.GetAllFullNames());
                 }
 
                 return names;
@@ -670,8 +670,8 @@ namespace WHampson.Cascara
             foreach (KeyValuePair<string, Symbol> entry in symbolTable)
             {
                 Symbol sym = entry.Value;
-                names.Add(sym.FullyQualifiedName);
-                names.AddRange(sym.GetAllFullyQualifiedNames());
+                names.Add(sym.FullName);
+                names.AddRange(sym.GetAllFullNames());
             }
 
             return names;
@@ -842,8 +842,8 @@ namespace WHampson.Cascara
         public override string ToString()
         {
             string elemCountStr = string.Format(", ElementCount = {0}", ElementCount);
-            return string.Format("Symbol: [ FullyQualifiedName = {0}, IsCollection = {1}{2} ]",
-                FullyQualifiedName, IsCollection, (IsCollection) ? elemCountStr : "");
+            return string.Format("Symbol: [ FullName = {0}, IsCollection = {1}{2} ]",
+                FullName, IsCollection, (IsCollection) ? elemCountStr : "");
         }
     }
 }
