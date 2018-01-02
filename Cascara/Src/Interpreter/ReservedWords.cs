@@ -24,7 +24,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// Defines all strings that have special meaning in the interpreter.

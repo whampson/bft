@@ -23,20 +23,36 @@
 
 using System;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
+    /// <summary>
+    /// The exception that is thrown when a syntactical error is found while interpreting
+    /// the source code of a <see cref="BinaryLayout"/>.
+    /// </summary>
     public class SyntaxException : LayoutException
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SyntaxException"/> class.
+        /// </summary>
         internal SyntaxException()
             : base()
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SyntaxException"/> class.
+        /// </summary>
+        /// <param name="message">A message that describes the error.</param>
         internal SyntaxException(string message)
             : base(message)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SyntaxException"/> class.
+        /// </summary>
+        /// <param name="message">A message that describes the error.</param>
+        /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         internal SyntaxException(string message, Exception innerException)
             : base(message, innerException)
         {

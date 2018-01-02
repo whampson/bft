@@ -22,8 +22,9 @@
 #endregion
 
 using System.Collections.Generic;
+using WHampson.Cascara.Extensions;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
     internal static partial class ReservedWords
     {
