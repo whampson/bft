@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
 using System.Xml.Linq;
@@ -81,6 +82,8 @@ namespace WHampson.Cascara
             }
         }
 
+        protected Dictionary<string, string> _metadata;
+
         private BinaryLayout(string name, Version version, string sourcePath)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -96,6 +99,7 @@ namespace WHampson.Cascara
             Name = name;
             Version = version;
             SourcePath = sourcePath;
+            _metadata = new Dictionary<string, string>();
         }
 
         /// <summary>
@@ -115,7 +119,7 @@ namespace WHampson.Cascara
         {
             get
             {
-                if (RootStatement.Parameters.TryGetValue(key, out string value))
+                if (_metadata.TryGetValue(key, out string value))
                 {
                     return value;
                 }
@@ -131,14 +135,19 @@ namespace WHampson.Cascara
             get;
         }
 
+        public Version Version
+        {
+            get;
+        }
+
         public string SourcePath
         {
             get;
         }
 
-        public Version Version
+        public IReadOnlyDictionary<string, string> Metadata
         {
-            get;
+            get { return _metadata; }
         }
 
         internal Statement RootStatement
