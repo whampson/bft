@@ -128,7 +128,11 @@ namespace WHampson.Cascara.Interpreter
             get { return _nestedStatements; }
         }
 
-        internal bool IsStructDefinition
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="Statement"/>
+        /// defines a structure object.
+        /// </summary>
+        internal bool IsStructureDefinition
         {
             get
             {
@@ -238,16 +242,19 @@ namespace WHampson.Cascara.Interpreter
         /// </remarks>
         protected abstract void ExtractInfo();
 
+        /// <summary>
+        /// Analyzes the statement for syntax errors.
+        /// </summary>
         private void Validate()
         {
             // Check that nested statements occur where they should
-            if (HasNestedStatements && !(IsStructDefinition || StatementType == StatementType.TypeDefinition))
+            if (HasNestedStatements && !(IsStructureDefinition || StatementType == StatementType.TypeDefinition))
             {
                 string msg = Resources.SyntaxExceptionUnexpectedNestedStatement;
                 Statement nested = NestedStatements.ElementAt(0);
                 throw LayoutException.Create<SyntaxException>(null, nested, msg);
             }
-            else if (!HasNestedStatements && IsStructDefinition)
+            else if (!HasNestedStatements && IsStructureDefinition)
             {
                 string msg = Resources.SyntaxExceptionEmptyStructure;
                 throw LayoutException.Create<SyntaxException>(null, this, msg);
