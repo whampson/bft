@@ -119,12 +119,20 @@ namespace WHampson.Cascara.Interpreter
             get { return _nestedStatements; }
         }
 
+        /// <summary>
+        /// Analyzes the <see cref="Statement"/> for syntax errors,
+        /// reads parameters, and determines the statement type.
+        /// </summary>
         protected void Parse()
         {
             ExtractInfo();
             DetermineType();
         }
 
+        /// <summary>
+        /// Adds a <see cref="Statement"/> to the list of nested statements for this <see cref="Statement"/>.
+        /// </summary>
+        /// <param name="stmt">The nested <see cref="Statement"/> to add.</param>
         protected void AddNestedStatement(Statement stmt)
         {
             if (stmt == null)
@@ -139,6 +147,11 @@ namespace WHampson.Cascara.Interpreter
             _nestedStatements.Add(stmt);
         }
 
+        /// <summary>
+        /// Sets a parameter value.
+        /// </summary>
+        /// <param name="key">The parameter name.</param>
+        /// <param name="value">The parameter value.</param>
         protected void SetParameter(string key, string value)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -304,12 +317,12 @@ namespace WHampson.Cascara.Interpreter
         /// <summary>
         /// Directs the interpreter to carry out some command.
         /// </summary>
-        Directive,                  // <align count="2"/>, <include path="foo.xml"/>, <echo message="Fee Fie Foe Fum!"/>
+        Directive,
 
         /// <summary>
         /// Defines an object at the current address in the file.
         /// </summary>
-        FileObjectDefinition,       // <float/>, <int name="foo"/>, <struct name="my_struct"><float/></struct>
+        FileObjectDefinition,
 
         /// <summary>
         /// Defines a variable with some value in the current scope.
@@ -317,11 +330,11 @@ namespace WHampson.Cascara.Interpreter
         /// <remarks>
         /// Local variables are not mapped to the file data.
         /// </remarks>
-        LocalVariableDefinition,    // <local name="a" value="4"/>, 
+        LocalVariableDefinition,
 
         /// <summary>
         /// Defines a new data type and a globally-accessible identifier for that type.
         /// </summary>
-        TypeDefinition,             // <typedef name="my_int" kind="int"/>
+        TypeDefinition,
     }
 }

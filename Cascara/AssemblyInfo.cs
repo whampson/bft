@@ -29,8 +29,14 @@ using System.Runtime.CompilerServices;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Utility class for getting information about the executing assembly.
+    /// </summary>
     internal static class AssemblyInfo
     {
+        /// <summary>
+        /// Gets the version of the executing assembly.
+        /// </summary>
         internal static Version AssemblyVersion
         {
             get { return Assembly.GetExecutingAssembly().GetName().Version; }

@@ -28,8 +28,19 @@ using WHampson.Cascara.Extensions;
 
 namespace WHampson.Cascara.Interpreter.Xml
 {
+    /// <summary>
+    /// Represents a <see cref="Statement"/> in XML syntax.
+    /// </summary>
     internal sealed class XmlStatement : Statement
     {
+        /// <summary>
+        /// Creates a new <see cref="XmlStatement"/> using the specified <see cref="XElement"/>.
+        /// </summary>
+        /// <param name="elem">The XML element to parse.</param>
+        /// <returns>The new <see cref="XmlStatement"/> object.</returns>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the specified <see cref="XElement"/> is not a valid <see cref="Statement"/>.
+        /// </exception>
         public static XmlStatement Parse(XElement elem)
         {
             XmlStatement stmt = new XmlStatement(elem);
@@ -38,6 +49,14 @@ namespace WHampson.Cascara.Interpreter.Xml
             return stmt;
         }
 
+        /// <summary>
+        /// Extracts source code line information from the specified <see cref="XElement"/>.
+        /// </summary>
+        /// <param name="elem"></param>
+        /// <returns>
+        /// An integer pair representing the text coordinates of the statement in the source code.
+        /// 'Item1' is the line number; 'Item2' is the column number.
+        /// </returns>
         private static Tuple<int, int> GetLineInfo(XElement elem)
         {
             if (elem == null)
@@ -54,7 +73,10 @@ namespace WHampson.Cascara.Interpreter.Xml
         {
             Element = sourceElement;
         }
-
+        
+        /// <summary>
+        /// Gets the <see cref="XElement"/> that created this <see cref="Statement"/>.
+        /// </summary>
         internal XElement Element
         {
             get;
