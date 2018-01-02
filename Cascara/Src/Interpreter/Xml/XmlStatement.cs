@@ -21,42 +21,68 @@
  */
 #endregion
 
+using System;
+using System.Xml;
 using System.Xml.Linq;
+using WHampson.Cascara.Extensions;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter.Xml
 {
     internal sealed class XmlStatement : Statement
     {
-        public XmlStatement(XElement sourceElement)
-            : base(sourceElement)
+        public static XmlStatement Parse(XElement elem)
         {
+            XmlStatement stmt = new XmlStatement(elem);
+            stmt.Parse();
+
+            return stmt;
         }
 
-        protected override void Parse()
+        private static Tuple<int, int> GetLineInfo(XElement elem)
         {
-            XElement sourceElem = (XElement) SourceObject;
+            if (elem == null)
+            {
+                throw new ArgumentNullException(nameof(elem));
+            }
+            IXmlLineInfo lineInfo = (IXmlLineInfo) elem;
 
+            return new Tuple<int, int>(lineInfo.LineNumber, lineInfo.LinePosition);
+        }
+
+        private XmlStatement(XElement sourceElement)
+            : base(GetLineInfo(sourceElement))
+        {
+            Element = sourceElement;
+        }
+
+        internal XElement Element
+        {
+            get;
+        }
+
+        protected override void ExtractInfo()
+        {
             // Extract keyword
-            Keyword = sourceElem.Name.LocalName;
+            Keyword = Element.Name.LocalName;
 
             // Check syntax
-            if (!string.IsNullOrEmpty(sourceElem.Value))
+            if (!string.IsNullOrEmpty(Element.Value))
             {
-                string text = sourceElem.Value.Ellipses(25);
+                string text = Element.Value.Ellipses(25);
                 string fmt = Resources.SyntaxExceptionXmlUnexpectedText;
-                throw LayoutException.Create<SyntaxException>(null, sourceElem, fmt, text, Keyword);
+                throw LayoutException.Create<SyntaxException>(null, this, fmt, text, Keyword);
             }
 
             // Extract parameters
-            foreach (XAttribute attr in sourceElem.Attributes())
+            foreach (XAttribute attr in Element.Attributes())
             {
                 SetParameter(attr.Name.LocalName, attr.Value);
             }
 
             // Parse nested statements
-            foreach (XElement elem in sourceElem.Elements())
+            foreach (XElement elem in Element.Elements())
             {
-                AddNestedStatement(new XmlStatement(elem));
+                AddNestedStatement(XmlStatement.Parse(elem));
             }
         }
     }
