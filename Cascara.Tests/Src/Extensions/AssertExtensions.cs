@@ -9,7 +9,7 @@ namespace Cascara.Tests.Extensions
             where T : Exception
         {
             var ex = Assert.Throws<T>(testCode);
-            Assert.Equal(ex.Message, message);
+            Assert.Equal(message, ex.Message);
 
             return ex;
         }
@@ -20,7 +20,27 @@ namespace Cascara.Tests.Extensions
             string message = string.Format(fmt, args);
 
             var ex = Assert.Throws<T>(testCode);
-            Assert.Equal(ex.Message, message);
+            Assert.Equal(message, ex.Message);
+
+            return ex;
+        }
+
+        public static T ThrowsAnyWithMessage<T>(Func<object> testCode, string message)
+            where T : Exception
+        {
+            var ex = Assert.ThrowsAny<T>(testCode);
+            Assert.Equal(message, ex.Message);
+
+            return ex;
+        }
+
+        public static T ThrowsAnyWithMessage<T>(Func<object> testCode, string fmt, params object[] args)
+            where T : Exception
+        {
+            string message = string.Format(fmt, args);
+
+            var ex = Assert.ThrowsAny<T>(testCode);
+            Assert.Equal(message, ex.Message);
 
             return ex;
         }
