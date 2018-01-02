@@ -54,7 +54,8 @@ namespace WHampson.Cascara
                         throw;
                     }
 
-                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLayoutLoadFailure);
+                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
+                    throw LayoutException.Create<LayoutException>(null, e, null, msg);
                 }
 
                 // Create and return layout
@@ -71,7 +72,8 @@ namespace WHampson.Cascara
                 }
                 catch (XmlException e)
                 {
-                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLayoutLoadFailure);
+                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
+                    throw LayoutException.Create<LayoutException>(null, e, null, msg);
                 }
 
                 // Create and return layout
@@ -83,20 +85,23 @@ namespace WHampson.Cascara
                 // Ensure root element is named correctly
                 if (doc.Root.Name.LocalName != Keywords.XmlDocumentRoot)
                 {
-                    throw LayoutException.Create<SyntaxException>(null, null, Resources.SyntaxExceptionXmlInvalidRootElement);
+                    string msg = Resources.SyntaxExceptionXmlInvalidRootElement;
+                    throw LayoutException.Create<SyntaxException>(null, null, msg, Keywords.XmlDocumentRoot);
                 }
 
                 // Ensure root element is not empty
                 if (!doc.Root.HasElements)
                 {
-                    throw LayoutException.Create<SyntaxException>(null, null, Resources.SyntaxExceptionEmptyStructure);
+                    string msg = Resources.SyntaxExceptionEmptyStructure;
+                    throw LayoutException.Create<SyntaxException>(null, null, msg);
                 }
 
                 // Read name; ensure it's present
                 string name = GetLayoutName(doc);
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    throw LayoutException.Create<LayoutException>(null, null, Resources.SyntaxExceptionMissingLayoutName);
+                    string msg = Resources.SyntaxExceptionMissingLayoutName;
+                    throw LayoutException.Create<LayoutException>(null, null, msg);
                 }
 
                 // Read version
@@ -125,7 +130,8 @@ namespace WHampson.Cascara
 
                 if (!Version.TryParse(versionAttr.Value, out Version ver))
                 {
-                    throw LayoutException.Create<LayoutException>(null, null, Resources.LayoutExceptionMalformattedLayoutVersion);
+                    string msg = Resources.LayoutExceptionMalformattedLayoutVersion;
+                    throw LayoutException.Create<LayoutException>(null, null, msg, versionAttr.Value);
                 }
 
                 return ver;
@@ -165,7 +171,8 @@ namespace WHampson.Cascara
                 }
                 catch (LayoutException e)
                 {
-                    throw LayoutException.Create<LayoutException>(this, null, Resources.LayoutExceptionLayoutLoadFailure);
+                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
+                    throw LayoutException.Create<LayoutException>(this, e, null, msg);
                 }
             }
         }
