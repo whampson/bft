@@ -38,9 +38,6 @@ namespace WHampson.Cascara.Interpreter.Xml
         /// </summary>
         /// <param name="elem">The XML element to parse.</param>
         /// <returns>The new <see cref="XmlStatement"/> object.</returns>
-        /// <exception cref="SyntaxException">
-        /// Thrown if the specified <see cref="XElement"/> is not a valid <see cref="Statement"/>.
-        /// </exception>
         public static XmlStatement Parse(XElement elem)
         {
             XmlStatement stmt = new XmlStatement(elem);
@@ -71,6 +68,11 @@ namespace WHampson.Cascara.Interpreter.Xml
         private XmlStatement(XElement sourceElement)
             : base(GetLineInfo(sourceElement))
         {
+            if (sourceElement == null)
+            {
+                throw new ArgumentNullException(nameof(sourceElement));
+            }
+
             Element = sourceElement;
         }
         
