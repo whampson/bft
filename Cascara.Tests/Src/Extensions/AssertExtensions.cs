@@ -1,7 +1,7 @@
 ﻿using System;
 using Xunit;
 
-namespace Cascara.Tests
+namespace Cascara.Tests.Extensions
 {
     public class AssertExtensions : Assert
     {
