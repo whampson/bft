@@ -61,29 +61,20 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to List cannot be empty..
+        ///   Looks up a localized string similar to Collection must contain at least one element..
         /// </summary>
-        internal static string ArgumentExceptionEmptyList {
+        internal static string ArgumentExceptionEmptyCollection {
             get {
-                return ResourceManager.GetString("ArgumentExceptionEmptyList", resourceCulture);
+                return ResourceManager.GetString("ArgumentExceptionEmptyCollection", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Path cannot be empty or null..
+        ///   Looks up a localized string similar to Parameter cannot be empty or null..
         /// </summary>
-        internal static string ArgumentExceptionEmptyPath {
+        internal static string ArgumentExceptionEmptyString {
             get {
-                return ResourceManager.GetString("ArgumentExceptionEmptyPath", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XML data cannot be empty or null..
-        /// </summary>
-        internal static string ArgumentExceptionEmptyXmlData {
-            get {
-                return ResourceManager.GetString("ArgumentExceptionEmptyXmlData", resourceCulture);
+                return ResourceManager.GetString("ArgumentExceptionEmptyString", resourceCulture);
             }
         }
         
@@ -97,7 +88,7 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Must be a non-negative integer..
+        ///   Looks up a localized string similar to Parameter must be a non-negative integer..
         /// </summary>
         internal static string ArgumentExceptionNonNegativeInteger {
             get {
@@ -106,7 +97,7 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Must be a value type..
+        ///   Looks up a localized string similar to Parameter must be a value type..
         /// </summary>
         internal static string ArgumentExceptionValueType {
             get {
@@ -124,29 +115,11 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Attribute &apos;{0}&apos; cannot have an empty value..
+        ///   Looks up a localized string similar to At least one file object declaration required..
         /// </summary>
-        internal static string LayoutExceptionEmptyAttribute {
+        internal static string LayoutExceptionEmptyStructure {
             get {
-                return ResourceManager.GetString("LayoutExceptionEmptyAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Empty Binary Layout..
-        /// </summary>
-        internal static string LayoutExceptionEmptyLayout {
-            get {
-                return ResourceManager.GetString("LayoutExceptionEmptyLayout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Empty struct..
-        /// </summary>
-        internal static string LayoutExceptionEmptyStruct {
-            get {
-                return ResourceManager.GetString("LayoutExceptionEmptyStruct", resourceCulture);
+                return ResourceManager.GetString("LayoutExceptionEmptyStructure", resourceCulture);
             }
         }
         
@@ -169,6 +142,24 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to load Binary Layout data..
+        /// </summary>
+        internal static string LayoutExceptionLoadFailure {
+            get {
+                return ResourceManager.GetString("LayoutExceptionLoadFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid version number..
+        /// </summary>
+        internal static string LayoutExceptionMalformattedLayoutVersion {
+            get {
+                return ResourceManager.GetString("LayoutExceptionMalformattedLayoutVersion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Missing required attribute &apos;{0}&apos;..
         /// </summary>
         internal static string LayoutExceptionMissingRequiredAttribute {
@@ -187,15 +178,6 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unknown identifier &apos;{0}&apos;..
-        /// </summary>
-        internal static string LayoutExceptionUnknownIdentifier {
-            get {
-                return ResourceManager.GetString("LayoutExceptionUnknownIdentifier", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Unknown type or directive &apos;{0}&apos;..
         /// </summary>
         internal static string LayoutExceptionUnknownType {
@@ -205,11 +187,11 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to load XML data for Binary Layout..
+        ///   Looks up a localized string similar to Layout version &apos;{0}&apos; is not currently supported..
         /// </summary>
-        internal static string LayoutExceptionXmlLoadFailure {
+        internal static string LayoutExceptionUnsupportedLayoutVersion {
             get {
-                return ResourceManager.GetString("LayoutExceptionXmlLoadFailure", resourceCulture);
+                return ResourceManager.GetString("LayoutExceptionUnsupportedLayoutVersion", resourceCulture);
             }
         }
         
@@ -219,6 +201,33 @@ namespace WHampson.Cascara {
         internal static string NotSupportedExceptionElementAccess {
             get {
                 return ResourceManager.GetString("NotSupportedExceptionElementAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Missing name for Binary Layout..
+        /// </summary>
+        internal static string SyntaxExceptionMissingLayoutName {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionMissingLayoutName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown identifier &apos;{0}&apos;..
+        /// </summary>
+        internal static string SyntaxExceptionUnknownIdentifier {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionUnknownIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The identifier &apos;{0}&apos; can only be used for the root element..
+        /// </summary>
+        internal static string SyntaxExceptionXmlInvalidUsageOfRootElement {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionXmlInvalidUsageOfRootElement", resourceCulture);
             }
         }
         
