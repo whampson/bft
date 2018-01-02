@@ -54,7 +54,7 @@ namespace WHampson.Cascara
                         throw;
                     }
 
-                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLoadFailure);
+                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLayoutLoadFailure);
                 }
 
                 // Create and return layout
@@ -71,7 +71,7 @@ namespace WHampson.Cascara
                 }
                 catch (XmlException e)
                 {
-                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLoadFailure);
+                    throw LayoutException.Create<LayoutException>(null, e, null, Resources.LayoutExceptionLayoutLoadFailure);
                 }
 
                 // Create and return layout
@@ -80,6 +80,18 @@ namespace WHampson.Cascara
 
             private static XmlBinaryLayout CreateXmlBinaryLayout(XDocument doc, string sourcePath)
             {
+                // Ensure root element is named correctly
+                if (doc.Root.Name.LocalName != Keywords.XmlDocumentRoot)
+                {
+                    throw LayoutException.Create<SyntaxException>(null, null, Resources.SyntaxExceptionXmlInvalidRootElement);
+                }
+
+                // Ensure root element is not empty
+                if (!doc.Root.HasElements)
+                {
+                    throw LayoutException.Create<SyntaxException>(null, null, Resources.SyntaxExceptionEmptyStructure);
+                }
+
                 // Read name; ensure it's present
                 string name = GetLayoutName(doc);
                 if (string.IsNullOrWhiteSpace(name))
@@ -134,13 +146,26 @@ namespace WHampson.Cascara
 
             protected override void Initialize()
             {
+                // Read metadata from root element attributes
+                foreach (XAttribute attr in Document.Root.Attributes())
+                {
+                    _metadata[attr.Name.LocalName] = attr.Value;
+                }
+
+                // Replace root elem with parameterless struct elem
+                // so we don't get error about using root elem name incorrectly
+                XElement elem = new XElement(Document.Root);
+                elem.Name = Keywords.Struct;
+                elem.Attributes().Remove();
+
+                // Parse XML data
                 try
                 {
-                    RootStatement = XmlStatement.Parse(Document.Root);
+                    RootStatement = XmlStatement.Parse(elem);
                 }
                 catch (LayoutException e)
                 {
-                    throw LayoutException.Create<LayoutException>(this, null, Resources.LayoutExceptionLoadFailure);
+                    throw LayoutException.Create<LayoutException>(this, null, Resources.LayoutExceptionLayoutLoadFailure);
                 }
             }
         }
