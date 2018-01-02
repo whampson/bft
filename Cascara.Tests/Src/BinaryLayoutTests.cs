@@ -39,7 +39,7 @@ namespace Cascara.Tests
 
             if (version != null)
             {
-                allAttrs.Add(Tuple.Create("version", version));
+                allAttrs.Add(Tuple.Create(Parameters.Version, version));
             }
             if (body == null)
             {

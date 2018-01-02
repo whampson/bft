@@ -42,8 +42,8 @@ namespace WHampson.Cascara.Interpreter
             public const string Message = "message";
             public const string Name = "name";
             public const string Path = "path";
-            //public const string Raw = "raw";
             public const string Value = "value";
+            public const string Version = "version";
 
             public static readonly HashSet<string> AllParameters = new HashSet<string>(
                 typeof(Parameters).GetPublicConstants<string>());

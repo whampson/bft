@@ -37,8 +37,6 @@ namespace WHampson.Cascara
     {
         internal sealed class XmlBinaryLayout : BinaryLayout
         {
-            private const string VersionAttrName = "version";
-
             public static XmlBinaryLayout LoadSource(string path)
             {
                 // Load XML document
@@ -122,7 +120,7 @@ namespace WHampson.Cascara
 
             private static Version GetLayoutVersion(XDocument doc)
             {
-                XAttribute versionAttr = doc.Root.Attribute(VersionAttrName);
+                XAttribute versionAttr = doc.Root.Attribute(Parameters.Version);
                 if (versionAttr == null)
                 {
                     return AssemblyInfo.AssemblyVersion;

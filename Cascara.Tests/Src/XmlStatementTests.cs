@@ -82,8 +82,8 @@ namespace Cascara.Tests
         public void Parse_Invalid_BadParams()
         {
             // Arrange
-            string data1 = BuildXmlElement("local", Tuple.Create("name", "foo"));
-            string data2 = BuildXmlElement("align", Tuple.Create("bogus", "true"));
+            string data1 = BuildXmlElement(Keywords.Local, Tuple.Create("name", "foo"));
+            string data2 = BuildXmlElement(Keywords.Align, Tuple.Create("bogus", "true"));
             XElement elem1 = ParseXmlElement(data1);
             XElement elem2 = ParseXmlElement(data2);
             string expectedMissing = Parameters.Value;
@@ -130,7 +130,7 @@ namespace Cascara.Tests
         [Fact]
         public void Parse_Invalid_EmptyStructure()
         {
-            string data = BuildXmlElement("struct");
+            string data = BuildXmlElement(Keywords.Struct);
             XElement elem = ParseXmlElement(data);
 
             // Act, assert
