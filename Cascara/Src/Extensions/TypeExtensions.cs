@@ -26,7 +26,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Extensions
 {
     /// <summary>
     /// Extension methods for the <see cref="System.Type"/> class.

@@ -21,7 +21,7 @@
  */
 #endregion
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Extensions
 {
     /// <summary>
     /// Extension methods for the <see cref="string"/> class.
