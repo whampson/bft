@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Cascara.Tests.Extensions;
+using System;
 using System.Linq;
 using System.Xml.Linq;
 using WHampson.Cascara;
+using WHampson.Cascara.Interpreter;
+using WHampson.Cascara.Interpreter.Xml;
 using Xunit;
 using Xunit.Abstractions;
+using static WHampson.Cascara.Interpreter.ReservedWords;
 
 namespace Cascara.Tests
 {
@@ -14,7 +18,23 @@ namespace Cascara.Tests
         {
         }
 
-        private XElement CreateXmlElement(string data)
+        private string BuildXmlElement(string name, params Tuple<string, string>[] attrs)
+        {
+            return BuildXmlElement(name, "", attrs);
+        }
+
+        private string BuildXmlElement(string name, string innerData, params Tuple<string, string>[] attrs)
+        {
+            string attrString = "";
+            foreach (Tuple<string, string> t in attrs)
+            {
+                attrString += string.Format(" {0}='{1}'", t.Item1, t.Item2);
+            }
+
+            return string.Format("<{0}{1}>{2}</{0}>", name, attrString, innerData);
+        }
+
+        private XElement Parse(string data)
         {
             XDocument doc = XDocument.Parse(data, LoadOptions.SetLineInfo);
 
@@ -22,18 +42,20 @@ namespace Cascara.Tests
         }
 
         [Fact]
-        public void TestCreate()
+        public void Parse_Simple()
         {
             // Arrange
-            string expectedKeyword = "foo";
+            string expectedKeyword = Keywords.Int;
             bool expectedHasParameters = false;
             int expectedParameterCount = 0;
             bool expectedHasNestedStatements = false;
             int expectedNestedStatementsCount = 0;
-            XElement elem = CreateXmlElement("<foo/>");
+            StatementType expectedType = StatementType.FileObjectDefinition;
+            string data = BuildXmlElement(expectedKeyword);
+            XElement elem = Parse(data);
 
             // Act
-            Statement stmt = new XmlStatement(elem);
+            Statement stmt = XmlStatement.Parse(elem);
             Output.WriteLine(stmt.ToString());
 
             // Assert
@@ -42,49 +64,26 @@ namespace Cascara.Tests
             Assert.Equal(stmt.Parameters.Count, expectedParameterCount);
             Assert.Equal(stmt.HasNestedStatements, expectedHasNestedStatements);
             Assert.Equal(stmt.NestedStatements.Count(), expectedNestedStatementsCount);
+            Assert.Equal(stmt.StatementType, expectedType);
         }
 
         [Fact]
-        public void TestCreateParametered()
+        public void Parse_Complex()
         {
             // Arrange
-            string expectedKeyword = "int";
-            bool expectedHasParameters = true;
-            int expectedParameterCount = 2;
-            bool expectedHasNestedStatements = false;
-            int expectedNestedStatementsCount = 0;
-            Tuple<string, string> expectedParam1 = Tuple.Create("name", "foo");
-            Tuple<string, string> expectedParam2 = Tuple.Create("count", "5");
-            XElement elem = CreateXmlElement("<int name='foo' count='5'/>");
-
-            // Act
-            Statement stmt = new XmlStatement(elem);
-            Output.WriteLine(stmt.ToString());
-
-            // Assert
-            Assert.Equal(stmt.Keyword, expectedKeyword);
-            Assert.Equal(stmt.HasParameters, expectedHasParameters);
-            Assert.Equal(stmt.Parameters.Count, expectedParameterCount);
-            Assert.Equal(stmt.HasNestedStatements, expectedHasNestedStatements);
-            Assert.Equal(stmt.NestedStatements.Count(), expectedNestedStatementsCount);
-            Assert.Equal(stmt.Parameters[expectedParam1.Item1], expectedParam1.Item2);
-            Assert.Equal(stmt.Parameters[expectedParam2.Item1], expectedParam2.Item2);
-        }
-
-        [Fact]
-        public void TestCreateNested()
-        {
-            // Arrange
-            string expectedKeywordParent = "struct";
-            string[] expectedKeywordChild = { "int", "float" };
+            string expectedKeywordParent = Keywords.Struct;
+            string[] expectedKeywordChild = { Keywords.Int, Keywords.Float };
             bool expectedHasParameters = false;
             int expectedParameterCount = 0;
             bool expectedHasNestedStatements = true;
             int expectedNestedStatementsCount = 2;
-            XElement elem = CreateXmlElement("<struct><int/><float/></struct>");
+            StatementType expectedType = StatementType.FileObjectDefinition;
+            string data = BuildXmlElement(expectedKeywordParent,
+                BuildXmlElement(expectedKeywordChild[0]) + BuildXmlElement(expectedKeywordChild[1]));
+            XElement elem = Parse(data);
 
             // Act
-            Statement stmt = new XmlStatement(elem);
+            Statement stmt = XmlStatement.Parse(elem);
             Output.WriteLine(stmt.ToString());
 
             // Assert
@@ -93,6 +92,7 @@ namespace Cascara.Tests
             Assert.Equal(stmt.Parameters.Count, expectedParameterCount);
             Assert.Equal(stmt.HasNestedStatements, expectedHasNestedStatements);
             Assert.Equal(stmt.NestedStatements.Count(), expectedNestedStatementsCount);
+            Assert.Equal(stmt.StatementType, expectedType);
 
             for (int i = 0; i < stmt.NestedStatements.Count(); i++)
             {
@@ -101,14 +101,51 @@ namespace Cascara.Tests
             }
         }
 
+        [Fact(Skip = "Not implemented yet")]
+        public void Parse_Invalid_BadParams()
+        {
+        }
+
         [Fact]
-        public void TestCreateWithText()
+        public void Parse_Invalid_UnknownKeyword()
         {
             // Arrange
-            XElement elem = CreateXmlElement("<string>Hello, world!</string>");
+            string identifier = "foo";
+            string data = BuildXmlElement(identifier);
+            XElement elem = Parse(data);
 
             // Act, assert
-            var ex = Assert.Throws<SyntaxException>(() => new XmlStatement(elem));
+            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem),
+                Resources.SyntaxExceptionUnknownIdentifier, identifier);
+        }
+
+        [Fact]
+        public void Parse_Invalid_RootElementUsage()
+        {
+            // Arrange
+            string identifier = Keywords.XmlDocumentRoot;
+            string data = BuildXmlElement(identifier);
+            XElement elem = Parse(data);
+
+            // Act, assert
+            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem),
+                Resources.SyntaxExceptionXmlInvalidUsageOfRootElement, identifier);
+        }
+
+        [Fact]
+        public void Parse_Invalid_UnexpectedText()
+        {
+            string text = "Hello, world!";
+            string elemName = Keywords.Int;
+            string data = BuildXmlElement(elemName, text);
+            XElement elem = Parse(data);
+
+            // Act, assert
+            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem),
+                Resources.SyntaxExceptionXmlUnexpectedText, text, elemName);
         }
     }
 }
