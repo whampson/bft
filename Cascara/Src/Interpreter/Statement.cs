@@ -24,66 +24,48 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static WHampson.Cascara.Interpreter.ReservedWords;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// Represents an instruction to be carried out by the interpreter.
     /// </summary>
-    internal abstract class Statement : IEquatable<Statement>
+    internal abstract class Statement : ISourceElement, IEquatable<Statement>
     {
-        /// <summary>
-        /// Defines all possible kinds of <see cref="Statement"/>s.
-        /// </summary>
-        public enum StatementType
-        {
-            /// <summary>
-            /// Directs the interpreter to carry out some command.
-            /// </summary>
-            Directive,                  // <align count="2"/>, <include path="foo.xml"/>, <echo message="Fee Fie Foe Fum!"/>
-
-            /// <summary>
-            /// Defines an object at the current address in the file.
-            /// </summary>
-            FileObjectDefinition,       // <float/>, <int name="foo"/>, <struct name="my_struct"><float/></struct>
-
-            /// <summary>
-            /// Defines a variable with some value in the current scope.
-            /// </summary>
-            /// <remarks>
-            /// Local variables are not mapped to the file data.
-            /// </remarks>
-            LocalVariableDefinition,    // <local name="a" value="4"/>, 
-
-            /// <summary>
-            /// Defines a new data type and a globally-accessible identifier for that type.
-            /// </summary>
-            TypeDefinition,             // <typedef name="my_int" kind="int"/>
-        }
-
+        private int _lineNumber;
+        private int _linePosition;
         private List<Statement> _nestedStatements;
         private Dictionary<string, string> _parameters;
 
-        protected Statement(object sourceObject)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Statement"/> class.
+        /// </summary>
+        /// <param name="lineNum">
+        /// The line number in the source code where the statement begins.
+        /// </param>
+        /// <param name="linePos">
+        /// The column number in the source code where the statement begins.
+        /// </param>
+        protected Statement(int lineNum, int linePos)
         {
-            if (sourceObject == null)
-            {
-                throw new ArgumentNullException(nameof(sourceObject));
-            }
-
-            SourceObject = sourceObject;
+            _lineNumber = (lineNum < 1) ? 0 : lineNum;
+            _linePosition = (linePos < 1) ? 0 : linePos;
             _parameters = new Dictionary<string, string>();
             _nestedStatements = new List<Statement>();
-
-            Parse();
+            StatementType = StatementType.None;
         }
 
         /// <summary>
-        /// Gets the object from the source code that created this <see cref="Statement"/>.
+        /// Initializes a new instance of the <see cref="Statement"/> class.
         /// </summary>
-        public object SourceObject
+        /// <param name="lineInfo">
+        /// An integer pair representing the text coordinates of the statement in the source code.
+        /// 'Item1' is the line number; 'Item2' is the column number.
+        /// </param>
+        protected Statement(Tuple<int, int> lineInfo)
+            : this(lineInfo.Item1, lineInfo.Item2)
         {
-            get;
         }
 
         /// <summary>
@@ -95,6 +77,18 @@ namespace WHampson.Cascara
             protected set;
         }
 
+        /// <summary>
+        /// Gets the <see cref="Statement"/> type.
+        /// </summary>
+        public StatementType StatementType
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="Statement"/> has parameters.
+        /// </summary>
         public bool HasParameters
         {
             get { return _parameters.Any(); }
@@ -125,6 +119,12 @@ namespace WHampson.Cascara
             get { return _nestedStatements; }
         }
 
+        protected void Parse()
+        {
+            ExtractInfo();
+            DetermineType();
+        }
+
         protected void AddNestedStatement(Statement stmt)
         {
             if (stmt == null)
@@ -141,10 +141,80 @@ namespace WHampson.Cascara
 
         protected void SetParameter(string key, string value)
         {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException(nameof(key));
+            }
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                throw new ArgumentException(nameof(value));
+            }
+
             _parameters[key.Trim()] = value.Trim();
         }
 
-        protected abstract void Parse();
+        /// <summary>
+        /// Calculates the <see cref="StatementType"/> using the keyword
+        /// extracted from the source code.
+        /// </summary>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the keyword is not valid.
+        /// </exception>
+        protected void DetermineType()
+        {
+            string msg;
+
+            switch (Keyword)
+            {
+                case Keywords.Align:
+                case Keywords.Echo:
+                case Keywords.Include:
+                    StatementType = StatementType.Directive;
+                    break;
+
+                case Keywords.Local:
+                    StatementType = StatementType.LocalVariableDefinition;
+                    break;
+
+                case Keywords.Typedef:
+                    StatementType = StatementType.TypeDefinition;
+                    break;
+
+                case Keywords.XmlDocumentRoot:
+                    msg = Resources.SyntaxExceptionXmlInvalidUsageOfRootElement;
+                    throw LayoutException.Create<SyntaxException>(null, this, msg, Keyword);
+
+                default:
+                    if (!Keywords.AllKeywords.Contains(Keyword))
+                    {
+                        msg = Resources.SyntaxExceptionUnknownIdentifier;
+                        throw LayoutException.Create<SyntaxException>(null, this, msg, Keyword);
+                    }
+
+                    StatementType = StatementType.FileObjectDefinition;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the <see cref="Keyword"/>, <see cref="Parameters"/>,
+        /// and any nested <see cref="Statement"/>s from the source element.
+        /// </summary>
+        /// <remarks>
+        /// Hint: use the <see cref="SetParameter(string, string)"/>
+        /// and <see cref="AddNestedStatement(Statement)"/> helper functions!
+        /// </remarks>
+        protected abstract void ExtractInfo();
+
+        int ISourceElement.LineNumber
+        {
+            get { return _lineNumber; }
+        }
+
+        int ISourceElement.LinePosition
+        {
+            get { return _linePosition; }
+        }
 
         #region Equality
         public bool Equals(Statement other)
@@ -214,10 +284,44 @@ namespace WHampson.Cascara
 
             return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6}, {7} = {8} ]",
                 GetType().Name,
+                nameof(StatementType), StatementType,
                 nameof(Keyword), Keyword,
                 nameof(Parameters), paramStr,
-                nameof(HasNestedStatements), HasNestedStatements,
-                nameof(SourceObject), SourceObject);
+                nameof(HasNestedStatements), HasNestedStatements);
         }
+    }
+
+    /// <summary>
+    /// Defines all possible kinds of <see cref="Statement"/>s.
+    /// </summary>
+    public enum StatementType
+    {
+        /// <summary>
+        /// The type assigned before the <see cref="Statement"/> has been parsed.
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Directs the interpreter to carry out some command.
+        /// </summary>
+        Directive,                  // <align count="2"/>, <include path="foo.xml"/>, <echo message="Fee Fie Foe Fum!"/>
+
+        /// <summary>
+        /// Defines an object at the current address in the file.
+        /// </summary>
+        FileObjectDefinition,       // <float/>, <int name="foo"/>, <struct name="my_struct"><float/></struct>
+
+        /// <summary>
+        /// Defines a variable with some value in the current scope.
+        /// </summary>
+        /// <remarks>
+        /// Local variables are not mapped to the file data.
+        /// </remarks>
+        LocalVariableDefinition,    // <local name="a" value="4"/>, 
+
+        /// <summary>
+        /// Defines a new data type and a globally-accessible identifier for that type.
+        /// </summary>
+        TypeDefinition,             // <typedef name="my_int" kind="int"/>
     }
 }
