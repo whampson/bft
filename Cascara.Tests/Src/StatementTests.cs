@@ -1,5 +1,6 @@
 ﻿using System.Xml.Linq;
-using WHampson.Cascara;
+using WHampson.Cascara.Interpreter;
+using WHampson.Cascara.Interpreter.Xml;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -16,7 +17,7 @@ namespace Cascara.Tests
         {
             XDocument doc = XDocument.Parse(xml, LoadOptions.SetLineInfo);
 
-            return new XmlStatement(doc.Root);
+            return XmlStatement.Parse(doc.Root);
         }
 
         // TODO: make this cleaner and more readable! 
@@ -32,7 +33,7 @@ namespace Cascara.Tests
         [InlineData("<struct><int/><float/></struct>", "<struct><int/><float/></struct>", true)]
         [InlineData("<struct><float/><float/></struct>", "<struct><int/><float/></struct>", false)]
         [InlineData("<struct><int/><float/></struct>", "<struct><int name='foo'/><float/></struct>", false)]
-        public void TestEquality(string leftXml, string rightXml, bool expectedResult)
+        public void Equality(string leftXml, string rightXml, bool expectedResult)
         {
             // Arrange
             Statement stmtA = CreateXmlStatement(leftXml);
