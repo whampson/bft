@@ -115,24 +115,6 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to At least one file object declaration required..
-        /// </summary>
-        internal static string LayoutExceptionEmptyStructure {
-            get {
-                return ResourceManager.GetString("LayoutExceptionEmptyStructure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Must have a root element named &apos;{0}&apos;..
-        /// </summary>
-        internal static string LayoutExceptionInvalidRootElement {
-            get {
-                return ResourceManager.GetString("LayoutExceptionInvalidRootElement", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to A layout named &apos;{0}&apos; already exists in the namespace..
         /// </summary>
         internal static string LayoutExceptionLayoutExists {
@@ -144,9 +126,9 @@ namespace WHampson.Cascara {
         /// <summary>
         ///   Looks up a localized string similar to Unable to load Binary Layout data..
         /// </summary>
-        internal static string LayoutExceptionLoadFailure {
+        internal static string LayoutExceptionLayoutLoadFailure {
             get {
-                return ResourceManager.GetString("LayoutExceptionLoadFailure", resourceCulture);
+                return ResourceManager.GetString("LayoutExceptionLayoutLoadFailure", resourceCulture);
             }
         }
         
@@ -156,33 +138,6 @@ namespace WHampson.Cascara {
         internal static string LayoutExceptionMalformattedLayoutVersion {
             get {
                 return ResourceManager.GetString("LayoutExceptionMalformattedLayoutVersion", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing required attribute &apos;{0}&apos;..
-        /// </summary>
-        internal static string LayoutExceptionMissingRequiredAttribute {
-            get {
-                return ResourceManager.GetString("LayoutExceptionMissingRequiredAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unknown attribute &apos;{0}&apos;..
-        /// </summary>
-        internal static string LayoutExceptionUnknownAttribute {
-            get {
-                return ResourceManager.GetString("LayoutExceptionUnknownAttribute", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unknown type or directive &apos;{0}&apos;..
-        /// </summary>
-        internal static string LayoutExceptionUnknownType {
-            get {
-                return ResourceManager.GetString("LayoutExceptionUnknownType", resourceCulture);
             }
         }
         
@@ -205,6 +160,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to At least one file object declaration required..
+        /// </summary>
+        internal static string SyntaxExceptionEmptyStructure {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionEmptyStructure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Missing name for Binary Layout..
         /// </summary>
         internal static string SyntaxExceptionMissingLayoutName {
@@ -214,11 +178,38 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Missing required parameter &apos;{0}&apos;..
+        /// </summary>
+        internal static string SyntaxExceptionMissingRequiredParameter {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionMissingRequiredParameter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unexpected nested statement..
+        /// </summary>
+        internal static string SyntaxExceptionUnexpectedNestedStatement {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionUnexpectedNestedStatement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Unknown identifier &apos;{0}&apos;..
         /// </summary>
         internal static string SyntaxExceptionUnknownIdentifier {
             get {
                 return ResourceManager.GetString("SyntaxExceptionUnknownIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Must have a root element named &apos;{0}&apos;..
+        /// </summary>
+        internal static string SyntaxExceptionXmlInvalidRootElement {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionXmlInvalidRootElement", resourceCulture);
             }
         }
         
