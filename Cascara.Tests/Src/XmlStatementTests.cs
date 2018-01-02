@@ -151,6 +151,18 @@ namespace Cascara.Tests
         }
 
         [Fact]
+        public void Parse_Invalid_EmptyStructure()
+        {
+            string data = BuildXmlElement("struct");
+            XElement elem = Parse(data);
+
+            // Act, assert
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem),
+                Resources.SyntaxExceptionEmptyStructure);
+        }
+
+        [Fact]
         public void Parse_Invalid_UnexpectedText()
         {
             string text = "Hello, world!";
