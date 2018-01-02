@@ -22,8 +22,9 @@
 #endregion
 
 using System.Collections.Generic;
+using WHampson.Cascara.Extensions;
 
-namespace WHampson.Cascara
+namespace WHampson.Cascara.Interpreter
 {
     internal static partial class ReservedWords
     {
@@ -33,7 +34,7 @@ namespace WHampson.Cascara
         public static class Keywords
         {
             // XML root element
-            public const string DocumentRoot = "cascaraLayout";
+            public const string XmlDocumentRoot = "cascaraLayout";
 
             // Data types
             public const string Bool = "bool";
