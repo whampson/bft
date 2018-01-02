@@ -79,67 +79,6 @@ namespace Cascara.Tests
         }
 
         [Fact]
-        public void Parse_Invalid_BadParams()
-        {
-            // Arrange
-            string data1 = BuildXmlElement(Keywords.Local, Tuple.Create("name", "foo"));
-            string data2 = BuildXmlElement(Keywords.Align, Tuple.Create("bogus", "true"));
-            XElement elem1 = ParseXmlElement(data1);
-            XElement elem2 = ParseXmlElement(data2);
-            string expectedMissing = Parameters.Value;
-            string expectedUnknown = "bogus";
-
-            // Act, assert
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
-                () => XmlStatement.Parse(elem1),
-                Resources.SyntaxExceptionMissingRequiredParameter, expectedMissing);
-
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
-                () => XmlStatement.Parse(elem2),
-                Resources.SyntaxExceptionUnknownIdentifier, expectedUnknown);
-        }
-
-        [Fact]
-        public void Parse_Invalid_UnknownKeyword()
-        {
-            // Arrange
-            string identifier = "foo";
-            string data = BuildXmlElement(identifier);
-            XElement elem = ParseXmlElement(data);
-
-            // Act, assert
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
-                () => XmlStatement.Parse(elem),
-                Resources.SyntaxExceptionUnknownIdentifier, identifier);
-        }
-
-        [Fact]
-        public void Parse_Invalid_RootElementUsage()
-        {
-            // Arrange
-            string identifier = Keywords.XmlDocumentRoot;
-            string data = BuildXmlElement(identifier);
-            XElement elem = ParseXmlElement(data);
-
-            // Act, assert
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
-                () => XmlStatement.Parse(elem),
-                Resources.SyntaxExceptionXmlInvalidUsageOfRootElement, identifier);
-        }
-
-        [Fact]
-        public void Parse_Invalid_EmptyStructure()
-        {
-            string data = BuildXmlElement(Keywords.Struct);
-            XElement elem = ParseXmlElement(data);
-
-            // Act, assert
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
-                () => XmlStatement.Parse(elem),
-                Resources.SyntaxExceptionEmptyStructure);
-        }
-
-        [Fact]
         public void Parse_Invalid_UnexpectedText()
         {
             string text = "Hello, world!";
