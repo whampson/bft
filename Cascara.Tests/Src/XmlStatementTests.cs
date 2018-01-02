@@ -101,9 +101,25 @@ namespace Cascara.Tests
             }
         }
 
-        [Fact(Skip = "Not implemented yet")]
+        [Fact]
         public void Parse_Invalid_BadParams()
         {
+            // Arrange
+            string data1 = BuildXmlElement("local", Tuple.Create("name", "foo"));
+            string data2 = BuildXmlElement("align", Tuple.Create("bogus", "true"));
+            XElement elem1 = Parse(data1);
+            XElement elem2 = Parse(data2);
+            string expectedMissing = Parameters.Value;
+            string expectedUnknown = "bogus";
+
+            // Act, assert
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem1),
+                Resources.SyntaxExceptionMissingRequiredParameter, expectedMissing);
+
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
+                () => XmlStatement.Parse(elem2),
+                Resources.SyntaxExceptionUnknownIdentifier, expectedUnknown);
         }
 
         [Fact]
@@ -115,7 +131,7 @@ namespace Cascara.Tests
             XElement elem = Parse(data);
 
             // Act, assert
-            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
                 () => XmlStatement.Parse(elem),
                 Resources.SyntaxExceptionUnknownIdentifier, identifier);
         }
@@ -129,7 +145,7 @@ namespace Cascara.Tests
             XElement elem = Parse(data);
 
             // Act, assert
-            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
                 () => XmlStatement.Parse(elem),
                 Resources.SyntaxExceptionXmlInvalidUsageOfRootElement, identifier);
         }
@@ -143,7 +159,7 @@ namespace Cascara.Tests
             XElement elem = Parse(data);
 
             // Act, assert
-            var ex = AssertExtensions.ThrowsWithMessage<SyntaxException>(
+            AssertExtensions.ThrowsWithMessage<SyntaxException>(
                 () => XmlStatement.Parse(elem),
                 Resources.SyntaxExceptionXmlUnexpectedText, text, elemName);
         }
