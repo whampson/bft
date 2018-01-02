@@ -21,6 +21,19 @@
  */
 #endregion
 
+using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Cascara.Tests")]
+
+namespace WHampson.Cascara
+{
+    internal static class AssemblyInfo
+    {
+        internal static Version AssemblyVersion
+        {
+            get { return Assembly.GetExecutingAssembly().GetName().Version; }
+        }
+    }
+}
