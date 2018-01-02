@@ -156,16 +156,10 @@ namespace WHampson.Cascara
                     _metadata[attr.Name.LocalName] = attr.Value;
                 }
 
-                // Replace root elem with parameterless struct elem
-                // so we don't get error about using root elem name incorrectly
-                XElement elem = new XElement(Document.Root);
-                elem.Name = Keywords.Struct;
-                elem.Attributes().Remove();
-
                 // Parse XML data
                 try
                 {
-                    RootStatement = XmlStatement.Parse(elem);
+                    RootStatement = XmlStatement.Parse(Document.Root);
                 }
                 catch (LayoutException e)
                 {
