@@ -44,11 +44,11 @@ namespace Cascara.Tests
             bool result2 = stmtB.Equals(stmtA);
 
             // Assert
-            Assert.Equal(result1, expectedResult);
-            Assert.Equal(result2, expectedResult);
+            Assert.Equal(expectedResult, result1);
+            Assert.Equal(expectedResult, result2);
             if (expectedResult == true)
             {
-                Assert.Equal(stmtA.GetHashCode(), stmtB.GetHashCode());
+                Assert.True(stmtA.GetHashCode() == stmtB.GetHashCode());
             }
 
         }

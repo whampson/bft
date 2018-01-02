@@ -18,29 +18,6 @@ namespace Cascara.Tests
         {
         }
 
-        private string BuildXmlElement(string name, params Tuple<string, string>[] attrs)
-        {
-            return BuildXmlElement(name, "", attrs);
-        }
-
-        private string BuildXmlElement(string name, string innerData, params Tuple<string, string>[] attrs)
-        {
-            string attrString = "";
-            foreach (Tuple<string, string> t in attrs)
-            {
-                attrString += string.Format(" {0}='{1}'", t.Item1, t.Item2);
-            }
-
-            return string.Format("<{0}{1}>{2}</{0}>", name, attrString, innerData);
-        }
-
-        private XElement Parse(string data)
-        {
-            XDocument doc = XDocument.Parse(data, LoadOptions.SetLineInfo);
-
-            return doc.Root;
-        }
-
         [Fact]
         public void Parse_Simple()
         {
@@ -52,19 +29,19 @@ namespace Cascara.Tests
             int expectedNestedStatementsCount = 0;
             StatementType expectedType = StatementType.FileObjectDefinition;
             string data = BuildXmlElement(expectedKeyword);
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act
             Statement stmt = XmlStatement.Parse(elem);
             Output.WriteLine(stmt.ToString());
 
             // Assert
-            Assert.Equal(stmt.Keyword, expectedKeyword);
-            Assert.Equal(stmt.HasParameters, expectedHasParameters);
-            Assert.Equal(stmt.Parameters.Count, expectedParameterCount);
-            Assert.Equal(stmt.HasNestedStatements, expectedHasNestedStatements);
-            Assert.Equal(stmt.NestedStatements.Count(), expectedNestedStatementsCount);
-            Assert.Equal(stmt.StatementType, expectedType);
+            Assert.Equal(expectedKeyword, stmt.Keyword);
+            Assert.Equal(expectedHasParameters, stmt.HasParameters);
+            Assert.Equal(expectedParameterCount, stmt.Parameters.Count);
+            Assert.Equal(expectedHasNestedStatements, stmt.HasNestedStatements);
+            Assert.Equal(expectedNestedStatementsCount, stmt.NestedStatements.Count());
+            Assert.Equal(expectedType, stmt.StatementType);
         }
 
         [Fact]
@@ -80,24 +57,24 @@ namespace Cascara.Tests
             StatementType expectedType = StatementType.FileObjectDefinition;
             string data = BuildXmlElement(expectedKeywordParent,
                 BuildXmlElement(expectedKeywordChild[0]) + BuildXmlElement(expectedKeywordChild[1]));
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act
             Statement stmt = XmlStatement.Parse(elem);
             Output.WriteLine(stmt.ToString());
 
             // Assert
-            Assert.Equal(stmt.Keyword, expectedKeywordParent);
-            Assert.Equal(stmt.HasParameters, expectedHasParameters);
-            Assert.Equal(stmt.Parameters.Count, expectedParameterCount);
-            Assert.Equal(stmt.HasNestedStatements, expectedHasNestedStatements);
-            Assert.Equal(stmt.NestedStatements.Count(), expectedNestedStatementsCount);
-            Assert.Equal(stmt.StatementType, expectedType);
+            Assert.Equal(expectedKeywordParent, stmt.Keyword);
+            Assert.Equal(expectedHasParameters, stmt.HasParameters);
+            Assert.Equal(expectedParameterCount, stmt.Parameters.Count);
+            Assert.Equal(expectedHasNestedStatements, stmt.HasNestedStatements);
+            Assert.Equal(expectedNestedStatementsCount, stmt.NestedStatements.Count());
+            Assert.Equal(expectedType, stmt.StatementType);
 
             for (int i = 0; i < stmt.NestedStatements.Count(); i++)
             {
                 Statement childStmt = stmt.NestedStatements.ElementAt(i);
-                Assert.Equal(childStmt.Keyword, expectedKeywordChild[i]);
+                Assert.Equal(expectedKeywordChild[i], childStmt.Keyword);
             }
         }
 
@@ -107,8 +84,8 @@ namespace Cascara.Tests
             // Arrange
             string data1 = BuildXmlElement("local", Tuple.Create("name", "foo"));
             string data2 = BuildXmlElement("align", Tuple.Create("bogus", "true"));
-            XElement elem1 = Parse(data1);
-            XElement elem2 = Parse(data2);
+            XElement elem1 = ParseXmlElement(data1);
+            XElement elem2 = ParseXmlElement(data2);
             string expectedMissing = Parameters.Value;
             string expectedUnknown = "bogus";
 
@@ -128,7 +105,7 @@ namespace Cascara.Tests
             // Arrange
             string identifier = "foo";
             string data = BuildXmlElement(identifier);
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act, assert
             AssertExtensions.ThrowsWithMessage<SyntaxException>(
@@ -142,7 +119,7 @@ namespace Cascara.Tests
             // Arrange
             string identifier = Keywords.XmlDocumentRoot;
             string data = BuildXmlElement(identifier);
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act, assert
             AssertExtensions.ThrowsWithMessage<SyntaxException>(
@@ -154,7 +131,7 @@ namespace Cascara.Tests
         public void Parse_Invalid_EmptyStructure()
         {
             string data = BuildXmlElement("struct");
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act, assert
             AssertExtensions.ThrowsWithMessage<SyntaxException>(
@@ -168,7 +145,7 @@ namespace Cascara.Tests
             string text = "Hello, world!";
             string elemName = Keywords.Int;
             string data = BuildXmlElement(elemName, text);
-            XElement elem = Parse(data);
+            XElement elem = ParseXmlElement(data);
 
             // Act, assert
             AssertExtensions.ThrowsWithMessage<SyntaxException>(
