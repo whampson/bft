@@ -38,8 +38,8 @@ namespace WHampson.Cascara.Interpreter
         private List<Statement> _nestedStatements;
         private Dictionary<string, string> _parameters;
 
-        private Dictionary<StatementType, List<Tuple<string, bool>>> validParameters;
-        private Dictionary<string, List<Tuple<string, bool>>> validParametersDirective;
+        //private Dictionary<StatementType, List<Tuple<string, bool>>> validParameters;
+        //private Dictionary<string, List<Tuple<string, bool>>> validParametersDirective;
 
 
         /// <summary>
@@ -59,10 +59,10 @@ namespace WHampson.Cascara.Interpreter
             _nestedStatements = new List<Statement>();
             StatementType = StatementType.None;
 
-            validParameters = new Dictionary<StatementType, List<Tuple<string, bool>>>();
-            validParametersDirective = new Dictionary<string, List<Tuple<string, bool>>>();
+            //validParameters = new Dictionary<StatementType, List<Tuple<string, bool>>>();
+            //validParametersDirective = new Dictionary<string, List<Tuple<string, bool>>>();
 
-            InitializeValidParametersMaps();
+            //InitializeValidParametersMaps();
         }
 
         /// <summary>
@@ -142,14 +142,13 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Analyzes the <see cref="Statement"/> for syntax errors,
-        /// reads parameters, and determines the statement type.
+        /// Reads parameters and determines the statement type.
         /// </summary>
         protected void Parse()
         {
             ExtractInfo();
             DetermineType();
-            Validate();
+            //Validate();
         }
 
         /// <summary>
@@ -193,9 +192,6 @@ namespace WHampson.Cascara.Interpreter
         /// Calculates the <see cref="StatementType"/> using the keyword
         /// extracted from the source code.
         /// </summary>
-        /// <exception cref="SyntaxException">
-        /// Thrown if the keyword is not valid.
-        /// </exception>
         protected void DetermineType()
         {
             string msg;
@@ -216,17 +212,7 @@ namespace WHampson.Cascara.Interpreter
                     StatementType = StatementType.TypeDefinition;
                     break;
 
-                case Keywords.XmlDocumentRoot:
-                    msg = Resources.SyntaxExceptionXmlInvalidUsageOfRootElement;
-                    throw LayoutException.Create<SyntaxException>(null, this, msg, Keyword);
-
                 default:
-                    if (!Keywords.AllKeywords.Contains(Keyword))
-                    {
-                        msg = Resources.SyntaxExceptionUnknownIdentifier;
-                        throw LayoutException.Create<SyntaxException>(null, this, msg, Keyword);
-                    }
-
                     StatementType = StatementType.FileObjectDefinition;
                     break;
             }
@@ -242,109 +228,109 @@ namespace WHampson.Cascara.Interpreter
         /// </remarks>
         protected abstract void ExtractInfo();
 
-        /// <summary>
-        /// Analyzes the statement for syntax errors.
-        /// </summary>
-        private void Validate()
-        {
-            // Check that nested statements occur where they should
-            if (HasNestedStatements && !(IsStructureDefinition || StatementType == StatementType.TypeDefinition))
-            {
-                string msg = Resources.SyntaxExceptionUnexpectedNestedStatement;
-                Statement nested = NestedStatements.ElementAt(0);
-                throw LayoutException.Create<SyntaxException>(null, nested, msg);
-            }
-            else if (!HasNestedStatements && IsStructureDefinition)
-            {
-                string msg = Resources.SyntaxExceptionEmptyStructure;
-                throw LayoutException.Create<SyntaxException>(null, this, msg);
-            }
+        ///// <summary>
+        ///// Analyzes the statement for syntax errors.
+        ///// </summary>
+        //private void Validate()
+        //{
+        //    // Check that nested statements occur where they should
+        //    if (HasNestedStatements && !(IsStructureDefinition || StatementType == StatementType.TypeDefinition))
+        //    {
+        //        string msg = Resources.SyntaxExceptionUnexpectedNestedStatement;
+        //        Statement nested = NestedStatements.ElementAt(0);
+        //        throw LayoutException.Create<SyntaxException>(null, nested, msg);
+        //    }
+        //    else if (!HasNestedStatements && IsStructureDefinition)
+        //    {
+        //        string msg = Resources.SyntaxExceptionEmptyStructure;
+        //        throw LayoutException.Create<SyntaxException>(null, this, msg);
+        //    }
 
-            List<Tuple<string, bool>> validParamsList;
-            if (StatementType == StatementType.Directive)
-            {
-                validParamsList = validParametersDirective[Keyword];
-            }
-            else
-            {
-                validParamsList = validParameters[StatementType];
-            }
+        //    List<Tuple<string, bool>> validParamsList;
+        //    if (StatementType == StatementType.Directive)
+        //    {
+        //        validParamsList = validParametersDirective[Keyword];
+        //    }
+        //    else
+        //    {
+        //        validParamsList = validParameters[StatementType];
+        //    }
 
-            // Ensure all required parameters are present
-            List<string> seenParams = new List<string>();
-            foreach (Tuple<string, bool> t in validParamsList)
-            {
-                string paramName = t.Item1;
-                bool isRequired = t.Item2;
-                bool paramSupplied = Parameters.ContainsKey(paramName);
+        //    // Ensure all required parameters are present
+        //    List<string> seenParams = new List<string>();
+        //    foreach (Tuple<string, bool> t in validParamsList)
+        //    {
+        //        string paramName = t.Item1;
+        //        bool isRequired = t.Item2;
+        //        bool paramSupplied = Parameters.ContainsKey(paramName);
 
-                if (isRequired && !paramSupplied)
-                {
-                    string msg = Resources.SyntaxExceptionMissingRequiredParameter;
-                    throw LayoutException.Create<SyntaxException>(null, this, msg, paramName);
-                }
-                else if (paramSupplied)
-                {
-                    seenParams.Add(paramName);
-                }
-            }
+        //        if (isRequired && !paramSupplied)
+        //        {
+        //            string msg = Resources.SyntaxExceptionMissingRequiredParameter;
+        //            throw LayoutException.Create<SyntaxException>(null, this, msg, paramName);
+        //        }
+        //        else if (paramSupplied)
+        //        {
+        //            seenParams.Add(paramName);
+        //        }
+        //    }
 
-            // Ensure there are no extra parameters
-            List<string> extraParams = Parameters
-                .Select(p => p.Key)
-                .Except(seenParams)
-                .ToList();
-            if (extraParams.Any())
-            {
-                string msg = Resources.SyntaxExceptionUnknownIdentifier;
-                throw LayoutException.Create<SyntaxException>(null, this, msg, extraParams[0]);
-            }
-        }
+        //    // Ensure there are no extra parameters
+        //    List<string> extraParams = Parameters
+        //        .Select(p => p.Key)
+        //        .Except(seenParams)
+        //        .ToList();
+        //    if (extraParams.Any())
+        //    {
+        //        string msg = Resources.SyntaxExceptionUnknownIdentifier;
+        //        throw LayoutException.Create<SyntaxException>(null, this, msg, extraParams[0]);
+        //    }
+        //}
 
 
-        private void InitializeValidParametersMaps()
-        {
-            validParameters[StatementType.FileObjectDefinition] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Count, false),
-                Tuple.Create(ReservedWords.Parameters.Name, false),
-            };
+        //private void InitializeValidParametersMaps()
+        //{
+        //    validParameters[StatementType.FileObjectDefinition] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Count, false),
+        //        Tuple.Create(ReservedWords.Parameters.Name, false),
+        //    };
 
-            validParameters[StatementType.LocalVariableDefinition] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Name, true),
-                Tuple.Create(ReservedWords.Parameters.Value, true),
-            };
+        //    validParameters[StatementType.LocalVariableDefinition] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Name, true),
+        //        Tuple.Create(ReservedWords.Parameters.Value, true),
+        //    };
 
-            validParameters[StatementType.TypeDefinition] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Kind, true),
-                Tuple.Create(ReservedWords.Parameters.Name, true),
-            };
+        //    validParameters[StatementType.TypeDefinition] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Kind, true),
+        //        Tuple.Create(ReservedWords.Parameters.Name, true),
+        //    };
 
-            // Directives
-            validParametersDirective[Keywords.Align] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Count, false),
-                Tuple.Create(ReservedWords.Parameters.Kind, false),
-            };
+        //    // Directives
+        //    validParametersDirective[Keywords.Align] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Count, false),
+        //        Tuple.Create(ReservedWords.Parameters.Kind, false),
+        //    };
 
-            validParametersDirective[Keywords.Echo] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Message, true),
-            };
+        //    validParametersDirective[Keywords.Echo] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Message, true),
+        //    };
 
-            validParametersDirective[Keywords.Include] = new List<Tuple<string, bool>>()
-            {
-                Tuple.Create(ReservedWords.Parameters.Comment, false),
-                Tuple.Create(ReservedWords.Parameters.Path, true),
-            };
-        }
+        //    validParametersDirective[Keywords.Include] = new List<Tuple<string, bool>>()
+        //    {
+        //        Tuple.Create(ReservedWords.Parameters.Comment, false),
+        //        Tuple.Create(ReservedWords.Parameters.Path, true),
+        //    };
+        //}
 
         int ISourceElement.LineNumber
         {
