@@ -52,7 +52,7 @@ namespace WHampson.Cascara
                         throw;
                     }
 
-                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
+                    string msg = e.Message;
                     throw LayoutException.Create<LayoutException>(null, e, null, msg);
                 }
 
@@ -70,7 +70,7 @@ namespace WHampson.Cascara
                 }
                 catch (XmlException e)
                 {
-                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
+                    string msg = e.Message;
                     throw LayoutException.Create<LayoutException>(null, e, null, msg);
                 }
 
@@ -84,14 +84,7 @@ namespace WHampson.Cascara
                 if (doc.Root.Name.LocalName != Keywords.XmlDocumentRoot)
                 {
                     string msg = Resources.SyntaxExceptionXmlInvalidRootElement;
-                    throw LayoutException.Create<SyntaxException>(null, null, msg, Keywords.XmlDocumentRoot);
-                }
-
-                // Ensure root element is not empty
-                if (!doc.Root.HasElements)
-                {
-                    string msg = Resources.SyntaxExceptionEmptyStructure;
-                    throw LayoutException.Create<SyntaxException>(null, null, msg);
+                    throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg, Keywords.XmlDocumentRoot);
                 }
 
                 // Read name; ensure it's present
@@ -99,11 +92,18 @@ namespace WHampson.Cascara
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     string msg = Resources.SyntaxExceptionMissingLayoutName;
-                    throw LayoutException.Create<LayoutException>(null, null, msg);
+                    throw LayoutException.Create<LayoutException>(null, new XmlSourceEntity(doc.Root), msg);
                 }
 
                 // Read version
                 Version ver = GetLayoutVersion(doc);
+
+                // Ensure root element is not empty
+                if (!doc.Root.HasElements)
+                {
+                    string msg = Resources.SyntaxExceptionEmptyLayout;
+                    throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg);
+                }
 
                 // Create and return layout object
                 return new XmlBinaryLayout(doc, name, ver, sourcePath);
@@ -129,7 +129,7 @@ namespace WHampson.Cascara
                 if (!Version.TryParse(versionAttr.Value, out Version ver))
                 {
                     string msg = Resources.LayoutExceptionMalformattedLayoutVersion;
-                    throw LayoutException.Create<LayoutException>(null, null, msg, versionAttr.Value);
+                    throw LayoutException.Create<LayoutException>(null, new XmlSourceEntity(versionAttr), msg, versionAttr.Value);
                 }
 
                 return ver;
@@ -138,8 +138,12 @@ namespace WHampson.Cascara
             private XmlBinaryLayout(XDocument document, string name, Version version, string sourcePath)
                 : base(name, version, sourcePath)
             {
-                Document = document;
+                if (document == null)
+                {
+                    throw new ArgumentNullException(nameof(document));
+                }
 
+                Document = document;
                 Initialize();
             }
 
@@ -157,15 +161,7 @@ namespace WHampson.Cascara
                 }
 
                 // Parse XML data
-                try
-                {
-                    RootStatement = XmlStatement.Parse(Document.Root);
-                }
-                catch (LayoutException e)
-                {
-                    string msg = Resources.LayoutExceptionLayoutLoadFailure;
-                    throw LayoutException.Create<LayoutException>(this, e, null, msg);
-                }
+                RootStatement = XmlStatement.Parse(Document.Root);
             }
         }
     }
