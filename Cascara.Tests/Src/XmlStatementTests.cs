@@ -83,11 +83,11 @@ namespace Cascara.Tests
         {
             string text = "Hello, world!";
             string elemName = Keywords.Int;
-            string data = BuildXmlElement(elemName, text);
+            string data = BuildXmlElement("outer", BuildXmlElement(elemName, text));
             XElement elem = ParseXmlElement(data);
 
             // Act, assert
-            AssertExtensions.ThrowsWithMessage<SyntaxException>(
+            AssertExtensions.ThrowsWithMessageContaining<SyntaxException>(
                 () => XmlStatement.Parse(elem),
                 Resources.SyntaxExceptionXmlUnexpectedText, text, elemName);
         }

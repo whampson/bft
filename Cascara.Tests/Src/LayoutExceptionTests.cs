@@ -18,7 +18,7 @@ namespace Cascara.Tests
         {
             // Arrange
             BinaryLayout layout = null;
-            ISourceElement srcElem = null;
+            ISourceEntity srcElem = null;
             string msg = null;
             Exception innerException = null;
 
@@ -44,7 +44,7 @@ namespace Cascara.Tests
         {
             // Arrange
             BinaryLayout layout = null;
-            ISourceElement srcElem = null;
+            ISourceEntity srcElem = null;
             string msg = "Test.";
             Exception innerException = null;
 
@@ -70,7 +70,7 @@ namespace Cascara.Tests
         {
             // Inputs
             BinaryLayout layout = null;
-            ISourceElement srcElem = null;
+            ISourceEntity srcElem = null;
             string msg = "Failed to process layout.";
             Exception innerException = new ArgumentNullException("foo", "The parameter was null."); ;
 

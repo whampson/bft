@@ -1,6 +1,7 @@
 ﻿using Cascara.Tests.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Xml;
 using System.Xml.Linq;
 using WHampson.Cascara;
 using WHampson.Cascara.Interpreter;
@@ -76,9 +77,8 @@ namespace Cascara.Tests
             string src = "not xml";
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessage<LayoutException>(
-                () => BinaryLayout.Parse(src),
-                Resources.LayoutExceptionLayoutLoadFailure);
+            var ex = Assert.ThrowsAny<LayoutException>(() => BinaryLayout.Parse(src));
+            Assert.True(ex.InnerException is XmlException);
         }
 
         [Fact]
@@ -88,7 +88,7 @@ namespace Cascara.Tests
             string src = BuildXmlElement("badRoot");
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessage<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
                 () => BinaryLayout.Parse(src),
                 Resources.SyntaxExceptionXmlInvalidRootElement, Keywords.XmlDocumentRoot);
         }
@@ -97,12 +97,12 @@ namespace Cascara.Tests
         public void Parse_Xml_EmptyLayout()
         {
             // Arrange
-            string src = BuildXmlElement(Keywords.XmlDocumentRoot);
+            string src = CreateLayout("");
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessage<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
                 () => BinaryLayout.Parse(src),
-                Resources.SyntaxExceptionEmptyStructure);
+                Resources.SyntaxExceptionEmptyLayout);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace Cascara.Tests
             string src = BuildXmlElement(Keywords.XmlDocumentRoot, BuildXmlElement(Keywords.Int));
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessage<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
                 () => BinaryLayout.Parse(src),
                 Resources.SyntaxExceptionMissingLayoutName);
         }
@@ -125,7 +125,7 @@ namespace Cascara.Tests
             string src = CreateLayout("foo", badVersion, BuildXmlElement(Keywords.Int));
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessage<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
                 () => BinaryLayout.Parse(src),
                 Resources.LayoutExceptionMalformattedLayoutVersion, badVersion);
         }
