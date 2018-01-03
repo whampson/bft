@@ -59,7 +59,7 @@ namespace WHampson.Cascara
         /// with the length provided.
         /// </exception>
         public BinaryFile(int length)
-            : this(Endianness.Little)
+            : this(length, Endianness.Little)
         {
         }
 
