@@ -31,7 +31,7 @@ namespace WHampson.Cascara.Interpreter
     /// <summary>
     /// Represents an instruction to be carried out by the interpreter.
     /// </summary>
-    internal abstract class Statement : ISourceElement, IEquatable<Statement>
+    internal abstract class Statement : ISourceEntity, IEquatable<Statement>
     {
         private int _lineNumber;
         private int _linePosition;
@@ -332,12 +332,12 @@ namespace WHampson.Cascara.Interpreter
         //    };
         //}
 
-        int ISourceElement.LineNumber
+        int ISourceEntity.LineNumber
         {
             get { return _lineNumber; }
         }
 
-        int ISourceElement.LinePosition
+        int ISourceEntity.LinePosition
         {
             get { return _linePosition; }
         }

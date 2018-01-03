@@ -27,7 +27,7 @@ namespace WHampson.Cascara.Interpreter
     /// Represents a generalized piece of <see cref="BinaryLayout"/>
     /// source code with meaning and structure.
     /// </summary>
-    internal interface ISourceElement
+    internal interface ISourceEntity
     {
         /// <summary>
         /// The line number (y-coordinate) that the source element exists on.
