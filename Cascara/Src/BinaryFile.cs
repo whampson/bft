@@ -29,28 +29,53 @@ using System.Text;
 
 namespace WHampson.Cascara
 {
-    public enum Endianness
-    {
-        BigEndian,
-        LittleEndian
-    }
-
+    /// <summary>
+    /// Represents a non-text file.
+    /// </summary>
     public class BinaryFile : IDisposable
     {
         private bool hasBeenDisposed;
         private IntPtr dataPtr;
 
-        private BinaryFile()
+        private BinaryFile(Endianness endianness)
         {
+            if (endianness == null)
+            {
+                throw new ArgumentNullException(nameof(endianness));
+            }
+
             hasBeenDisposed = false;
             dataPtr = IntPtr.Zero;
-            Endianness = Endianness.LittleEndian;
+            Endianness = endianness;
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="BinaryFile"/> object of the specified length
+        /// with little-endian byte order.
+        /// </summary>
+        /// <param name="length">The number of bytes to allocate.</param>
+        /// <exception cref="OutOfMemoryException">
+        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// with the length provided.
+        /// </exception>
         public BinaryFile(int length)
-            : this()
+            : this(Endianness.Little)
         {
-            if (length < 0)
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="BinaryFile"/> object of the specified length.
+        /// </summary>
+        /// <param name="length">The number of bytes to allocate.</param>
+        /// <param name="endianness">The byte order for primitive types.</param>
+        /// <exception cref="OutOfMemoryException">
+        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// with the length provided.
+        /// </exception>
+        public BinaryFile(int length, Endianness endianness)
+            : this(endianness)
+        {
+            if (length < 1)
             {
                 throw new ArgumentOutOfRangeException(nameof(length));
             }
@@ -59,37 +84,106 @@ namespace WHampson.Cascara
             Length = length;
         }
 
+        /// <summary>
+        /// Initializes a new <see cref="BinaryFile"/> object with data
+        /// from the specified byte array with little-endian byte order.
+        /// </summary>
+        /// <param name="data">The array to initialize the file with.</param>
+        /// <exception cref="OutOfMemoryException">
+        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// with the length provided.
+        /// </exception>
+        public BinaryFile(byte[] data)
+            : this(data, Endianness.Little)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="BinaryFile"/> object with data
+        /// from the specified byte array.
+        /// </summary>
+        /// <param name="data">The array to initialize the file with.</param>
+        /// <param name="endianness">The byte order for primitive types.</param>
+        /// <exception cref="OutOfMemoryException">
+        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// with the length provided.
+        /// </exception>
+        public BinaryFile(byte[] data, Endianness endianness)
+            : this(endianness)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+            if (data.Length < 1)
+            {
+                throw new ArgumentException(Resources.ArgumentExceptionEmptyCollection, nameof(data));
+            }
+
+            dataPtr = Marshal.AllocHGlobal(data.Length);
+            Length = data.Length;
+
+            SetBytes(0, data);
+        }
+
+        /// <summary>
+        /// Gets or sets the byte order.
+        /// The value of this property affects the values of primitive types
+        /// returned by <see cref="GetValue{T}(int)"/> and set by <see cref="SetValue{T}(int, T)"/>.
+        /// </summary>
         public Endianness Endianness
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Gets the number of bytes in the <see cref="BinaryFile"/>.
+        /// </summary>
         public int Length
         {
             get;
         }
 
+        /// <summary>
+        /// Gets or sets a byte in the file data.
+        /// </summary>
+        /// <param name="offset">The position in the file data of the byte to get or set.</param>
+        /// <returns>The value of the byte at the offset.</returns>
         public byte this[int offset]
         {
             get { return GetByte(offset); }
             set { SetByte(offset, value); }
         }
 
+        /// <summary>
+        /// Gets the value of a byte in the file data.
+        /// </summary>
+        /// <param name="offset">The position in the file data of the byte to get.</param>
+        /// <returns>The value of the byte at the offset.</returns>
         public byte GetByte(int offset)
         {
             return GetBytes(offset, 1)[0];
         }
 
+        /// <summary>
+        /// Gets a contiguous array of bytes from the file data.
+        /// </summary>
+        /// <param name="offset">The position in the file data of the first byte to get.</param>
+        /// <param name="length">The number of bytes to get.</param>
+        /// <returns>
+        /// An array of the specified length containing the values of all bytes
+        /// beginning at the specified offset.
+        /// </returns>
         public byte[] GetBytes(int offset, int length)
         {
             if (offset < 0 || offset >= Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(offset));
+                throw new ArgumentException(Resources.ArgumentExceptionOffsetTooLarge, nameof(offset));
             }
             if (offset + length > Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(length));
+                throw new ArgumentException(Resources.ArgumentExceptionLengthTooLarge, nameof(length));
             }
 
             byte[] b = new byte[length];
@@ -98,6 +192,12 @@ namespace WHampson.Cascara
             return b;
         }
 
+        /// <summary>
+        /// Gets the value of a primitive type in the file data.
+        /// </summary>
+        /// <typeparam name="T">The type of value to get.</typeparam>
+        /// <param name="offset">The position in the file data of the value to get.</param>
+        /// <returns>The value of the primitive type at the specified offset.</returns>
         public T GetValue<T>(int offset)
             where T : struct
         {
@@ -107,80 +207,67 @@ namespace WHampson.Cascara
                 throw new ArgumentException(Resources.ArgumentExceptionPrimitiveType, nameof(T));
             }
 
-            int size = SizeOf<T>();
-            if (offset + size > Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(offset), Resources.ArgumentExceptionOutOfRangeForType);
-            }
-
-            if (t == typeof(byte))
-            {
-                return (T) Convert.ChangeType(GetByte(offset), t);
-            }
-            else if (t == typeof(sbyte))
-            {
-                return (T) Convert.ChangeType((sbyte) GetByte(offset), t);
-            }
-
-            byte[] b = GetBytes(offset, size);
-            if (Endianness == Endianness.BigEndian)
+            byte[] b = GetBytes(offset, PrimitiveTypeUtils.SizeOf<T>());
+            if (Endianness == Endianness.Big)
             {
                 b = b.Reverse().ToArray();
             }
 
-            object value = default(object);
-            if (t == typeof(bool))
-            {
-                value = BitConverter.ToBoolean(b, 0);
-            }
-            else if (t == typeof(char))
-            {
-                value = BitConverter.ToChar(b, 0);
-            }
-            else if (t == typeof(int))
-            {
-                value = BitConverter.ToInt32(b, 0);
-            }
-
-            if (value == null)
-            {
-                throw new InvalidOperationException("Bug!!");
-            }
-
-            return (T) Convert.ChangeType(value, t);
+            return PrimitiveTypeUtils.GetValue<T>(b);
         }
 
+        /// <summary>
+        /// Sets the value of a byte in the file data.
+        /// </summary>
+        /// <param name="offset">The position in the file data of the byte to set.</param>
+        /// <param name="value">The value to write at the offset.</param>
         public void SetByte(int offset, byte value)
         {
             SetBytes(offset, new byte[] { value });
         }
 
+        /// <summary>
+        /// Sets the values of a contiguous array of bytes in the file data.
+        /// </summary>
+        /// <param name="offset">The position in the file data of the first byte to set.</param>
+        /// <param name="b">The bytes to write at the offset.</param>
         public void SetBytes(int offset, byte[] b)
         {
             if (offset < 0 || offset >= Length)
             {
-                throw new ArgumentOutOfRangeException(nameof(offset));
+                throw new ArgumentException(Resources.ArgumentExceptionOffsetTooLarge, nameof(offset));
             }
             if (offset + b.Length > Length)
             {
-                throw new ArgumentException("blah", nameof(b));
+                throw new ArgumentException(Resources.ArgumentExceptionLengthTooLarge, nameof(b));
             }
 
             Marshal.Copy(b, 0, dataPtr + offset, b.Length);
         }
 
-        //public void SetValue<T>(int offset, T value) where T : struct
-        //{
-        //    if (typeof(T).IsPrimitive)
-        //    {
-        //        // TODO: message
-        //        throw new ArgumentException("blah", nameof(T));
-        //    }
-        //    if (Endianness == Endianness.BigEndian)
-        //    {
-        //        b = b.Reverse().ToArray();
-        //    }
-        //}
+        /// <summary>
+        /// Sets the value of a primitive type in the file data.
+        /// </summary>
+        /// <typeparam name="T">The type of value to set.</typeparam>
+        /// <param name="offset">The position in the file data of the value to set.</param>
+        /// <param name="value">The value to write at the offset.</param>
+        public void SetValue<T>(int offset, T value)
+            where T : struct
+        {
+            Type t = typeof(T);
+            if (!t.IsPrimitive)
+            {
+                throw new ArgumentException(Resources.ArgumentExceptionPrimitiveType, nameof(T));
+            }
+
+            byte[] b = PrimitiveTypeUtils.GetBytes(value);
+            if (Endianness == Endianness.Big)
+            {
+                b = b.Reverse().ToArray();
+            }
+
+            SetBytes(offset, b);
+        }
 
         #region Disposal
         protected virtual void Dispose(bool disposing)
@@ -214,23 +301,39 @@ namespace WHampson.Cascara
         }
         #endregion
 
-        private static int SizeOf<T>()
-            where T : struct
+        public override string ToString()
         {
-            Type t = typeof(T);
-            if (t.IsPrimitive)
+            const int MaxBytes = 16;
+
+            byte[] data = GetBytes(0, Math.Min(Length, MaxBytes));
+            string dataStr = "";
+            foreach (byte b in data)
             {
-                return PrimitiveTypeSizeDictionary[t];
+                dataStr += string.Format(" {0:X2}", b);
             }
+            dataStr = (Length > MaxBytes) ? dataStr.Trim() + "..." : dataStr.Trim();
 
-            return Marshal.SizeOf<T>();
+            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6} ]",
+                GetType().Name,
+                nameof(Length), Length,
+                nameof(Endianness), Endianness,
+                "Data", dataStr);
         }
+    }
 
-        private static readonly IReadOnlyDictionary<Type, int> PrimitiveTypeSizeDictionary = new Dictionary<Type, int>()
-        {
-            { typeof(bool), sizeof(bool) },
-            { typeof(char), sizeof(char) },
-            { typeof(int), sizeof(int) },
-        };
+    /// <summary>
+    /// Specifies the byte order for multi-byte primitive data types.
+    /// </summary>
+    public enum Endianness
+    {
+        /// <summary>
+        /// The most significant byte goes first.
+        /// </summary>
+        Big,
+
+        /// <summary>
+        /// The least significant byte goes first.
+        /// </summary>
+        Little
     }
 }
