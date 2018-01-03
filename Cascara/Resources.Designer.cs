@@ -79,6 +79,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The parameter creates an offset that exceeds the length of the buffer..
+        /// </summary>
+        internal static string ArgumentExceptionLengthTooLarge {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionLengthTooLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nested statement cannot be the same object reference as the current statement..
         /// </summary>
         internal static string ArgumentExceptionNestedStatementReference {
@@ -97,6 +106,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The parameter exceeds the length of the buffer..
+        /// </summary>
+        internal static string ArgumentExceptionOffsetTooLarge {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionOffsetTooLarge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The parameter is out of range for the type provided..
         /// </summary>
         internal static string ArgumentExceptionOutOfRangeForType {
@@ -111,6 +129,15 @@ namespace WHampson.Cascara {
         internal static string ArgumentExceptionPrimitiveType {
             get {
                 return ResourceManager.GetString("ArgumentExceptionPrimitiveType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter type does not match expected type..
+        /// </summary>
+        internal static string ArgumentExceptionTypeMismatch {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionTypeMismatch", resourceCulture);
             }
         }
         

@@ -123,6 +123,9 @@
   <data name="ArgumentExceptionEmptyString" xml:space="preserve">
     <value>Parameter cannot be empty or null.</value>
   </data>
+  <data name="ArgumentExceptionLengthTooLarge" xml:space="preserve">
+    <value>The parameter creates an offset that exceeds the length of the buffer.</value>
+  </data>
   <data name="ArgumentExceptionNestedStatementReference" xml:space="preserve">
     <value>Nested statement cannot be the same object reference as the current statement.</value>
     <comment>!!! RE-WORD !!!</comment>
@@ -130,11 +133,17 @@
   <data name="ArgumentExceptionNonNegativeInteger" xml:space="preserve">
     <value>Parameter must be a non-negative integer.</value>
   </data>
+  <data name="ArgumentExceptionOffsetTooLarge" xml:space="preserve">
+    <value>The parameter exceeds the length of the buffer.</value>
+  </data>
   <data name="ArgumentExceptionOutOfRangeForType" xml:space="preserve">
     <value>The parameter is out of range for the type provided.</value>
   </data>
   <data name="ArgumentExceptionPrimitiveType" xml:space="preserve">
     <value>Parameter must be a primitive type.</value>
+  </data>
+  <data name="ArgumentExceptionTypeMismatch" xml:space="preserve">
+    <value>Parameter type does not match expected type.</value>
   </data>
   <data name="InvalidOperationExceptionReservedSymbolName" xml:space="preserve">
     <value>Internal name for collections used on a symbol that does not represent a collection!</value>
