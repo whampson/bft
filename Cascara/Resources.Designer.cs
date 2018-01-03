@@ -124,15 +124,6 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to load Binary Layout data..
-        /// </summary>
-        internal static string LayoutExceptionLayoutLoadFailure {
-            get {
-                return ResourceManager.GetString("LayoutExceptionLayoutLoadFailure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid version number..
         /// </summary>
         internal static string LayoutExceptionMalformattedLayoutVersion {
@@ -156,6 +147,15 @@ namespace WHampson.Cascara {
         internal static string NotSupportedExceptionElementAccess {
             get {
                 return ResourceManager.GetString("NotSupportedExceptionElementAccess", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Empty layout. At least one statement is required..
+        /// </summary>
+        internal static string SyntaxExceptionEmptyLayout {
+            get {
+                return ResourceManager.GetString("SyntaxExceptionEmptyLayout", resourceCulture);
             }
         }
         
@@ -205,7 +205,7 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Must have a root element named &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Root element must be named &apos;{0}&apos;..
         /// </summary>
         internal static string SyntaxExceptionXmlInvalidRootElement {
             get {
