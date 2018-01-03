@@ -130,8 +130,11 @@
   <data name="ArgumentExceptionNonNegativeInteger" xml:space="preserve">
     <value>Parameter must be a non-negative integer.</value>
   </data>
-  <data name="ArgumentExceptionValueType" xml:space="preserve">
-    <value>Parameter must be a value type.</value>
+  <data name="ArgumentExceptionOutOfRangeForType" xml:space="preserve">
+    <value>The parameter is out of range for the type provided.</value>
+  </data>
+  <data name="ArgumentExceptionPrimitiveType" xml:space="preserve">
+    <value>Parameter must be a primitive type.</value>
   </data>
   <data name="InvalidOperationExceptionReservedSymbolName" xml:space="preserve">
     <value>Internal name for collections used on a symbol that does not represent a collection!</value>
