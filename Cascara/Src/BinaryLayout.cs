@@ -47,8 +47,8 @@ namespace WHampson.Cascara
         /// <param name="path">The path to the file to load.</param>
         /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name, or contains
-        /// a malformatted version.
+        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
@@ -65,8 +65,8 @@ namespace WHampson.Cascara
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name, or contains
-        /// a malformatted version.
+        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
@@ -93,8 +93,8 @@ namespace WHampson.Cascara
         /// <param name="source">The <see cref="BinaryLayout"/> source code string.</param>
         /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name, or contains
-        /// a malformatted version.
+        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
@@ -111,8 +111,8 @@ namespace WHampson.Cascara
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name, or contains
-        /// a malformatted version.
+        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
@@ -276,7 +276,7 @@ namespace WHampson.Cascara
         public sealed override string ToString()
         {
             Dictionary<string, string> meta = _metadata
-                .Where(p => (p.Key != Parameters.Name && p.Key != Parameters.Value))
+                .Where(p => (p.Key != Parameters.Name && p.Key != Parameters.Version))
                 .ToDictionary(p => p.Key, q => q.Value);
             string metaStr = "{";
             foreach (var kvp in meta)
