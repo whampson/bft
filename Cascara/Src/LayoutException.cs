@@ -42,10 +42,10 @@ namespace WHampson.Cascara
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
-        /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the exception.</param>
+        /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, ISourceElement srcElem, string msg)
+        internal static T Create<T>(BinaryLayout layout, ISourceEntity srcElem, string msg)
             where T : LayoutException
         {
             string detailedMsg = BuildDetailedMessage(msg, null, layout, srcElem);
@@ -58,11 +58,11 @@ namespace WHampson.Cascara
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
-        /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the exception.</param>
+        /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, ISourceElement srcElem, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(BinaryLayout layout, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
             where T : LayoutException
         {
             string msg;
@@ -80,10 +80,10 @@ namespace WHampson.Cascara
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
-        /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the exception.</param>
+        /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceElement srcElem, string msg)
+        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceEntity srcElem, string msg)
             where T : LayoutException
         {
             string detailedMsg = BuildDetailedMessage(msg, innerException, layout, srcElem);
@@ -97,11 +97,11 @@ namespace WHampson.Cascara
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
         /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
-        /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the exception.</param>
+        /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceElement srcElem, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
             where T : LayoutException
         {
             string msg;
@@ -118,12 +118,17 @@ namespace WHampson.Cascara
         /// <param name="msg">A brief message that describes the error.</param>
         /// <param name="detailedMsg">A detailed message that describes the error.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
-        /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the exception.</param>
+        /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <returns></returns>
         private static T CreateException<T>(
-            BinaryLayout layout, string msg, string detailedMsg, Exception innerException, ISourceElement srcElem)
+            BinaryLayout layout, string msg, string detailedMsg, Exception innerException, ISourceEntity srcElem)
             where T : LayoutException
         {
+            if (srcElem != null && srcElem.LineNumber > 0 && srcElem.LinePosition > 0)
+            {
+                msg += string.Format(" Line {0}, position {1}.", srcElem.LineNumber, srcElem.LinePosition);
+            }
+
             T ex = (T) Activator.CreateInstance(
                 typeof(T),
                 BindingFlags.NonPublic | BindingFlags.Instance,
@@ -153,10 +158,10 @@ namespace WHampson.Cascara
         /// <param name="exceptionMessage">A message describing the error.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused the error.</param>
         /// <param name="layout">The <see cref="BinaryLayout"/> that caused the error.</param>
-        /// /// <param name="srcElem">The <see cref="ISourceElement"/> that caused the error.</param>
+        /// /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the error.</param>
         /// <returns>The newly-created error message.</returns>
         private static string BuildDetailedMessage(
-            string exceptionMessage, Exception innerException, BinaryLayout layout, ISourceElement srcElem)
+            string exceptionMessage, Exception innerException, BinaryLayout layout, ISourceEntity srcElem)
         {
             if (exceptionMessage == null)
             {
@@ -170,7 +175,7 @@ namespace WHampson.Cascara
             bool hasLayout = layout != null;
             bool hasName = hasLayout && layout.Name != null;
             bool hasPath = hasLayout && layout.SourcePath != null;
-            bool hasLineInfo = srcElem != null;
+            bool hasLineInfo = srcElem != null && srcElem.LineNumber > 0 && srcElem.LinePosition > 0;
 
             string msg = "";
             if (hasExceptionMessage)
@@ -201,7 +206,7 @@ namespace WHampson.Cascara
             if (hasLineInfo)
             {
                 msg += Environment.NewLine + "Occurred at:";
-                msg += Environment.NewLine + "  Line:     " + srcElem.LineNumber;
+                msg += Environment.NewLine + "  Line: " + srcElem.LineNumber;
                 msg += Environment.NewLine + "  Position: " + srcElem.LinePosition;
             }
 
