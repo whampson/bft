@@ -22,6 +22,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using WHampson.Cascara.Extensions;
@@ -38,6 +40,10 @@ namespace WHampson.Cascara.Interpreter.Xml
         /// </summary>
         /// <param name="elem">The XML element to parse.</param>
         /// <returns>The new <see cref="XmlStatement"/> object.</returns>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the specified <see cref="XElement"/> is malformatted
+        /// (such as a text node being included inside the element).
+        /// </exception>
         public static XmlStatement Parse(XElement elem)
         {
             XmlStatement stmt = new XmlStatement(elem);
@@ -46,27 +52,8 @@ namespace WHampson.Cascara.Interpreter.Xml
             return stmt;
         }
 
-        /// <summary>
-        /// Extracts source code line information from the specified <see cref="XElement"/>.
-        /// </summary>
-        /// <param name="elem"></param>
-        /// <returns>
-        /// An integer pair representing the text coordinates of the statement in the source code.
-        /// 'Item1' is the line number; 'Item2' is the column number.
-        /// </returns>
-        private static Tuple<int, int> GetLineInfo(XElement elem)
-        {
-            if (elem == null)
-            {
-                throw new ArgumentNullException(nameof(elem));
-            }
-            IXmlLineInfo lineInfo = (IXmlLineInfo) elem;
-
-            return new Tuple<int, int>(lineInfo.LineNumber, lineInfo.LinePosition);
-        }
-
         private XmlStatement(XElement sourceElement)
-            : base(GetLineInfo(sourceElement))
+            : base(sourceElement.GetLineInfo())
         {
             if (sourceElement == null)
             {
@@ -90,11 +77,14 @@ namespace WHampson.Cascara.Interpreter.Xml
             Keyword = Element.Name.LocalName;
 
             // Check syntax
-            if (!string.IsNullOrEmpty(Element.Value))
+            IEnumerable<XNode> textNodes = Element.Nodes()
+                .Where(n => n.NodeType == XmlNodeType.Text);
+            if (textNodes.Any())
             {
                 string text = Element.Value.Ellipses(25);
                 string fmt = Resources.SyntaxExceptionXmlUnexpectedText;
-                throw LayoutException.Create<SyntaxException>(null, this, fmt, text, Keyword);
+                XNode textNode = textNodes.ElementAt(0);
+                throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(textNode), fmt, text, Keyword);
             }
 
             // Extract parameters
