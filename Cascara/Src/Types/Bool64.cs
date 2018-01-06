@@ -63,10 +63,8 @@ namespace WHampson.Cascara
 
             if (!(obj is Bool64))
             {
-                string fmt = "Object is not an instance of {0}.";
-                string msg = string.Format(fmt, GetType().Name);
-
-                throw new ArgumentException(msg, "obj");
+                string msg = string.Format(Resources.ArgumentExceptionInvalidType, GetType().Name);
+                throw new ArgumentException(msg, nameof(obj));
             }
 
             return CompareTo((Bool64) obj);
