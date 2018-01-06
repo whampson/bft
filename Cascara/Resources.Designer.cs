@@ -88,6 +88,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Object is not an instance of &apos;{0}&apos;..
+        /// </summary>
+        internal static string ArgumentExceptionInvalidType {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionInvalidType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Nested statement cannot be the same object reference as the current statement..
         /// </summary>
         internal static string ArgumentExceptionNestedStatementReference {

@@ -126,6 +126,10 @@
   <data name="ArgumentExceptionEmptyString" xml:space="preserve">
     <value>Parameter cannot be empty or null.</value>
   </data>
+  <data name="ArgumentExceptionInvalidType" xml:space="preserve">
+    <value>Object is not an instance of '{0}'.</value>
+    <comment>{0} - name of expected type</comment>
+  </data>
   <data name="ArgumentExceptionNestedStatementReference" xml:space="preserve">
     <value>Nested statement cannot be the same object reference as the current statement.</value>
     <comment>!!! RE-WORD !!!</comment>
