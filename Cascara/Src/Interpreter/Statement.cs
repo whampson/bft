@@ -420,7 +420,7 @@ namespace WHampson.Cascara.Interpreter
     /// <summary>
     /// Defines all possible kinds of <see cref="Statement"/>s.
     /// </summary>
-    public enum StatementType
+    internal enum StatementType
     {
         /// <summary>
         /// The type assigned before the <see cref="Statement"/> has been parsed.

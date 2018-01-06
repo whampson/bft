@@ -34,7 +34,7 @@ namespace WHampson.Cascara.Interpreter
     /// <remarks>
     /// This class also encapsulates the functionality of a symbol table.
     /// </remarks>
-    public class Symbol : IEnumerable<Symbol>
+    internal class Symbol : IEnumerable<Symbol>
     {
         /// <summary>
         /// Indicates the member of a structure.
