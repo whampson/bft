@@ -123,7 +123,7 @@ namespace WHampson.Cascara
             dataPtr = Marshal.AllocHGlobal(data.Length);
             Length = data.Length;
 
-            SetBytes(0, data);
+            Set<byte>(0, data);
         }
 
         /// <summary>
@@ -148,125 +148,161 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets or sets a byte in the file data.
         /// </summary>
-        /// <param name="offset">The position in the file data of the byte to get or set.</param>
-        /// <returns>The value of the byte at the offset.</returns>
-        public byte this[int offset]
+        /// <param name="index">The position in the file data of the byte to get or set.</param>
+        /// <returns>The value of the byte at the specified index.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the index is out of range.
+        /// </exception>
+        public byte this[int index]
         {
-            get { return GetByte(offset); }
-            set { SetByte(offset, value); }
+            get { return Get<byte>(index); }
+            set { Set<byte>(index, value); }
         }
 
         /// <summary>
-        /// Gets the value of a byte in the file data.
+        /// Gets a value from the file data.
         /// </summary>
-        /// <param name="offset">The position in the file data of the byte to get.</param>
-        /// <returns>The value of the byte at the offset.</returns>
-        public byte GetByte(int offset)
+        /// <remarks>
+        /// If <typeparamref name="T"/> is a multi-byte type, the bytes will be retrieved
+        /// in the order specified by the <see cref="Endianness"/> property.
+        /// </remarks>
+        /// <typeparam name="T">The type of the value to get.</typeparam>
+        /// <param name="index">The position in the file data of the value to get.</param>
+        /// <returns>The value at the specified index.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the index is out of range.
+        /// </exception>
+        public T Get<T>(int index)
+            where T : struct
         {
-            return GetBytes(offset, 1)[0];
+            return Get<T>(index, 1)[0];
         }
 
         /// <summary>
-        /// Gets a contiguous array of bytes from the file data.
+        /// Gets an array of values from the file data.
         /// </summary>
-        /// <param name="offset">The position in the file data of the first byte to get.</param>
-        /// <param name="length">The number of bytes to get.</param>
+        /// <remarks>
+        /// If <typeparamref name="T"/> is a multi-byte type, the bytes of each element
+        /// will be retrieved in the order specified by the <see cref="Endianness"/> property.
+        /// </remarks>
+        /// <typeparam name="T">The type of the values to get.</typeparam>
+        /// <param name="index">The position in the file data of the first value to get.</param>
+        /// <param name="count">The number of elements to get.</param>
         /// <returns>
-        /// An array of the specified length containing the values of all bytes
-        /// beginning at the specified offset.
+        /// An array of <paramref name="count"/> values retrieved from the binary file data at the specified index.
         /// </returns>
-        public byte[] GetBytes(int offset, int length)
-        {
-            if (offset < 0 || offset >= Length)
-            {
-                throw new ArgumentException(Resources.ArgumentExceptionOffsetTooLarge, nameof(offset));
-            }
-            if (offset + length > Length)
-            {
-                throw new ArgumentException(Resources.ArgumentExceptionLengthTooLarge, nameof(length));
-            }
-
-            byte[] b = new byte[length];
-            Marshal.Copy(dataPtr + offset, b, 0, length);
-
-            return b;
-        }
-
-        /// <summary>
-        /// Gets the value of a primitive type in the file data.
-        /// </summary>
-        /// <typeparam name="T">The type of value to get.</typeparam>
-        /// <param name="offset">The position in the file data of the value to get.</param>
-        /// <returns>The value of the primitive type at the specified offset.</returns>
-        public T GetValue<T>(int offset)
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the index is out of range or if the count results in an index that is out of range.
+        /// </exception>
+        public T[] Get<T>(int index, int count)
             where T : struct
         {
-            Type t = typeof(T);
-            if (!t.IsPrimitive)
+            if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
             {
                 throw new ArgumentException(Resources.ArgumentExceptionPrimitiveType, nameof(T));
             }
 
-            byte[] b = GetBytes(offset, PrimitiveTypeUtils.SizeOf<T>());
-            if (Endianness == Endianness.Big)
+            int elemSize = PrimitiveTypeUtils.SizeOf<T>();
+            int numBytes = elemSize * count;
+
+            RangeCheck(index);
+            RangeCheck(index + numBytes - 1);
+
+            // Get bytes from binary file data
+            byte[] b = new byte[numBytes];
+            Marshal.Copy(dataPtr + index, b, 0, numBytes);
+
+            // Create array of values
+            T[] values = new T[count];
+            byte[] valueBytes = new byte[elemSize];
+            for (int i = 0; i < count; i++)
             {
-                b = b.Reverse().ToArray();
+                Buffer.BlockCopy(b, i * elemSize, valueBytes, 0, elemSize);
+                if (Endianness == Endianness.Big)
+                {
+                    valueBytes = valueBytes.Reverse().ToArray();
+                }
+
+                values[i] = PrimitiveTypeUtils.GetValue<T>(valueBytes);
             }
 
-            return PrimitiveTypeUtils.GetValue<T>(b);
+            return values;
         }
 
         /// <summary>
-        /// Sets the value of a byte in the file data.
+        /// Sets a value from in file data.
         /// </summary>
-        /// <param name="offset">The position in the file data of the byte to set.</param>
-        /// <param name="value">The value to write at the offset.</param>
-        public void SetByte(int offset, byte value)
-        {
-            SetBytes(offset, new byte[] { value });
-        }
-
-        /// <summary>
-        /// Sets the values of a contiguous array of bytes in the file data.
-        /// </summary>
-        /// <param name="offset">The position in the file data of the first byte to set.</param>
-        /// <param name="b">The bytes to write at the offset.</param>
-        public void SetBytes(int offset, byte[] b)
-        {
-            if (offset < 0 || offset >= Length)
-            {
-                throw new ArgumentException(Resources.ArgumentExceptionOffsetTooLarge, nameof(offset));
-            }
-            if (offset + b.Length > Length)
-            {
-                throw new ArgumentException(Resources.ArgumentExceptionLengthTooLarge, nameof(b));
-            }
-
-            Marshal.Copy(b, 0, dataPtr + offset, b.Length);
-        }
-
-        /// <summary>
-        /// Sets the value of a primitive type in the file data.
-        /// </summary>
-        /// <typeparam name="T">The type of value to set.</typeparam>
-        /// <param name="offset">The position in the file data of the value to set.</param>
-        /// <param name="value">The value to write at the offset.</param>
-        public void SetValue<T>(int offset, T value)
+        /// /// <remarks>
+        /// If <typeparamref name="T"/> is a multi-byte type, the bytes will be written
+        /// in the order specified by the <see cref="Endianness"/> property.
+        /// </remarks>
+        /// <typeparam name="T">The type of the value to set.</typeparam>
+        /// <param name="index">The position in the file data of the value to set.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the index is out of range.
+        /// </exception>
+        public void Set<T>(int index, T value)
             where T : struct
         {
-            Type t = typeof(T);
-            if (!t.IsPrimitive)
+            Set<T>(index, new T[] { value });
+        }
+
+        /// <summary>
+        /// Sets an array of values from in file data.
+        /// </summary>
+        /// <remarks>
+        /// If <typeparamref name="T"/> is a multi-byte type, the bytes of each element
+        /// will be written in the order specified by the <see cref="Endianness"/> property.
+        /// </remarks>
+        /// <typeparam name="T">The type of the values to set.</typeparam>
+        /// <param name="index">The position in the file data of the first value to get.</param>
+        /// <param name="values">The values to be written to the binary file data starting at the index.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// If the index is out of range or if the count results in an index that is out of range.
+        /// </exception>
+        public void Set<T>(int index, T[] values)
+            where T : struct
+        {
+            if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
             {
                 throw new ArgumentException(Resources.ArgumentExceptionPrimitiveType, nameof(T));
             }
 
-            byte[] b = PrimitiveTypeUtils.GetBytes(value);
-            if (Endianness == Endianness.Big)
+            int elemSize = PrimitiveTypeUtils.SizeOf<T>();
+            int numBytes = elemSize * values.Length;
+
+            RangeCheck(index);
+            RangeCheck(index + numBytes - 1);
+
+            // Convert values into a single array of bytes
+            byte[] b = new byte[numBytes];
+            for (int i = 0; i < values.Length; i++)
             {
-                b = b.Reverse().ToArray();
+                byte[] valueBytes = PrimitiveTypeUtils.GetBytes<T>(values[i]);
+                if (Endianness == Endianness.Big)
+                {
+                    valueBytes = valueBytes.Reverse().ToArray();
+                }
+
+                Buffer.BlockCopy(valueBytes, 0, b, i * elemSize, elemSize);
             }
 
-            SetBytes(offset, b);
+            // Copy byte array to binary file data
+            Marshal.Copy(b, 0, dataPtr + index, numBytes);
+        }
+
+        /// <summary>
+        /// Ensures the specified index falls within the binary file data.
+        /// Throws an <see cref="ArgumentOutOfRangeException"/> if the index is out of range.
+        /// </summary>
+        /// <param name="index">The index to check.</param>
+        private void RangeCheck(int index)
+        {
+            if (index < 0 || index >= Length)
+            {
+                string msg = Resources.ArgumentExceptionBinaryFileIndexOutOfRange;
+                throw new ArgumentOutOfRangeException(null, index, msg);
+            }
         }
 
         #region Disposal
@@ -305,7 +341,7 @@ namespace WHampson.Cascara
         {
             const int MaxBytes = 16;
 
-            byte[] data = GetBytes(0, Math.Min(Length, MaxBytes));
+            byte[] data = Get<byte>(0, Math.Min(Length, MaxBytes));
             string dataStr = "";
             foreach (byte b in data)
             {
