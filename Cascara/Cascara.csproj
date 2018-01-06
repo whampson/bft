@@ -7,8 +7,8 @@
     <Company />
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>(C) 2017-2018 Wes Hampson</Copyright>
-    <AssemblyVersion>0.20.0.0</AssemblyVersion>
-    <FileVersion>0.20.0.0</FileVersion>
+    <AssemblyVersion>0.21.0.0</AssemblyVersion>
+    <FileVersion>0.21.0.0</FileVersion>
     <Version>0.20.0</Version>
     <Description>A simple framework for reading/writing binary data through the use of Binary Layout Files.</Description>
     <RepositoryUrl>https://github.com/whampson/cascara</RepositoryUrl>
