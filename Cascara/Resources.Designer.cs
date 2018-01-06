@@ -61,6 +61,15 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Index is out of range. Must be non-negative and less than the size of the binary file..
+        /// </summary>
+        internal static string ArgumentExceptionBinaryFileIndexOutOfRange {
+            get {
+                return ResourceManager.GetString("ArgumentExceptionBinaryFileIndexOutOfRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Collection must contain at least one element..
         /// </summary>
         internal static string ArgumentExceptionEmptyCollection {
@@ -79,15 +88,6 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The parameter creates an offset that exceeds the length of the buffer..
-        /// </summary>
-        internal static string ArgumentExceptionLengthTooLarge {
-            get {
-                return ResourceManager.GetString("ArgumentExceptionLengthTooLarge", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Nested statement cannot be the same object reference as the current statement..
         /// </summary>
         internal static string ArgumentExceptionNestedStatementReference {
@@ -102,24 +102,6 @@ namespace WHampson.Cascara {
         internal static string ArgumentExceptionNonNegativeInteger {
             get {
                 return ResourceManager.GetString("ArgumentExceptionNonNegativeInteger", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The parameter exceeds the length of the buffer..
-        /// </summary>
-        internal static string ArgumentExceptionOffsetTooLarge {
-            get {
-                return ResourceManager.GetString("ArgumentExceptionOffsetTooLarge", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The parameter is out of range for the type provided..
-        /// </summary>
-        internal static string ArgumentExceptionOutOfRangeForType {
-            get {
-                return ResourceManager.GetString("ArgumentExceptionOutOfRangeForType", resourceCulture);
             }
         }
         

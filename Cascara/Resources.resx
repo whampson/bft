@@ -117,14 +117,14 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="ArgumentExceptionBinaryFileIndexOutOfRange" xml:space="preserve">
+    <value>Index is out of range. Must be non-negative and less than the size of the binary file.</value>
+  </data>
   <data name="ArgumentExceptionEmptyCollection" xml:space="preserve">
     <value>Collection must contain at least one element.</value>
   </data>
   <data name="ArgumentExceptionEmptyString" xml:space="preserve">
     <value>Parameter cannot be empty or null.</value>
-  </data>
-  <data name="ArgumentExceptionLengthTooLarge" xml:space="preserve">
-    <value>The parameter creates an offset that exceeds the length of the buffer.</value>
   </data>
   <data name="ArgumentExceptionNestedStatementReference" xml:space="preserve">
     <value>Nested statement cannot be the same object reference as the current statement.</value>
@@ -132,12 +132,6 @@
   </data>
   <data name="ArgumentExceptionNonNegativeInteger" xml:space="preserve">
     <value>Parameter must be a non-negative integer.</value>
-  </data>
-  <data name="ArgumentExceptionOffsetTooLarge" xml:space="preserve">
-    <value>The parameter exceeds the length of the buffer.</value>
-  </data>
-  <data name="ArgumentExceptionOutOfRangeForType" xml:space="preserve">
-    <value>The parameter is out of range for the type provided.</value>
   </data>
   <data name="ArgumentExceptionPrimitiveType" xml:space="preserve">
     <value>Parameter must be a primitive type.</value>
