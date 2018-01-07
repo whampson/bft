@@ -23,6 +23,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -34,6 +35,78 @@ namespace WHampson.Cascara
     /// </summary>
     public class BinaryFile : IDisposable
     {
+        public const int MaxFileSize = int.MaxValue;
+        private const int BufferSize = 4096;
+
+        /// <summary>
+        /// Creates a new little-endian <see cref="BinaryFile"/> object from the data
+        /// stored inside a file.
+        /// </summary>
+        /// <param name="path">The path to the file to load.</param>
+        /// <returns>The newly-created <see cref="BinaryFile"/> object.</returns>
+        /// /// <exception cref="ArgumentException">
+        /// Thrown if the path is malformatted.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// Thrown if a problem occurs while reading the file.
+        /// </exception>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown if the process does not have permission to access to the specified path.
+        /// </exception>
+        public static BinaryFile Load(string path)
+        {
+            return Load(path, Endianness.Little);
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="BinaryFile"/> object from the data
+        /// stored inside a file.
+        /// </summary>
+        /// <param name="path">The path to the file to load.</param>
+        /// <param name="endianness">The byte order for primitive types.</param>
+        /// <returns>The newly-created <see cref="BinaryFile"/> object.</returns>
+        /// /// <exception cref="ArgumentException">
+        /// Thrown if the path is malformatted or if the endianness is not specified.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// Thrown if a problem occurs while reading the file.
+        /// </exception>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown if the process does not have permission to access to the specified path.
+        /// </exception>
+        public static BinaryFile Load(string path, Endianness endianness)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                string msg = Resources.ArgumentExceptionEmptyString;
+                throw new ArgumentException(msg, nameof(path));
+            }
+
+            using (FileStream fStream = new FileStream(path, FileMode.Open))
+            {
+                if (fStream.Length > MaxFileSize)
+                {
+                    // throw some exception
+                }
+
+                // Create file data buffer
+                int len = (int) fStream.Length;
+                IntPtr data = Marshal.AllocHGlobal(len);
+                byte[] buffer = new byte[BufferSize];
+
+                // Read the file in chunks
+                int offset = 0;
+                int bytesRead;
+                while ((bytesRead = fStream.Read(buffer, 0, BufferSize)) > 0)
+                {
+                    Marshal.Copy(buffer, 0, data + offset, bytesRead);
+                    offset += bytesRead;
+                }
+
+                return new BinaryFile(data, len, endianness);
+            }
+        }
+
         private bool hasBeenDisposed;
         private IntPtr dataPtr;
 
@@ -124,6 +197,13 @@ namespace WHampson.Cascara
             Length = data.Length;
 
             Set<byte>(0, data);
+        }
+
+        private BinaryFile(IntPtr data, int length, Endianness endianness)
+            : this(endianness)
+        {
+            dataPtr = data;
+            Length = length;
         }
 
         /// <summary>
@@ -289,6 +369,53 @@ namespace WHampson.Cascara
 
             // Copy byte array to binary file data
             Marshal.Copy(b, 0, dataPtr + index, numBytes);
+        }
+
+        /// <summary>
+        /// Writes the binary data to a file.
+        /// If the file already exists, it will be overwritten.
+        /// </summary>
+        /// <param name="path">The path to the file to write.</param>
+        /// <exception cref="ArgumentException">
+        /// Thrown if the path is malformatted.
+        /// </exception>
+        /// <exception cref="IOException">
+        /// Thrown if a problem occurs while writing to the file.
+        /// </exception>
+        /// <exception cref="UnauthorizedAccessException">
+        /// Thrown if the process does not have permission to access to the specified path.
+        /// </exception>
+        public void Store(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                string msg = Resources.ArgumentExceptionEmptyString;
+                throw new ArgumentException(msg, nameof(path));
+            }
+
+            // Create directory if needed
+            DirectoryInfo dirInfo = Directory.GetParent(path);
+            if (dirInfo != null)
+            {
+                Directory.CreateDirectory(dirInfo.FullName);
+            }
+
+            // Write data to file
+            using (FileStream fStream = new FileStream(path, FileMode.Create))
+            {
+                byte[] buffer = new byte[BufferSize];
+                int offset = 0;
+                int bytesRead;
+
+                while (offset < Length)
+                {
+                    bytesRead = Math.Min(BufferSize, Length - offset);
+                    Marshal.Copy(dataPtr + offset, buffer, 0, bytesRead);
+
+                    fStream.Write(buffer, 0, bytesRead);
+                    offset += bytesRead;
+                }
+            }
         }
 
         /// <summary>
