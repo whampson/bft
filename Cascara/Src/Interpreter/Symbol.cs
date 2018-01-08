@@ -171,10 +171,29 @@ namespace WHampson.Cascara.Interpreter
                 return;
             }
 
-            // Add entry to list if it exists in the current table
-            if (sym.symbolTable.TryGetValue(name, out Symbol entry))
+            string tempName = name;
+
+            // Read collection index and remove from symbol name (if applicable)
+            bool isSearchingForCollection = TryGetElementIndex(tempName, out int index);
+            if (isSearchingForCollection)
             {
-                results.Add(entry);
+                tempName = StripCollectionNotation(tempName);
+            }
+
+            // Add entry to list if it exists in the current table
+            if (sym.symbolTable.TryGetValue(tempName, out Symbol entry))
+            {
+                if (isSearchingForCollection)
+                {
+                    if (entry.IsCollection && index < entry.ElementCount)
+                    {
+                        results.Add(entry.collectionSymbols[index]);
+                    }
+                }
+                else
+                {
+                    results.Add(entry);
+                }
             }
 
             // Search the parent table
