@@ -21,23 +21,76 @@
  */
 #endregion
 
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
 namespace WHampson.Cascara
 {
-    public interface IFileObject
+    /// <summary>
+    /// Defines a file object, which is a meaningful piece of data
+    /// made up of bytes in a <see cref="BinaryFile"/>.
+    /// </summary>
+    public interface IFileObject : IEnumerable<IFileObject>
     {
-        BinaryFile SourceFile
+        /// <summary>
+        /// Gets the position of this <see cref="IFileObject"/> relative to the start
+        /// of the <see cref="BinaryFile"/>.
+        /// </summary>
+        int FilePosition
         {
             get;
         }
 
+        /// <summary>
+        /// Gets the position of this <see cref="IFileObject"/> relative to the start
+        /// of the parent object.
+        /// </summary>
         int Offset
         {
             get;
         }
 
-        int Size
+        /// <summary>
+        /// Gets the number of bytes that make up this <see cref="IFileObject"/>.
+        /// </summary>
+        int Length
         {
             get;
         }
+
+        /// <summary>
+        /// Gets a value indicating whether this <see cref="IFileObject"/> represents a collection.
+        /// </summary>
+        bool IsCollection
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Gets the number of elements in the collection represented by this <see cref="IFileObject"/>.
+        /// If this <see cref="IFileObject"/> does not represent a collection, this value is -1.
+        /// </summary>
+        /// <seealso cref="IsCollection"/>
+        int ElementCount
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Gets the element at the specified index in the collection as an <see cref="IFileObject"/>.
+        /// If this <see cref="IFileObject"/> does not represent a collection, an
+        /// <see cref="InvalidOperationException"/> will be thrown.
+        /// </summary>
+        /// <param name="index">The index of the element to get.</param>
+        /// <returns>The element at the specified index.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown if the specified index is negative or greater than or equal to the element count.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if this <see cref="IFileObject"/> does not represent a collection.
+        /// </exception>
+        /// <seealso cref="IsCollection"/>
+        IFileObject ElementAt(int index);
     }
 }
