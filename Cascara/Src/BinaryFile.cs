@@ -446,22 +446,22 @@ namespace WHampson.Cascara
             return fileStructure.GetPrimitive<T>(name);
         }
 
-        public Structure AddStructure(string name, int offset, int length)
-        {
-            return fileStructure.AddStructure(name, offset, length);
-        }
+        //public Structure AddStructure(string name, int offset, int length)
+        //{
+        //    return fileStructure.AddStructure(name, offset, length);
+        //}
 
-        public Primitive<T> AddPrimitive<T>(string name, int offset)
-            where T : struct
-        {
-            return fileStructure.AddPrimitive<T>(name, offset);
-        }
+        //public Primitive<T> AddPrimitive<T>(string name, int offset)
+        //    where T : struct
+        //{
+        //    return fileStructure.AddPrimitive<T>(name, offset);
+        //}
 
-        public Primitive<T> AddPrimitive<T>(string name, int offset, int count)
-            where T : struct
-        {
-            return fileStructure.AddPrimitive<T>(name, offset, count);
-        }
+        //public Primitive<T> AddPrimitive<T>(string name, int offset, int count)
+        //    where T : struct
+        //{
+        //    return fileStructure.AddPrimitive<T>(name, offset, count);
+        //}
 
         #region Disposal
         protected virtual void Dispose(bool disposing)
