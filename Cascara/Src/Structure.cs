@@ -13,12 +13,12 @@ namespace WHampson.Cascara
     public class Structure : IFileObject
     {
         private BinaryFile sourceFile;
-        private Symbol symbol;
+        //private Symbol symbol;
 
         internal Structure(BinaryFile sourceFile, Symbol symbol)
         {
             this.sourceFile = sourceFile;
-            this.symbol = symbol;
+            Symbol = symbol;
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int FilePosition
         {
-            get { return symbol.DataOffset; }
+            get { return Symbol.DataOffset; }
         }
 
         /// <summary>
@@ -57,12 +57,12 @@ namespace WHampson.Cascara
         {
             get
             {
-                if (symbol.Parent != null)
+                if (Symbol.Parent != null)
                 {
-                    return symbol.DataOffset - symbol.Parent.DataOffset;
+                    return Symbol.DataOffset - Symbol.Parent.DataOffset;
                 }
 
-                return symbol.DataOffset;
+                return Symbol.DataOffset;
             }
         }
 
@@ -71,7 +71,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int Length
         {
-            get { return symbol.DataLength; }
+            get { return Symbol.DataLength; }
         }
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace WHampson.Cascara
         /// </summary>
         public bool IsCollection
         {
-            get { return symbol.IsCollection; }
+            get { return Symbol.IsCollection; }
         }
 
         /// <summary>
@@ -89,7 +89,12 @@ namespace WHampson.Cascara
         /// <seealso cref="IsCollection"/>
         public int ElementCount
         {
-            get { return symbol.ElementCount; }
+            get { return Symbol.ElementCount; }
+        }
+
+        internal Symbol Symbol
+        {
+            get;
         }
 
         //public int SizeOf(string name)
@@ -134,7 +139,7 @@ namespace WHampson.Cascara
         /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise</returns>
         public Structure GetStructure(string name)
         {
-            bool exists = symbol.TryLookup(name, out Symbol sym);
+            bool exists = Symbol.TryLookup(name, out Symbol sym);
             if (!exists)
             {
                 return null;
@@ -156,7 +161,7 @@ namespace WHampson.Cascara
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
-            bool exists = symbol.TryLookup(name, out Symbol sym);
+            bool exists = Symbol.TryLookup(name, out Symbol sym);
             if (!exists)
             {
                 return null;
@@ -194,7 +199,7 @@ namespace WHampson.Cascara
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            return new Structure(sourceFile, symbol[index]);
+            return new Structure(sourceFile, Symbol[index]);
         }
 
         public IEnumerator<IFileObject> GetEnumerator()
