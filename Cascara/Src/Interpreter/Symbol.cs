@@ -417,6 +417,9 @@ namespace WHampson.Cascara.Interpreter
             get;
         }
 
+        /// <summary>
+        /// Gets value indicating whether this <see cref="Symbol"/> contains child symbols.
+        /// </summary>
         public bool IsLeaf
         {
             get { return symbolTable.Count == 0 && collectionSymbols.Count == 0; }
@@ -431,24 +434,23 @@ namespace WHampson.Cascara.Interpreter
             get { return (IsCollection) ? collectionSymbols.Count : -1; }
         }
 
-        public int Size
+        public int DataOffset
         {
             get;
-            internal set;
+            set;
         }
 
-        public int Offset
+        public int DataLength
         {
             get;
-            internal set;
+            set;
         }
 
-        public Type NativeType
+        public Type DataType
         {
             get;
-            internal set;
+            set;
         }
-
 
         /// <summary>
         /// Adds an entry to this <see cref="Symbol"/>'s symbol table.
