@@ -446,6 +446,12 @@ namespace WHampson.Cascara
             return fileStructure.GetPrimitive<T>(name);
         }
 
+        public void ApplyLayout(BinaryLayout layout)
+        {
+            LayoutInterpreter interpreter = new LayoutInterpreter(layout);
+            interpreter.Execute(fileStructure.Symbol, Length);
+        }
+
         //public Structure AddStructure(string name, int offset, int length)
         //{
         //    return fileStructure.AddStructure(name, offset, length);
