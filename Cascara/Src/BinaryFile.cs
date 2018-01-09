@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using WHampson.Cascara.Interpreter;
 
 namespace WHampson.Cascara
 {
@@ -109,6 +110,7 @@ namespace WHampson.Cascara
 
         private bool hasBeenDisposed;
         private IntPtr dataPtr;
+        private Structure fileStructure;
 
         private BinaryFile(Endianness endianness)
         {
@@ -119,6 +121,7 @@ namespace WHampson.Cascara
 
             hasBeenDisposed = false;
             dataPtr = IntPtr.Zero;
+            fileStructure = new Structure(this, Symbol.CreateRootSymbol());
             Endianness = endianness;
         }
 
@@ -430,6 +433,34 @@ namespace WHampson.Cascara
                 string msg = Resources.ArgumentExceptionBinaryFileIndexOutOfRange;
                 throw new ArgumentOutOfRangeException(null, index, msg);
             }
+        }
+
+        public Structure GetStructure(string name)
+        {
+            return fileStructure.GetStructure(name);
+        }
+
+        public Primitive<T> GetPrimitive<T>(string name)
+            where T : struct
+        {
+            return fileStructure.GetPrimitive<T>(name);
+        }
+
+        public Structure AddStructure(string name, int offset, int length)
+        {
+            return fileStructure.AddStructure(name, offset, length);
+        }
+
+        public Primitive<T> AddPrimitive<T>(string name, int offset)
+            where T : struct
+        {
+            return fileStructure.AddPrimitive<T>(name, offset);
+        }
+
+        public Primitive<T> AddPrimitive<T>(string name, int offset, int count)
+            where T : struct
+        {
+            return fileStructure.AddPrimitive<T>(name, offset, count);
         }
 
         #region Disposal
