@@ -81,7 +81,7 @@ namespace WHampson.Cascara.Interpreter.Xml
                 .Where(n => n.NodeType == XmlNodeType.Text);
             if (textNodes.Any())
             {
-                string text = Element.Value.Ellipses(25);
+                string text = Element.Value.Trim().Ellipses(25);
                 string fmt = Resources.SyntaxExceptionXmlUnexpectedText;
                 XNode textNode = textNodes.ElementAt(0);
                 throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(textNode), fmt, text, Keyword);
