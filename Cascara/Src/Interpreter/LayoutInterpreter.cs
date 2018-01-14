@@ -21,51 +21,93 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using static WHampson.Cascara.Interpreter.ReservedWords;
 
 namespace WHampson.Cascara.Interpreter
 {
     internal sealed class LayoutInterpreter
     {
+        private const string GlobalOffsetOfPattern = @"\$GlobalOffsetOf\((.+?)\)";
+        private const string OffsetOfPattern = @"\$OffsetOf\((.+?)\)";
+        private const string SizeOfPattern = @"\$SizeOf\((.+?)\)";
+        private const string ValueOfPattern = @"\$ValueOf\((.+?)\)";
+        private const string ValueOfShorthandPattern = @"\${(.+?)}";
+
         private static readonly HashSet<Version> SupportedVersions = new HashSet<Version>(new Version[]
         {
             //new Version("1.0.0"),
             AssemblyInfo.AssemblyVersion        // current version
         });
 
-        public enum Directive
+        private class Scope
         {
-            Align,
-            Echo,
-            Include
+            private int _offset;
+            private int _maxOffset;
+
+            public Scope(Symbol sym)
+            {
+                _offset = 0;
+                _maxOffset = 0;
+                IsUnion = false;
+                Symbol = sym;
+                Locals = new Dictionary<string, double>();
+            }
+
+            public int Offset
+            {
+                get { return _offset; }
+                set
+                {
+                    _offset = value;
+                    _maxOffset = Math.Max(_offset, _maxOffset);
+                }
+            }
+
+            public int MaxOffset
+            {
+                get { return _maxOffset; }
+                set { _maxOffset = value; }
+            }
+
+            public bool IsUnion
+            {
+                get;
+                set;
+            }
+
+            public Symbol Symbol
+            {
+                get;
+            }
+
+            public Dictionary<string, double> Locals
+            {
+                get;
+            }
         }
 
-        private delegate void StatementTypeAction(Statement stmt);
-        private delegate void DirectiveAction(Statement stmt);
-
-        private int offset;
-        private int dataLength;
+        private delegate void InterpretAction(Statement stmt);
 
         private BinaryLayout layout;
-        private Stack<Symbol> symbolStack;
+        private BinaryFile file;
+        private Stack<Scope> scopeStack;
         private HashSet<BinaryLayout> includedLayouts;
         private TextWriter echoWriter;
 
-        private Dictionary<StatementType, StatementTypeAction> statementTypeActionMap;
-        private Dictionary<string, DirectiveAction> directiveActionMap;
-
         private Dictionary<string, CascaraTypeInfo> userDefinedTypes;
 
-        public LayoutInterpreter(BinaryLayout layout)
-            : this(layout, Console.Out)
-        {
-        }
+        private Dictionary<StatementType, InterpretAction> statementTypeActionMap;
+        private Dictionary<string, InterpretAction> directiveActionMap;
 
         public LayoutInterpreter(BinaryLayout layout, TextWriter echoWriter)
         {
@@ -75,195 +117,356 @@ namespace WHampson.Cascara.Interpreter
                 throw new NotSupportedException(msg);
             }
 
-            offset = 0;
-            dataLength = 0;
-
             this.layout = layout;
             this.echoWriter = echoWriter;
-            symbolStack = new Stack<Symbol>();
+            scopeStack = new Stack<Scope>();
             includedLayouts = new HashSet<BinaryLayout>();
-
-            statementTypeActionMap = new Dictionary<StatementType, StatementTypeAction>();
-            directiveActionMap = new Dictionary<string, DirectiveAction>();
-
             userDefinedTypes = new Dictionary<string, CascaraTypeInfo>();
 
+            statementTypeActionMap = new Dictionary<StatementType, InterpretAction>();
+            directiveActionMap = new Dictionary<string, InterpretAction>();
             InitializeInterpreterActionMaps();
+        }
+
+        private Scope CurrentScope
+        {
+            get { return scopeStack.Peek(); }
+        }
+
+        private int GlobalOffset
+        {
+            get { return scopeStack.Sum(s => s.Offset); }
         }
 
         public void Reset()
         {
-            symbolStack.Clear();
+            scopeStack.Clear();
             includedLayouts.Clear();
-            offset = 0;
-            dataLength = 0;
             userDefinedTypes.Clear();
+            file = null;
         }
 
-        public void Execute(Symbol rootSymbol, int dataLength)
+        public void Execute(Symbol rootSymbol, BinaryFile file)
         {
-            this.dataLength = dataLength;
-            symbolStack.Push(rootSymbol);
+            Reset();
+
+            this.file = file;
+            scopeStack.Push(new Scope(rootSymbol));
             includedLayouts.Add(layout);
 
             InterpretRootStatement(layout.RootStatement);
+            echoWriter.WriteLine("Final offset: {0}", GlobalOffset);
         }
 
         private void InterpretRootStatement(Statement stmt)
         {
+            // Validate root element name
             if (stmt.Keyword != Keywords.XmlDocumentRoot)
             {
-                // TODO: exception
-                return;
+                string msg = Resources.SyntaxExceptionXmlInvalidRootElement;
+                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, Keywords.XmlDocumentRoot);
             }
 
+            // Interpret nested statements
             foreach (Statement childStmt in stmt.NestedStatements)
             {
                 InterpretStatement(childStmt);
             }
-
         }
 
         private void InterpretStatement(Statement stmt)
         {
-            // TODO: error checking
-            StatementTypeAction interpret = statementTypeActionMap[stmt.StatementType];
+            StatementType type = stmt.StatementType;
+            InterpretAction interpret;
+            string msg;
+
+            switch (type)
+            {
+                case StatementType.Directive:
+                    // Get action based on directive name.
+                    if (!directiveActionMap.TryGetValue(stmt.Keyword, out interpret))
+                    {
+                        msg = "Unknown directive '{0}'.";
+                        throw LayoutException.Create<LayoutException>(layout, stmt, msg, stmt.Keyword);
+                    }
+                    break;
+
+                case StatementType.None:
+                    // Invalid state. Should never happen if the statement was parsed correctly...
+                    msg = "Invalid statement.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg);
+
+                default:
+                    // Get action based on statement type
+                    if (!statementTypeActionMap.TryGetValue(type, out interpret))
+                    {
+                        // Should never happen...
+                        msg = string.Format("Bug! No action exists for statement type '{0}'!", type);
+                        throw new InvalidOperationException(msg);
+                    }
+                    break;
+            }
+
             interpret(stmt);
         }
 
         private void InterpretFileObjectDefinition(Statement stmt)
         {
-            Console.WriteLine("{0} at 0x{1:X2}", stmt.Keyword, offset);
+            EnsureParameters(stmt, Parameters.Comment, Parameters.Count, Parameters.Name);
 
-            bool hasCount = stmt.Parameters.TryGetValue(Parameters.Count, out string countStr);
-            bool hasName = stmt.Parameters.TryGetValue(Parameters.Name, out string nameStr);
+            bool hasCount = GetParameter(stmt, Parameters.Count, out string countStr);
+            bool hasName = GetParameter(stmt, Parameters.Name, out string objName);
 
+            string typeName = stmt.Keyword;
+            bool isStruct = (typeName == Keywords.Struct || typeName == Keywords.Union);
+
+            CascaraTypeInfo type = default(CascaraTypeInfo);
+            if (!isStruct && !TryLookupType(typeName, out type))
+            {
+                string msg = "Unknown type '{0}'.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, typeName);
+            }
+
+            // Evaluate 'count' expression
             int count = 1;
-
             if (hasCount)
             {
-                // TODO: resolve variables
                 try
                 {
                     count = (int) EvaluateExpression(countStr);
                 }
                 catch (SyntaxErrorException e)
                 {
-                    string msg = "Syntax error in expression.";
-                    throw LayoutException.Create<SyntaxException>(layout, e, stmt, msg);
+                    string msg = "'{0}' is not a valid expression.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, countStr);
+                }
+
+                if (count <= 0)
+                {
+                    string msg = "Parameter '{0}' must be a positive integer.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, Parameters.Count);
                 }
             }
 
-            if (stmt.Keyword == Keywords.Struct || stmt.Keyword == Keywords.Union)
+            Symbol sym = Symbol.CreateRootSymbol();
+            if (hasName)
             {
-                int startOffset = offset;
-                if (hasName)
+                if (!Symbol.IsNameValid(objName))
                 {
-                    // TODO: handle collections
-                    Symbol sym = symbolStack.Peek().Insert(nameStr);
-                    sym.DataOffset = offset;
-                    symbolStack.Push(sym);
+                    string msg = "Invalid identifier '{0}'. " +
+                        "Identifiers must consist of only letters, numbers, and underscores. " +
+                        "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
+                }
+                if (CurrentScope.Symbol.Lookup(objName) != null || TryLookupLocal(objName, out double dummyLocalValue))
+                {
+                    string msg = "A variable with identifier '{0}' already exists in the current scope.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
+                }
+
+                if (hasCount)
+                {
+                    sym = CurrentScope.Symbol.Insert(objName, count);
                 }
                 else
                 {
-                    symbolStack.Push(Symbol.CreateNamelessSymbol(symbolStack.Peek()));
-                }
-
-                foreach (Statement childStmt in stmt.NestedStatements)
-                {
-                    InterpretStatement(childStmt);
-                }
-
-                if (hasName)
-                {
-                    Symbol sym = symbolStack.Pop();
-                    sym.DataLength = offset - startOffset;
+                    sym = CurrentScope.Symbol.Insert(objName);
                 }
             }
-            else
+            sym.DataOffset = GlobalOffset;
+            sym.DataType = (hasCount && !(isStruct || type.IsStruct))
+                ? type.NativeType.MakeArrayType()
+                : type.NativeType;
+
+            int totalDataLength = 0;
+            Symbol elemSym = sym;
+            for (int i = 0; i < count; i++)
             {
-                if (!TryLookupType(stmt.Keyword, out CascaraTypeInfo typeInfo))
+                if (hasCount)
                 {
-                    string msg = string.Format("Unknown type '{0}'", stmt.Keyword);
-                    throw LayoutException.Create<SyntaxException>(layout, stmt, msg);
+                    elemSym = sym[i];
                 }
+                elemSym.DataOffset = GlobalOffset;
 
-                if (hasName)
+                if (isStruct || type.IsStruct)
                 {
-                    Symbol sym = symbolStack.Peek().Insert(nameStr, (hasCount) ? count : 0);
-                    sym.DataOffset = offset;
-                    sym.DataLength = typeInfo.Size;
-                    sym.DataType = typeInfo.NativeType;
+                    if (hasName)
+                    {
+                        scopeStack.Push(new Scope(elemSym));
+                    }
+                    else
+                    {
+                        scopeStack.Push(new Scope(Symbol.CreateNamelessSymbol(CurrentScope.Symbol)));
+                    }
+                    CurrentScope.IsUnion = (stmt.Keyword == Keywords.Union);
+
+                    IEnumerable<Statement> members = (isStruct)
+                        ? stmt.NestedStatements
+                        : type.Members;
+                    if (!members.Any())
+                    {
+                        string msg = "Empty structures are not allowed.";
+                        throw LayoutException.Create<SyntaxException>(layout, stmt, msg);
+                    }
+
+                    foreach (Statement member in members)
+                    {
+                        InterpretStatement(member);
+                    }
+
+                    Scope oldScope = scopeStack.Pop();
+                    int numBytes = oldScope.MaxOffset;
+                    if (!CurrentScope.IsUnion)
+                    {
+                        CurrentScope.Offset += numBytes;
+                    }
+                    else
+                    {
+                        CurrentScope.MaxOffset = numBytes;
+                    }
+
+                    elemSym.DataType = null;
+                    elemSym.DataLength = numBytes;
+                    totalDataLength += numBytes;
                 }
-
-                for (int i = 0; i < count; i++)
+                else
                 {
-                    offset += typeInfo.Size;
+                    int numBytes = type.Size;
+                    int newOffset = CurrentScope.Offset + numBytes;
+                    if (newOffset > file.Length)
+                    {
+                        string msg = "Object definition runs past the end of the file.";
+                        throw LayoutException.Create<LayoutException>(layout, stmt, msg);
+                    }
+
+                    if (!CurrentScope.IsUnion)
+                    {
+                        CurrentScope.Offset = newOffset;
+                    }
+                    else
+                    {
+                        CurrentScope.MaxOffset = numBytes;
+                    }
+
+                    elemSym.DataType = type.NativeType;
+                    elemSym.DataLength = numBytes;
+                    totalDataLength += numBytes;
                 }
             }
+            sym.DataLength = totalDataLength;
         }
 
-        private void InterpretTypeDefinition(Statement stmt) { }
-        private void InterpretLocalVariableDefinition(Statement stmt) { }
-        private void InterpretDirective(Statement stmt)
+        private void InterpretTypeDefinition(Statement stmt)
         {
-            // TODO: error checking
-            DirectiveAction interpret = directiveActionMap[stmt.Keyword];
-            interpret(stmt);
+            EnsureParameters(stmt, Parameters.Comment, Parameters.Kind, Parameters.Name);
+
+            GetRequiredParameter(stmt, Parameters.Kind, out string baseTypeName);
+            GetRequiredParameter(stmt, Parameters.Name, out string newTypeName);
+
+            // TODO: handle struct/union
+
+            if (!TryLookupType(baseTypeName, out CascaraTypeInfo baseType))
+            {
+                string msg = "Unknown type '{0}'.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, baseTypeName);
+            }
+
+            if (!Symbol.IsNameValid(newTypeName))
+            {
+                string msg = "Invalid identifier '{0}'. " +
+                    "Identifiers must consist of only letters, numbers, and underscores. " +
+                    "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
+            }
+
+            if (TryLookupType(newTypeName, out CascaraTypeInfo dummyType))
+            {
+                string msg = "Type '{0}' already exists.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
+            }
+
+            userDefinedTypes[newTypeName] = baseType;
+        }
+
+        private void InterpretLocalVariableDefinition(Statement stmt)
+        {
+            EnsureParameters(stmt, Parameters.Comment, Parameters.Name, Parameters.Value);
+
+            GetRequiredParameter(stmt, Parameters.Name, out string varName);
+            GetRequiredParameter(stmt, Parameters.Value, out string valueStr);
+
+            if (CurrentScope.Symbol.Lookup(varName) != null)
+            {
+                string msg = "A variable with identifier '{0}' already exists in the current scope.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, varName);
+            }
+
+            try
+            {
+                double value = EvaluateExpression(valueStr);
+                CurrentScope.Locals[varName] = value;
+            }
+            catch (SyntaxErrorException e)
+            {
+                string msg = "'{0}' is not a valid expression.";
+                throw LayoutException.Create<LayoutException>(layout, stmt, msg, valueStr);
+            }
         }
 
         private void InterpretAlign(Statement stmt)
         {
+            EnsureParameters(stmt, Parameters.Comment, Parameters.Count, Parameters.Kind);
+
+            bool hasCount = GetParameter(stmt, Parameters.Count, out string countStr);
+            bool hasKind = GetParameter(stmt, Parameters.Kind, out string kindStr);
+
             int count = 1;
             int unitSize = 1;
 
-            bool hasCount = stmt.Parameters.TryGetValue(Parameters.Count, out string countStr);
-            bool hasKind = stmt.Parameters.TryGetValue(Parameters.Kind, out string kindStr);
-
             if (hasCount)
             {
-                // TODO: resolve variables
                 try
                 {
                     count = (int) EvaluateExpression(countStr);
                 }
                 catch (SyntaxErrorException e)
                 {
-                    string msg = "Syntax error in expression.";
-                    throw LayoutException.Create<SyntaxException>(layout, e, stmt, msg);
+                    string msg = "'{0}' is not a valid expression.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, countStr);
+                }
+
+                if (count <= 0)
+                {
+                    string msg = "Parameter '{0}' must be a positive integer.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, Parameters.Count);
                 }
             }
 
             if (hasKind)
             {
-                if (!TryLookupType(kindStr, out CascaraTypeInfo typeInfo))
+                if (!TryLookupType(kindStr, out CascaraTypeInfo unit))
                 {
-                    string msg = string.Format("Unknown type '{0}'", kindStr);
-                    throw LayoutException.Create<SyntaxException>(layout, stmt, msg);
+                    string msg = "Unknown type '{0}'.";
+                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, kindStr);
                 }
-                unitSize = typeInfo.Size;
+                unitSize = unit.Size;
             }
 
-            offset += (count * unitSize);
-            //Console.WriteLine("Aligned {0} units of size {1}", count, unitSize);
+            CurrentScope.Offset += (unitSize * count);
         }
 
         private void InterpretEcho(Statement stmt)
         {
-            if (!stmt.Parameters.TryGetValue(Parameters.Message, out string echoMsg))
-            {
-                string msg = string.Format("Missing required parameter '{0}'", Parameters.Message);
-                throw LayoutException.Create<SyntaxException>(layout, stmt, msg);
-            }
+            EnsureParameters(stmt, Parameters.Comment, Parameters.Message);
 
-            // TODO: resolve variables
+            GetRequiredParameter(stmt, Parameters.Message, out string echoMsg);
 
-            echoWriter.WriteLine(echoMsg);
+            echoWriter.WriteLine(ResolveLayoutVariables(echoMsg));
         }
 
         private void InterpretInclude(Statement stmt)
         {
-            // TODO
+
         }
 
         private bool TryLookupType(string typeName, out CascaraTypeInfo typeInfo)
@@ -276,10 +479,27 @@ namespace WHampson.Cascara.Interpreter
             return userDefinedTypes.TryGetValue(typeName, out typeInfo);
         }
 
+        private bool TryLookupLocal(string localVarName, out double value)
+        {
+            Dictionary<string, double> allLocals = scopeStack
+                .SelectMany(m => m.Locals)
+                .ToDictionary(k => k.Key, v => v.Value);
+
+            return allLocals.TryGetValue(localVarName, out value);
+        }
+
+        private bool IsVariableIdentifierAvailable(string identName)
+        {
+            return (CurrentScope.Symbol.Lookup(identName)) == null
+                //&& !TryLookupType(identName, out CascaraTypeInfo dummyType)
+                && !TryLookupLocal(identName, out double dummyValue);
+        }
+
         private double EvaluateExpression(string expr)
         {
-            // Clever way of evaluating math expressions using .NET's DataTable class.
+            expr = ResolveLayoutVariables(expr);
 
+            // Clever way of evaluating math expressions using .NET's DataTable class.
             DataTable dt = new DataTable();
             DataColumn dc = new DataColumn(null, typeof(double), expr);
             dt.Columns.Add(dc);
@@ -288,9 +508,218 @@ namespace WHampson.Cascara.Interpreter
             return (double) dt.Rows[0][0];
         }
 
+        private void EnsureParameters(Statement stmt, params string[] paramNames)
+        {
+            List<string> unknownParams = stmt.Parameters
+                .Select(x => x.Key)
+                .Where(x => !paramNames.Contains(x))
+                .ToList();
+
+            if (unknownParams.Any())
+            {
+                string msg = "Unknown parameter '{0}'.";
+                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, unknownParams[0]);
+            }
+        }
+
+        private bool GetParameter(Statement stmt, string paramName, out string value)
+        {
+            return GetParameter(stmt, paramName, false, out value);
+        }
+
+        private bool GetRequiredParameter(Statement stmt, string paramName, out string value)
+        {
+            return GetParameter(stmt, paramName, true, out value);
+        }
+
+        private bool GetParameter(Statement stmt, string paramName, bool isRequired, out string value)
+        {
+            bool hasParam = stmt.Parameters.TryGetValue(paramName, out value);
+            if (!hasParam && isRequired)
+            {
+                string msg = "Missing required parameter '{0}'";
+                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, paramName);
+            }
+
+            return hasParam;
+        }
+
+        private string ResolveLayoutVariables(string input)
+        {
+            input = Regex.Replace(input, GlobalOffsetOfPattern, ResolveGlobalOffsetOf);
+            input = Regex.Replace(input, OffsetOfPattern, ResolveOffsetOf);
+            input = Regex.Replace(input, SizeOfPattern, ResolveSizeOf);
+            input = Regex.Replace(input, ValueOfPattern, ResolveValueOf);
+            input = Regex.Replace(input, ValueOfShorthandPattern, ResolveValueOf);
+
+            return input;
+        }
+
+        private string ResolveGlobalOffsetOf(Match m)
+        {
+            return EvaluateOperator(Operator.GlobalOffsetOf, m.Groups[1].Value);
+        }
+
+        private string ResolveOffsetOf(Match m)
+        {
+            return EvaluateOperator(Operator.OffsetOf, m.Groups[1].Value);
+        }
+
+        private string ResolveSizeOf(Match m)
+        {
+            return EvaluateOperator(Operator.SizeOf, m.Groups[1].Value);
+        }
+
+        private string ResolveValueOf(Match m)
+        {
+            return EvaluateOperator(Operator.ValueOf, m.Groups[1].Value);
+        }
+
+        private enum Operator
+        {
+            GlobalOffsetOf,
+            OffsetOf,
+            SizeOf,
+            ValueOf
+        }
+
+        private string EvaluateOperator(Operator op, string varName)
+        {
+            bool isSpecialVar = SpecialVariables.AllSpecialVariables.Contains(varName);
+            bool isLocalVar = TryLookupLocal(varName, out double localVarVal);
+
+            // Handle special variables
+            if (isSpecialVar)
+            {
+                if (op != Operator.ValueOf)
+                {
+                    Log(LogLevel.Warning, "Operator {0} cannot be used on special variable '{1}'.", op, varName);
+                    return "";
+                }
+
+                switch (varName)
+                {
+                    case SpecialVariables.Filesize:
+                        return file.Length + "";
+                    case SpecialVariables.GlobalOffset:
+                        return GlobalOffset + "";
+                    case SpecialVariables.Offset:
+                        return CurrentScope.Offset + "";
+                }
+            }
+
+            // Handle local variables
+            if (isLocalVar)
+            {
+                if (op != Operator.ValueOf)
+                {
+                    Log(LogLevel.Warning, "Operator {0} cannot be used on local variable '{1}'.", op, varName);
+                    return "";
+                }
+
+                return localVarVal + "";
+            }
+
+            // Handle file-mapped variables
+            if (!CurrentScope.Symbol.TryLookup(varName, out Symbol sym))
+            {
+                // TODO: get statement. Perhaps throw a different exception and have Caller of ResolveVariables catch and handle it
+                string msg = "Unknown layout variable '{0}'";
+                throw LayoutException.Create<LayoutException>(layout, null, msg, varName);
+            }
+
+            return StringValueOf(sym);
+        }
+
+        private string StringValueOf(Symbol sym)
+        {
+            if (sym.IsLeaf && !sym.IsCollection)
+            {
+                // file.Get<sym.DataType>(sym.DataOffset);
+                MethodInfo method = typeof(BinaryFile)
+                    .GetMethod(nameof(BinaryFile.Get), new Type[] { typeof(int) })
+                    .MakeGenericMethod(sym.DataType);
+                object val = method.Invoke(file, new object[] { sym.DataOffset });
+
+                return val.ToString();
+            }
+
+            StringWriter sw = new StringWriter();
+
+            // Treat character arrays as strings
+            if (sym.IsCollection && (sym.DataType == typeof(char[]) || sym.DataType == typeof(Char8[])))
+            {
+                foreach (Symbol childSym in sym)
+                {
+                    string charValue = StringValueOf(childSym);
+                    if (charValue == "\0")
+                    {
+                        break;
+                    }
+                    sw.Write(charValue);
+                }
+
+                return sw.ToString();
+            }
+
+            // Write file object in JSON form
+            using (JsonWriter jw = new JsonTextWriter(sw))
+            {
+                if (sym.IsCollection)
+                {
+                    jw.Formatting = Formatting.None;
+                    jw.WriteStartArray();
+                    foreach (Symbol elemSym in sym)
+                    {
+                        jw.WriteRawValue(StringValueOf(elemSym));
+                    }
+                    jw.WriteEndArray();
+                }
+                
+                if (sym.GetAllMembers().Any())
+                {
+                    jw.Formatting = Formatting.Indented;
+                    jw.WriteStartObject();
+                    foreach (Symbol memberSym in sym.GetAllMembers())
+                    {
+                        jw.WritePropertyName(memberSym.Name);
+                        jw.WriteRawValue(StringValueOf(memberSym));
+                    }
+                    jw.WriteEndObject();
+                }
+            }
+
+            return sw.ToString();
+        }
+
+        private enum LogLevel
+        {
+            Info,
+            Warning,
+            Error
+        }
+
+        private void Log(LogLevel level, string fmt, params object[] fmtArgs)
+        {
+            string prefix = "";
+            switch (level)
+            {
+                case LogLevel.Info:
+                    prefix = "<Layout Interpreter> [INFO]: ";
+                    break;
+                case LogLevel.Warning:
+                    prefix = "<Layout Interpreter> [WARNING]: ";
+                    break;
+                case LogLevel.Error:
+                    prefix = "<Layout Interpreter> [ERROR]: ";
+                    break;
+            }
+
+            echoWriter.WriteLine("{0}{1}", prefix, string.Format(fmt, fmtArgs));
+        }
+
         private void InitializeInterpreterActionMaps()
         {
-            statementTypeActionMap[StatementType.Directive] = InterpretDirective;
             statementTypeActionMap[StatementType.FileObjectDefinition] = InterpretFileObjectDefinition;
             statementTypeActionMap[StatementType.LocalVariableDefinition] = InterpretLocalVariableDefinition;
             statementTypeActionMap[StatementType.TypeDefinition] = InterpretTypeDefinition;
@@ -338,7 +767,7 @@ namespace WHampson.Cascara.Interpreter
             return new CascaraTypeInfo(size, nativeType);
         }
 
-        public static CascaraTypeInfo CreateStruct(int size, params Tuple<int, CascaraTypeInfo>[] members)
+        public static CascaraTypeInfo CreateStruct(int size, params Statement[] members)
         {
             return new CascaraTypeInfo(size, members);
         }
@@ -347,19 +776,19 @@ namespace WHampson.Cascara.Interpreter
         {
             Size = size;
             NativeType = nativeType;
-            Members = new List<Tuple<int, CascaraTypeInfo>>();
+            Members = new List<Statement>();
         }
 
-        private CascaraTypeInfo(int size, params Tuple<int, CascaraTypeInfo>[] members)
+        private CascaraTypeInfo(int size, params Statement[] members)
         {
             Size = size;
             NativeType = null;
-            Members = new List<Tuple<int, CascaraTypeInfo>>(members);
+            Members = new List<Statement>(members);
         }
 
         public int Size { get; }
         public Type NativeType { get; }
-        public IEnumerable<Tuple<int, CascaraTypeInfo>> Members { get; }
+        public IEnumerable<Statement> Members { get; }
         public bool IsStruct { get { return NativeType == null && Members.Any(); } }
     }
 }
