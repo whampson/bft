@@ -24,6 +24,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace WHampson.Cascara.Interpreter
@@ -106,6 +107,12 @@ namespace WHampson.Cascara.Interpreter
             // This is because we use numbers as the names of collection element
             // symbol tables.
             if (string.IsNullOrWhiteSpace(name) || char.IsDigit(name[0]))
+            {
+                return false;
+            }
+
+            // Don't allow identifiers that match reserved words
+            if (ReservedWords.AllReservedWords.Contains(name))
             {
                 return false;
             }
@@ -696,6 +703,15 @@ namespace WHampson.Cascara.Interpreter
             }
 
             return names;
+        }
+
+        /// <summary>
+        /// Gets a list of all <see cref="Symbol"/>s that descend from this symbol.
+        /// </summary>
+        /// <returns>A list of member <see cref="Symbol"/>s.</returns>
+        public List<Symbol> GetAllMembers()
+        {
+            return symbolTable.Select(x => x.Value).ToList();
         }
 
         /// <summary>
