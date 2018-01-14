@@ -21,6 +21,7 @@
  */
 #endregion
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -45,7 +46,7 @@ namespace WHampson.Cascara.Interpreter
             IEnumerable<string> bigSet = new List<string>();
             foreach (HashSet<string> set in sets)
             {
-                bigSet.Concat(set);
+                bigSet = bigSet.Concat(set);
             }
 
             return bigSet;
