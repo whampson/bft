@@ -36,8 +36,9 @@ namespace WHampson.Cascara.Interpreter
         /// </remarks>
         public static class SpecialVariables
         {
-            public const string Filesize = "__FILESIZE__";
             public const string Offset = "__OFFSET__";
+            public const string GlobalOffset = "__GLOBALOFFSET__";
+            public const string Filesize = "__FILESIZE__";
 
             public static readonly HashSet<string> AllSpecialVariables = new HashSet<string>(
                 typeof(SpecialVariables).GetPublicConstants<string>());
