@@ -448,8 +448,13 @@ namespace WHampson.Cascara
 
         public void ApplyLayout(BinaryLayout layout)
         {
-            LayoutInterpreter interpreter = new LayoutInterpreter(layout);
-            interpreter.Execute(fileStructure.Symbol, Length);
+            ApplyLayout(layout, Console.Out);
+        }
+
+        public void ApplyLayout(BinaryLayout layout, TextWriter echoWriter)
+        {
+            LayoutInterpreter interpreter = new LayoutInterpreter(layout, echoWriter);
+            interpreter.Execute(fileStructure.Symbol, this);
         }
 
         //public Structure AddStructure(string name, int offset, int length)
