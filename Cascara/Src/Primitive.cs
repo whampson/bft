@@ -82,8 +82,25 @@ namespace WHampson.Cascara
         /// </summary>
         public T Value
         {
-            get { return sourceFile.Get<T>(FilePosition); }
-            set { sourceFile.Set<T>(FilePosition, value); }
+            get
+            {
+                if (IsCollection)
+                {
+                    string msg = "This property can only be used on elements of a collection, not the collection itself.";
+                    throw new InvalidOperationException(msg);
+                }
+                return sourceFile.Get<T>(FilePosition);
+            }
+
+            set
+            {
+                if (IsCollection)
+                {
+                    string msg = "This property can only be used on elements of a collection, not the collection itself.";
+                    throw new InvalidOperationException(msg);
+                }
+                sourceFile.Set<T>(FilePosition, value);
+            }
         }
 
         /// <summary>
