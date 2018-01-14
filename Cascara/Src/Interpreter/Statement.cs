@@ -178,11 +178,13 @@ namespace WHampson.Cascara.Interpreter
         {
             if (string.IsNullOrWhiteSpace(key))
             {
-                throw new ArgumentException(nameof(key));
+                string msg = Resources.ArgumentExceptionEmptyString;
+                throw new ArgumentException(msg, nameof(key));
             }
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new ArgumentException(nameof(value));
+                string msg = Resources.ArgumentExceptionEmptyString;
+                throw new ArgumentException(msg, nameof(value));
             }
 
             _parameters[key.Trim()] = value.Trim();
