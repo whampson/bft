@@ -45,66 +45,18 @@ namespace WHampson.Cascara.Interpreter
 
         private static readonly HashSet<Version> SupportedVersions = new HashSet<Version>(new Version[]
         {
-            //new Version("1.0.0"),
             AssemblyInfo.AssemblyVersion        // current version
         });
-
-        private class Scope
-        {
-            private int _offset;
-            private int _maxOffset;
-
-            public Scope(Symbol sym)
-            {
-                _offset = 0;
-                _maxOffset = 0;
-                IsUnion = false;
-                Symbol = sym;
-                Locals = new Dictionary<string, double>();
-            }
-
-            public int Offset
-            {
-                get { return _offset; }
-                set
-                {
-                    _offset = value;
-                    _maxOffset = Math.Max(_offset, _maxOffset);
-                }
-            }
-
-            public int MaxOffset
-            {
-                get { return _maxOffset; }
-                set { _maxOffset = value; }
-            }
-
-            public bool IsUnion
-            {
-                get;
-                set;
-            }
-
-            public Symbol Symbol
-            {
-                get;
-            }
-
-            public Dictionary<string, double> Locals
-            {
-                get;
-            }
-        }
 
         private delegate void InterpretAction(Statement stmt);
 
         private BinaryLayout layout;
         private BinaryFile file;
-        private Stack<Scope> scopeStack;
+        private Stack<CodeBlock> scopeStack;
         private HashSet<BinaryLayout> includedLayouts;
         private TextWriter echoWriter;
 
-        private Dictionary<string, CascaraTypeInfo> userDefinedTypes;
+        private Dictionary<string, TypeInfo> userDefinedTypes;
 
         private Dictionary<StatementType, InterpretAction> statementTypeActionMap;
         private Dictionary<string, InterpretAction> directiveActionMap;
@@ -119,16 +71,16 @@ namespace WHampson.Cascara.Interpreter
 
             this.layout = layout;
             this.echoWriter = echoWriter;
-            scopeStack = new Stack<Scope>();
+            scopeStack = new Stack<CodeBlock>();
             includedLayouts = new HashSet<BinaryLayout>();
-            userDefinedTypes = new Dictionary<string, CascaraTypeInfo>();
+            userDefinedTypes = new Dictionary<string, TypeInfo>();
 
             statementTypeActionMap = new Dictionary<StatementType, InterpretAction>();
             directiveActionMap = new Dictionary<string, InterpretAction>();
             InitializeInterpreterActionMaps();
         }
 
-        private Scope CurrentScope
+        private CodeBlock CurrentCodeBlock
         {
             get { return scopeStack.Peek(); }
         }
@@ -151,7 +103,7 @@ namespace WHampson.Cascara.Interpreter
             Reset();
 
             this.file = file;
-            scopeStack.Push(new Scope(rootSymbol));
+            scopeStack.Push(new CodeBlock(rootSymbol));
             includedLayouts.Add(layout);
 
             InterpretRootStatement(layout.RootStatement);
@@ -220,7 +172,7 @@ namespace WHampson.Cascara.Interpreter
             string typeName = stmt.Keyword;
             bool isStruct = (typeName == Keywords.Struct || typeName == Keywords.Union);
 
-            CascaraTypeInfo type = default(CascaraTypeInfo);
+            TypeInfo type = default(TypeInfo);
             if (!isStruct && !TryLookupType(typeName, out type))
             {
                 string msg = "Unknown type '{0}'.";
@@ -238,7 +190,7 @@ namespace WHampson.Cascara.Interpreter
                 catch (SyntaxErrorException e)
                 {
                     string msg = "'{0}' is not a valid expression.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, countStr);
+                    throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, countStr);
                 }
 
                 if (count <= 0)
@@ -248,6 +200,7 @@ namespace WHampson.Cascara.Interpreter
                 }
             }
 
+            // Validate name and create object symbol
             Symbol sym = Symbol.CreateRootSymbol();
             if (hasName)
             {
@@ -258,7 +211,7 @@ namespace WHampson.Cascara.Interpreter
                         "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
                     throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
                 }
-                if (CurrentScope.Symbol.Lookup(objName) != null || TryLookupLocal(objName, out double dummyLocalValue))
+                if (CurrentCodeBlock.Symbol.Lookup(objName) != null || TryLookupLocal(objName, out double dummyLocalValue))
                 {
                     string msg = "A variable with identifier '{0}' already exists in the current scope.";
                     throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
@@ -266,18 +219,20 @@ namespace WHampson.Cascara.Interpreter
 
                 if (hasCount)
                 {
-                    sym = CurrentScope.Symbol.Insert(objName, count);
+                    sym = CurrentCodeBlock.Symbol.Insert(objName, count);
                 }
                 else
                 {
-                    sym = CurrentScope.Symbol.Insert(objName);
+                    sym = CurrentCodeBlock.Symbol.Insert(objName);
                 }
             }
+
+            // Set symbol proprties
             sym.DataOffset = GlobalOffset;
             sym.DataType = (hasCount && !(isStruct || type.IsStruct))
                 ? type.NativeType.MakeArrayType()
                 : type.NativeType;
-
+            
             int totalDataLength = 0;
             Symbol elemSym = sym;
             for (int i = 0; i < count; i++)
@@ -292,13 +247,13 @@ namespace WHampson.Cascara.Interpreter
                 {
                     if (hasName)
                     {
-                        scopeStack.Push(new Scope(elemSym));
+                        scopeStack.Push(new CodeBlock(elemSym));
                     }
                     else
                     {
-                        scopeStack.Push(new Scope(Symbol.CreateNamelessSymbol(CurrentScope.Symbol)));
+                        scopeStack.Push(new CodeBlock(Symbol.CreateNamelessSymbol(CurrentCodeBlock.Symbol)));
                     }
-                    CurrentScope.IsUnion = (stmt.Keyword == Keywords.Union);
+                    CurrentCodeBlock.IsUnion = (stmt.Keyword == Keywords.Union);
 
                     IEnumerable<Statement> members = (isStruct)
                         ? stmt.NestedStatements
@@ -314,15 +269,15 @@ namespace WHampson.Cascara.Interpreter
                         InterpretStatement(member);
                     }
 
-                    Scope oldScope = scopeStack.Pop();
+                    CodeBlock oldScope = scopeStack.Pop();
                     int numBytes = oldScope.MaxOffset;
-                    if (!CurrentScope.IsUnion)
+                    if (!CurrentCodeBlock.IsUnion)
                     {
-                        CurrentScope.Offset += numBytes;
+                        CurrentCodeBlock.Offset += numBytes;
                     }
                     else
                     {
-                        CurrentScope.MaxOffset = numBytes;
+                        CurrentCodeBlock.MaxOffset = numBytes;
                     }
 
                     elemSym.DataType = null;
@@ -332,20 +287,20 @@ namespace WHampson.Cascara.Interpreter
                 else
                 {
                     int numBytes = type.Size;
-                    int newOffset = CurrentScope.Offset + numBytes;
+                    int newOffset = CurrentCodeBlock.Offset + numBytes;
                     if (newOffset > file.Length)
                     {
                         string msg = "Object definition runs past the end of the file.";
                         throw LayoutException.Create<LayoutException>(layout, stmt, msg);
                     }
 
-                    if (!CurrentScope.IsUnion)
+                    if (!CurrentCodeBlock.IsUnion)
                     {
-                        CurrentScope.Offset = newOffset;
+                        CurrentCodeBlock.Offset = newOffset;
                     }
                     else
                     {
-                        CurrentScope.MaxOffset = numBytes;
+                        CurrentCodeBlock.MaxOffset = numBytes;
                     }
 
                     elemSym.DataType = type.NativeType;
@@ -365,7 +320,7 @@ namespace WHampson.Cascara.Interpreter
 
             // TODO: handle struct/union
 
-            if (!TryLookupType(baseTypeName, out CascaraTypeInfo baseType))
+            if (!TryLookupType(baseTypeName, out TypeInfo baseType))
             {
                 string msg = "Unknown type '{0}'.";
                 throw LayoutException.Create<LayoutException>(layout, stmt, msg, baseTypeName);
@@ -379,7 +334,7 @@ namespace WHampson.Cascara.Interpreter
                 throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
             }
 
-            if (TryLookupType(newTypeName, out CascaraTypeInfo dummyType))
+            if (TryLookupType(newTypeName, out TypeInfo dummyType))
             {
                 string msg = "Type '{0}' already exists.";
                 throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
@@ -395,7 +350,7 @@ namespace WHampson.Cascara.Interpreter
             GetRequiredParameter(stmt, Parameters.Name, out string varName);
             GetRequiredParameter(stmt, Parameters.Value, out string valueStr);
 
-            if (CurrentScope.Symbol.Lookup(varName) != null)
+            if (CurrentCodeBlock.Symbol.Lookup(varName) != null)
             {
                 string msg = "A variable with identifier '{0}' already exists in the current scope.";
                 throw LayoutException.Create<LayoutException>(layout, stmt, msg, varName);
@@ -404,12 +359,12 @@ namespace WHampson.Cascara.Interpreter
             try
             {
                 double value = EvaluateExpression(valueStr);
-                CurrentScope.Locals[varName] = value;
+                CurrentCodeBlock.Locals[varName] = value;
             }
             catch (SyntaxErrorException e)
             {
                 string msg = "'{0}' is not a valid expression.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, valueStr);
+                throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, valueStr);
             }
         }
 
@@ -432,7 +387,7 @@ namespace WHampson.Cascara.Interpreter
                 catch (SyntaxErrorException e)
                 {
                     string msg = "'{0}' is not a valid expression.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, countStr);
+                    throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, countStr);
                 }
 
                 if (count <= 0)
@@ -444,7 +399,7 @@ namespace WHampson.Cascara.Interpreter
 
             if (hasKind)
             {
-                if (!TryLookupType(kindStr, out CascaraTypeInfo unit))
+                if (!TryLookupType(kindStr, out TypeInfo unit))
                 {
                     string msg = "Unknown type '{0}'.";
                     throw LayoutException.Create<LayoutException>(layout, stmt, msg, kindStr);
@@ -452,7 +407,7 @@ namespace WHampson.Cascara.Interpreter
                 unitSize = unit.Size;
             }
 
-            CurrentScope.Offset += (unitSize * count);
+            CurrentCodeBlock.Offset += (unitSize * count);
         }
 
         private void InterpretEcho(Statement stmt)
@@ -469,7 +424,7 @@ namespace WHampson.Cascara.Interpreter
 
         }
 
-        private bool TryLookupType(string typeName, out CascaraTypeInfo typeInfo)
+        private bool TryLookupType(string typeName, out TypeInfo typeInfo)
         {
             if (BuiltInPrimitives.TryGetValue(typeName, out typeInfo))
             {
@@ -490,7 +445,7 @@ namespace WHampson.Cascara.Interpreter
 
         private bool IsVariableIdentifierAvailable(string identName)
         {
-            return (CurrentScope.Symbol.Lookup(identName)) == null
+            return (CurrentCodeBlock.Symbol.Lookup(identName)) == null
                 //&& !TryLookupType(identName, out CascaraTypeInfo dummyType)
                 && !TryLookupLocal(identName, out double dummyValue);
         }
@@ -501,12 +456,32 @@ namespace WHampson.Cascara.Interpreter
 
             // Clever way of evaluating math expressions using .NET's DataTable class.
             DataTable dt = new DataTable();
-            DataColumn dc = new DataColumn(null, typeof(double), expr);
+            DataColumn dc = new DataColumn(null, typeof(bool), expr);
             dt.Columns.Add(dc);
             dt.Rows.Add(0);
 
             return (double) dt.Rows[0][0];
         }
+
+        //private T EvaluateExpression2<T>(string expr)
+        //    where T : struct
+        //{
+        //    expr = ResolveLayoutVariables(expr);
+
+        //    // Clever way of evaluating math expressions using .NET's DataTable class.
+        //    DataTable dt = new DataTable();
+        //    DataColumn dc = new DataColumn(null, typeof(T), expr);
+        //    dt.Columns.Add(dc);
+        //    dt.Rows.Add(0);
+
+        //    return (T) dt.Rows[0][0];
+        //}
+
+        /* Put these in 'Parameters.cs' */
+        /* Or maybe an internal class within the interpreter (make this a partial class) */
+        // bool GetCondParam(Statement stmt) { }
+        // int GetNameParam(Statement stmt) { }
+        // double GetValueParam(Statement stmt) { }
 
         private void EnsureParameters(Statement stmt, params string[] paramNames)
         {
@@ -604,7 +579,7 @@ namespace WHampson.Cascara.Interpreter
                     case SpecialVariables.GlobalOffset:
                         return GlobalOffset + "";
                     case SpecialVariables.Offset:
-                        return CurrentScope.Offset + "";
+                        return CurrentCodeBlock.Offset + "";
                 }
             }
 
@@ -621,7 +596,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Handle file-mapped variables
-            if (!CurrentScope.Symbol.TryLookup(varName, out Symbol sym))
+            if (!CurrentCodeBlock.Symbol.TryLookup(varName, out Symbol sym))
             {
                 // TODO: get statement. Perhaps throw a different exception and have Caller of ResolveVariables catch and handle it
                 string msg = "Unknown layout variable '{0}'";
@@ -729,66 +704,81 @@ namespace WHampson.Cascara.Interpreter
             directiveActionMap[Keywords.Include] = InterpretInclude;
         }
 
-        private static Dictionary<string, CascaraTypeInfo> BuiltInPrimitives = new Dictionary<string, CascaraTypeInfo>()
+        private static Dictionary<string, TypeInfo> BuiltInPrimitives = new Dictionary<string, TypeInfo>()
         {
-            { Keywords.Bool, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
-            { Keywords.Bool8, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
-            { Keywords.Bool16, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool16>(), typeof(Bool16)) },
-            { Keywords.Bool32, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool32>(), typeof(Bool32)) },
-            { Keywords.Bool64, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool64>(), typeof(Bool64)) },
-            { Keywords.Byte, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
-            { Keywords.Char, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
-            { Keywords.Char8, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
-            { Keywords.Char16, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<char>(), typeof(char)) },
-            { Keywords.Double, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<double>(), typeof(double)) },
-            { Keywords.Float, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
-            { Keywords.Int, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
-            { Keywords.Int8, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<sbyte>(), typeof(sbyte)) },
-            { Keywords.Int16, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
-            { Keywords.Int32, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
-            { Keywords.Int64, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(),  typeof(long)) },
-            { Keywords.Long, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(), typeof(long)) },
-            { Keywords.Short, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
-            { Keywords.Single, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
-            { Keywords.UInt, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
-            { Keywords.UInt8, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
-            { Keywords.UInt16, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) },
-            { Keywords.UInt32, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
-            { Keywords.UInt64, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
-            { Keywords.ULong, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
-            { Keywords.UShort, CascaraTypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) }
+            { Keywords.Bool, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
+            { Keywords.Bool8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
+            { Keywords.Bool16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool16>(), typeof(Bool16)) },
+            { Keywords.Bool32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool32>(), typeof(Bool32)) },
+            { Keywords.Bool64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool64>(), typeof(Bool64)) },
+            { Keywords.Byte, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
+            { Keywords.Char, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
+            { Keywords.Char8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
+            { Keywords.Char16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<char>(), typeof(char)) },
+            { Keywords.Double, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<double>(), typeof(double)) },
+            { Keywords.Float, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
+            { Keywords.Int, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
+            { Keywords.Int8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<sbyte>(), typeof(sbyte)) },
+            { Keywords.Int16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
+            { Keywords.Int32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
+            { Keywords.Int64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(),  typeof(long)) },
+            { Keywords.Long, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(), typeof(long)) },
+            { Keywords.Short, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
+            { Keywords.Single, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
+            { Keywords.UInt, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
+            { Keywords.UInt8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
+            { Keywords.UInt16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) },
+            { Keywords.UInt32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
+            { Keywords.UInt64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
+            { Keywords.ULong, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
+            { Keywords.UShort, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) }
         };
-    }
 
-    internal struct CascaraTypeInfo
-    {
-        public static CascaraTypeInfo CreatePrimitive(int size, Type nativeType)
+        private class CodeBlock
         {
-            return new CascaraTypeInfo(size, nativeType);
-        }
+            private int _offset;
+            private int _maxOffset;
 
-        public static CascaraTypeInfo CreateStruct(int size, params Statement[] members)
-        {
-            return new CascaraTypeInfo(size, members);
-        }
+            public CodeBlock(Symbol sym)
+            {
+                _offset = 0;
+                _maxOffset = 0;
+                IsUnion = false;
+                Symbol = sym;
+                Locals = new Dictionary<string, double>();
+            }
 
-        private CascaraTypeInfo(int size, Type nativeType)
-        {
-            Size = size;
-            NativeType = nativeType;
-            Members = new List<Statement>();
-        }
+            public int Offset
+            {
+                get { return _offset; }
+                set
+                {
+                    _offset = value;
+                    _maxOffset = Math.Max(_offset, _maxOffset);
+                }
+            }
 
-        private CascaraTypeInfo(int size, params Statement[] members)
-        {
-            Size = size;
-            NativeType = null;
-            Members = new List<Statement>(members);
-        }
+            public int MaxOffset
+            {
+                get { return _maxOffset; }
+                set { _maxOffset = value; }
+            }
 
-        public int Size { get; }
-        public Type NativeType { get; }
-        public IEnumerable<Statement> Members { get; }
-        public bool IsStruct { get { return NativeType == null && Members.Any(); } }
+            public bool IsUnion
+            {
+                get;
+                set;
+            }
+
+            public Symbol Symbol
+            {
+                get;
+            }
+
+            public Dictionary<string, double> Locals
+            {
+                get;
+            }
+        }
     }
 }
