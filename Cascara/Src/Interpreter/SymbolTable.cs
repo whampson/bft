@@ -30,94 +30,92 @@ using System.Text.RegularExpressions;
 namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
-    /// Represents an identifier given to some type of data.
+    /// Represents a node in a symbol tree.
+    /// Symbol trees are used to keep track of and maintain the hierarchy
+    /// of identifiers during parsing.
     /// </summary>
-    /// <remarks>
-    /// This class also encapsulates the functionality of a symbol table.
-    /// </remarks>
-    internal class Symbol : IEnumerable<Symbol>
+    internal class SymbolTable : IEnumerable<SymbolTable>
     {
         /// <summary>
-        /// Indicates the member of a structure.
+        /// The character used to denote the member of a structure.
         /// Example: 'x.y' means "member y of structure x".
         /// </summary>
         private const char StructureReferenceOperatorChar = '.';
 
         /// <summary>
-        /// Regex pattern for matching symbol names that refer to collection elements.
+        /// Regex pattern for matching identifiers that refer to collection elements.
         /// </summary>
         private const string CollectionNotationPattern = @"\[(\d+)\]$";
 
         /// <summary>
-        /// The child <see cref="Symbol"/> table.
+        /// A dictionary of member identifiers to child <see cref="SymbolTable"/>s.
         /// </summary>
-        private Dictionary<string, Symbol> symbolTable;
+        private Dictionary<string, SymbolTable> members;
 
         /// <summary>
-        /// Child <see cref="Symbol"/>s for referencing elements of a collection.
+        /// A list of child <see cref="SymbolTable"/>s corresponding to each element of the collection.
         /// </summary>
-        private List<Symbol> collectionSymbols;
+        private List<SymbolTable> collectionElements;
 
         /// <summary>
-        /// Creates a nameless, parentless <see cref="Symbol"/> for use
-        /// as the root in a <see cref="Symbol"/> tree.
+        /// Creates a nameless, parentless <see cref="SymbolTable"/> for use
+        /// as the root in a symbol tree.
         /// </summary>
         /// <returns>
-        /// The newly-created <see cref="Symbol"/> object.
+        /// The newly-created <see cref="SymbolTable"/> object.
         /// </returns>
-        internal static Symbol CreateRootSymbol()
+        internal static SymbolTable CreateRootSymbolTable()
         {
-            return new Symbol(null, null);
+            return new SymbolTable(null, null);
         }
 
         /// <summary>
-        /// Creates a nameless <see cref="Symbol"/> with the specified parent <see cref="Symbol"/>.
-        /// An entry for this <see cref="Symbol"/> does not exist in the parent.
+        /// Creates a nameless <see cref="SymbolTable"/> with the specified parent <see cref="SymbolTable"/>.
+        /// The parent does not contain a reference to this <see cref="SymbolTable"/>.
         /// </summary>
         /// <param name="parent">
-        /// The <see cref="Symbol"/> that this <see cref="Symbol"/> stems from.
+        /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> stems from.
         /// </param>
         /// <returns>
-        /// The newly-created <see cref="Symbol"/> object.
+        /// The newly-created <see cref="SymbolTable"/> object.
         /// </returns>
-        internal static Symbol CreateNamelessSymbol(Symbol parent)
+        internal static SymbolTable CreateNamelessSymbolTable(SymbolTable parent)
         {
-            return new Symbol(null, parent);
+            return new SymbolTable(null, parent);
         }
 
         /// <summary>
         /// Checks whether a given string satisfies the requirements
-        /// for a <see cref="Symbol"/> name.
+        /// for a symbol table entry.
         /// </summary>
         /// <remarks>
-        /// <see cref="Symbol"/> names must consist of only alphabetic characters
-        /// (any case), decimal digits, or underscores. <see cref="Symbol"/> names
-        /// cannot begin with a decimal digit.
+        /// Identifiers must consist of only alphabetic characters (any case),
+        /// decimal digits, or underscores. Identifiers cannot begin with a decimal digit.
         /// </remarks>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The string to validate.
         /// </param>
         /// <returns>
         /// <code>True</code> if the specified string meets the criteria for a
-        /// valid <see cref="Symbol"/> name, <code>False</code> otherwise.
+        /// valid <see cref="SymbolTable"/> name, <code>False</code> otherwise.
         /// </returns>
-        internal static bool IsNameValid(string name)
+        internal static bool IsIdentifierValid(string identifier)
         {
-            // Don't allow names to start with a digit.
+            // Don't allow identifiers to start with a digit.
             // This is because we use numbers as the names of collection element
-            // symbol tables.
-            if (string.IsNullOrWhiteSpace(name) || char.IsDigit(name[0]))
+            // symbol tables internally.
+            if (string.IsNullOrWhiteSpace(identifier) || char.IsDigit(identifier[0]))
             {
                 return false;
             }
 
             // Don't allow identifiers that match reserved words
-            if (ReservedWords.AllReservedWords.Contains(name))
+            if (ReservedWords.AllReservedWords.Contains(identifier))
             {
                 return false;
             }
 
-            foreach (char c in name)
+            foreach (char c in identifier)
             {
                 // Only allow alphanumeric characters and underscores.
                 if (!char.IsLetterOrDigit(c) && c != '_')
@@ -130,55 +128,54 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Searches up the <see cref="Symbol"/> tree from the given <see cref="Symbol"/>
-        /// to the root for all occurrences of the specified <see cref="Symbol"/> name.
+        /// Searches up the symbol tree from the given <see cref="SymbolTable"/>
+        /// to the root for all occurrences of the specified identifier.
         /// </summary>
         /// <remarks>
-        /// This is a wrapper function for <see cref="SearchUp(string, Symbol, ref List{Symbol})"/>.
+        /// This is a wrapper function for <see cref="SearchUp(string, SymbolTable, ref List{SymbolTable})"/>.
         /// </remarks>
-        /// <param name="name">
-        /// The name of the <see cref="Symbol"/> to search for.
+        /// <param name="identifier">
+        /// The identifier to search for.
         /// </param>
         /// <param name="sym">
-        /// The node in the <see cref="Symbol"/> tree from which to begin the search.
+        /// The node in the symbol tree from which to begin the search.
         /// </param>
         /// <returns>
-        /// A <see cref="List{Symbol}"/> of all <see cref="Symbol"/>s with a matching name.
+        /// A <see cref="List{Symbol}"/> of all <see cref="SymbolTable"/>s with a matching identifier.
         /// </returns>
-        private static List<Symbol> SearchUp(string name, Symbol sym)
+        private static List<SymbolTable> SearchUp(string identifier, SymbolTable sym)
         {
-            List<Symbol> results = new List<Symbol>();
-            SearchUp(name, sym, ref results);
+            List<SymbolTable> results = new List<SymbolTable>();
+            SearchUp(identifier, sym, ref results);
 
             return results;
         }
 
         /// <summary>
-        /// Searches up the <see cref="Symbol"/> tree from the given <see cref="Symbol"/>
-        /// to the root for all occurrences of the specified <see cref="Symbol"/> name.
+        /// Searches up the symbol tree from the given <see cref="SymbolTable"/>
+        /// to the root for all occurrences of the specified identifier.
         /// </summary>
         /// <remarks>
-        /// If <see cref="Symbol"/>s are found, they are said to be within the scope of
-        /// <paramref name="sym"/>.
+        /// If matches are found, they are said to be "within the scope of" <paramref name="sym"/>.
         /// </remarks>
-        /// <param name="name">
-        /// The name of the <see cref="Symbol"/> to search for.
+        /// <param name="identifier">
+        /// The identifier to search for.
         /// </param>
         /// <param name="sym">
-        /// The node in the <see cref="Symbol"/> tree from which to begin the search.
+        /// The node in the symbol tree from which to begin the search.
         /// </param>
         /// <param name="results">
         /// A <see cref="List{Symbol}"/> reference which is added to in each recursive
         /// call of this function.
         /// </param>
-        private static void SearchUp(string name, Symbol sym, ref List<Symbol> results)
+        private static void SearchUp(string identifier, SymbolTable sym, ref List<SymbolTable> results)
         {
             if (sym == null)
             {
                 return;
             }
 
-            string tempName = name;
+            string tempName = identifier;
 
             // Read collection index and remove from symbol name (if applicable)
             bool isSearchingForCollection = TryGetElementIndex(tempName, out int index);
@@ -188,13 +185,13 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Add entry to list if it exists in the current table
-            if (sym.symbolTable.TryGetValue(tempName, out Symbol entry))
+            if (sym.members.TryGetValue(tempName, out SymbolTable entry))
             {
                 if (isSearchingForCollection)
                 {
                     if (entry.IsCollection && index < entry.ElementCount)
                     {
-                        results.Add(entry.collectionSymbols[index]);
+                        results.Add(entry.collectionElements[index]);
                     }
                 }
                 else
@@ -204,41 +201,41 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Search the parent table
-            SearchUp(name, sym.Parent, ref results);
+            SearchUp(identifier, sym.Parent, ref results);
         }
 
         /// <summary>
-        /// Searches down the <see cref="Symbol"/> tree from the given root
-        /// for the given filly qualified symbol name.
+        /// Searches down the symbol tree from the given node
+        /// for the given filly-qualified symbol name.
         /// </summary>
-        /// <param name="name">
-        /// The fully-qualified name of the <see cref="Symbol"/> search for.
+        /// <param name="identifier">
+        /// The fully-qualified name of the <see cref="SymbolTable"/> search for.
         /// </param>
         /// <param name="sym">
-        /// The root of the <see cref="Symbol"/> tree to begin the search.
+        /// The node of the symbol tree to begin the search.
         /// </param>
         /// <returns>
-        /// The <see cref="Symbol"/> with the matching name, if found.
+        /// The <see cref="SymbolTable"/> with the matching name, if found.
         /// <code>Null</code> otherwise.
         /// </returns>
-        private static Symbol SearchDown(string name, Symbol sym)
+        private static SymbolTable SearchDown(string identifier, SymbolTable sym)
         {
             if (sym == null)
             {
                 return null;
             }
 
-            string[] splitName = name.Split(new char[] { StructureReferenceOperatorChar }, 2);
+            string[] splitIdent = identifier.Split(new char[] { StructureReferenceOperatorChar }, 2);
 
             // Read collection index and remove from symbol name (if applicable)
-            bool isSearchingForCollection = TryGetElementIndex(splitName[0], out int index);
+            bool isSearchingForCollection = TryGetElementIndex(splitIdent[0], out int index);
             if (isSearchingForCollection)
             {
-                splitName[0] = StripCollectionNotation(splitName[0]);
+                splitIdent[0] = StripCollectionNotation(splitIdent[0]);
             }
 
             // Look for top-level name in current symbol table
-            if (!sym.symbolTable.TryGetValue(splitName[0], out Symbol entry))
+            if (!sym.members.TryGetValue(splitIdent[0], out SymbolTable entry))
             {
                 return null;
             }
@@ -251,17 +248,17 @@ namespace WHampson.Cascara.Interpreter
                 }
 
                 // Get collection element symbol table
-                entry = entry.collectionSymbols[index];
+                entry = entry.collectionElements[index];
             }
 
             // If only a top-level name was specified (no dot), return the entry (base case)
-            if (splitName.Length == 1)
+            if (splitIdent.Length == 1)
             {
                 return entry;
             }
 
             // Continue searching down the tree for the rest of the name
-            return SearchDown(splitName[1], entry);
+            return SearchDown(splitIdent[1], entry);
         }
 
         /// <summary>
@@ -272,7 +269,7 @@ namespace WHampson.Cascara.Interpreter
         /// If the name passed in does not refer to a collection element,
         /// <code>False</code> will be returned.
         /// </remarks>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The name of the symbol to extract the element index from.
         /// </param>
         /// <param name="index">
@@ -284,97 +281,98 @@ namespace WHampson.Cascara.Interpreter
         /// <code>True</code> if the element index extraction succeeded,
         /// <code>False</code> otherwise.
         /// </returns>
-        private static bool TryGetElementIndex(string name, out int index)
+        private static bool TryGetElementIndex(string identifier, out int index)
         {
-            Match m = Regex.Match(name, CollectionNotationPattern);
+            Match m = Regex.Match(identifier, CollectionNotationPattern);
 
             return int.TryParse(m.Groups[1].Value, out index);
         }
 
         /// <summary>
-        /// Removes the "element brackets" from the given <see cref="Symbol"/> name.
+        /// Removes the "element brackets" from the given symbol identifier.
         /// </summary>
         /// <remarks>
         /// If the name passed in does not refer to a collection element,
-        /// <paramref name="name"/> will be returned.
+        /// <paramref name="identifier"/> will be returned.
         /// </remarks>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The symbol to strip the collection notation from.
         /// </param>
         /// <returns>
-        /// The modified <see cref="Symbol"/> name.
+        /// The modified <see cref="SymbolTable"/> name.
         /// </returns>
-        private static string StripCollectionNotation(string name)
+        private static string StripCollectionNotation(string identifier)
         {
-            return Regex.Replace(name, CollectionNotationPattern, "");
+            return Regex.Replace(identifier, CollectionNotationPattern, "");
         }
 
         /// <summary>
-        /// Creates a new <see cref="Symbol"/> object.
+        /// Creates a new <see cref="SymbolTable"/> object.
         /// </summary>
         /// <remarks>
-        /// The new <see cref="Symbol"/> is guaranteed to NOT be a collection.
+        /// The new <see cref="SymbolTable"/> is guaranteed to NOT be a collection.
         /// </remarks>
         /// <param name="name">
-        /// The name of the <see cref="Symbol"/>.
+        /// The name of the <see cref="SymbolTable"/>.
         /// </param>
         /// <param name="parent">
-        /// The <see cref="Symbol"/> that this <see cref="Symbol"/> is a child of.
+        /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> is a child of.
         /// </param>
-        private Symbol(string name, Symbol parent)
+        private SymbolTable(string name, SymbolTable parent)
             : this(name, parent, false, 1)
         {
         }
 
         /// <summary>
-        /// Creates a new <see cref="Symbol"/> object.
+        /// Creates a new <see cref="SymbolTable"/> object.
         /// </summary>
-        /// <param name="name">
-        /// The name of the <see cref="Symbol"/>.
+        /// <param name="identifier">
+        /// The name of the <see cref="SymbolTable"/>.
         /// </param>
         /// <param name="parent">
-        /// The <see cref="Symbol"/> that this <see cref="Symbol"/> is a child of.
+        /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> is a child of.
         /// </param>
         /// <param name="isCollection">
         /// A value indicating whether this symbol represents a collection.
         /// </param>
         /// <param name="elemCount">
         /// The number of elements in the collection.
-        /// MUST be -1 if the symbol does not represent a collection.
+        /// MUST be 1 if the symbol is not a collection.
         /// </param>
         /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown if the <paramref name="elemCount"/> is out of range.
         /// </exception>
-        private Symbol(string name, Symbol parent, bool isCollection, int elemCount)
+        private SymbolTable(string identifier, SymbolTable parent, bool isCollection, int elemCount)
         {
             if (elemCount < 0 || (!isCollection && elemCount != 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(elemCount));
             }
 
-            Name = name;
+            Name = identifier;
             Parent = parent;
             IsCollection = isCollection;
-            symbolTable = new Dictionary<string, Symbol>();
-            collectionSymbols = new List<Symbol>(elemCount);
+            members = new Dictionary<string, SymbolTable>();
+            collectionElements = new List<SymbolTable>(elemCount);
         }
 
         /// <summary>
-        /// Indexer for selecting the <see cref="Symbol"/> of an element of a collection.
+        /// Indexer for selecting the <see cref="SymbolTable"/> of an element in a collection.
         /// </summary>
-        /// <param name="index"></param>
+        /// <param name="index">The element index.</param>
         /// <returns>
-        /// The <see cref="Symbol"/> object at the specified collection index.
+        /// The <see cref="SymbolTable"/> object at the specified collection index.
         /// </returns>
         /// <exception cref="NotSupportedException">
-        /// Thrown if this indexer is used when the <see cref="Symbol"/> it is being used on
+        /// Thrown if this indexer is used when the <see cref="SymbolTable"/> it is being used on
         /// does not represent a collection.
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown if the <paramref name="index"/> is negative or greater than the number of
         /// elements in the collection.
         /// </exception>
-        public Symbol this[int index]
+        /// <see cref="IsCollection"/>
+        public SymbolTable this[int index]
         {
             get
             {
@@ -388,20 +386,22 @@ namespace WHampson.Cascara.Interpreter
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return collectionSymbols[index];
+                return collectionElements[index];
             }
         }
 
         /// <summary>
-        /// Gets the parent <see cref="Symbol"/> of this <see cref="Symbol"/>.
+        /// Gets the parent <see cref="SymbolTable"/>.
+        /// If this <see cref="SymbolTable"/> is the root, this property
+        /// returns <c>null</c>.
         /// </summary>
-        public Symbol Parent
+        public SymbolTable Parent
         {
             get;
         }
 
         /// <summary>
-        /// Gets the name of this <see cref="Symbol"/>.
+        /// Gets the name of this <see cref="SymbolTable"/>.
         /// </summary>
         public string Name
         {
@@ -409,7 +409,7 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets the fully-qualified name of this <see cref="Symbol"/>.
+        /// Gets the fully-qualified name of this <see cref="SymbolTable"/>.
         /// </summary>
         public string FullName
         {
@@ -417,7 +417,7 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets a value indicating whether this <see cref="Symbol"/> represents a collection.
+        /// Gets a value indicating whether this <see cref="SymbolTable"/> represents a collection.
         /// </summary>
         public bool IsCollection
         {
@@ -425,34 +425,45 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets value indicating whether this <see cref="Symbol"/> contains child symbols.
+        /// Gets value indicating whether this <see cref="SymbolTable"/> represents a composite data structure.
+        /// Composite data structure symbols have child tables, one for each member of the structure.
         /// </summary>
-        public bool IsLeaf
+        public bool IsStruct
         {
-            get { return symbolTable.Count == 0 && collectionSymbols.Count == 0; }
+            get { return members.Any(); }
         }
 
         /// <summary>
         /// Gets the number of elements in the collection.
-        /// Returns -1 if the <see cref="Symbol"/> does not represent a collection.
+        /// Returns 0 if the <see cref="SymbolTable"/> does not represent a collection.
         /// </summary>
         public int ElementCount
         {
-            get { return (IsCollection) ? collectionSymbols.Count : -1; }
+            get { return collectionElements.Count; }
         }
 
-        public int DataOffset
+        /// <summary>
+        /// Gets or sets the absolute address of the data represented by the symbol.
+        /// </summary>
+        public int DataAddress
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the size (in bytes) of the data represented by the symbol.
+        /// </summary>
         public int DataLength
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Gets or sets the <see cref="Type"/> of data represented by the symbol,
+        /// if the symbol represents a primitive type.
+        /// </summary>
         public Type DataType
         {
             get;
@@ -460,133 +471,166 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Adds an entry to this <see cref="Symbol"/>'s symbol table.
+        /// Adds an entry to the symbol table.
         /// </summary>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The name of the entry to add.
         /// </param>
         /// <returns>
-        /// The new <see cref="Symbol"/> if the entry was successfully added,
+        /// The new <see cref="SymbolTable"/> if the entry was successfully added,
         /// <code>Null</code> if the entry's name contains an invalid character
         /// or if the entry already exists in the symbol table.
         /// </returns>
-        public Symbol Insert(string name)
+        public SymbolTable Insert(string identifier)
         {
-            return Insert(name, 0);
+            return Insert(identifier, 0);
         }
 
         /// <summary>
-        /// Adds an entry to this <see cref="Symbol"/>'s symbol table.
+        /// Adds an entry to the symbol table.
         /// </summary>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The name of the entry to add.
         /// </param>
         /// <param name="elemCount">
         /// The number of elements in the collection, if adding a symbol that
-        /// refers to a collection. Specify 0 to insert a single entry.
+        /// refers to a collection. If the symbol should not represent a collection,
+        /// set this value to 0.
         /// </param>
         /// <returns>
-        /// The new <see cref="Symbol"/> if the entry was successfully added,
+        /// The new <see cref="SymbolTable"/> if the entry was successfully added,
         /// <code>Null</code> if the entry's name contains an invalid character
         /// or if the entry already exists in the symbol table.
         /// </returns>
-        public Symbol Insert(string name, int elemCount)
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown if the <paramref name="elemCount"/> is a negative number.
+        /// </exception>
+        public SymbolTable Insert(string identifier, int elemCount)
         {
-            if (!IsNameValid(name) || Contains(name))
+            if (!IsIdentifierValid(identifier) || Contains(identifier))
             {
                 return null;
             }
 
+            if (elemCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(elemCount), Resources.ArgumentExceptionNonNegativeInteger);
+            }
+
             if (elemCount > 0)
             {
-                return InsertCollection(name, elemCount);
+                return InsertCollection(identifier, elemCount);
             }
 
             if (IsCollection)
             {
-                return InsertIntoCollection(name);
+                return InsertIntoCollection(identifier);
             }
 
-            return (symbolTable[name] = new Symbol(name, this));
+            return (members[identifier] = new SymbolTable(identifier, this));
         }
 
         /// <summary>
-        /// Adds an entry to this <see cref="Symbol"/>'s symbol table.
+        /// Attempts to add an entry to the symbol table and returns a value
+        /// indicating whether or not the operation was successful.
         /// </summary>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The name of the entry to add.
         /// </param>
+        /// <param name="elemCount">
+        /// The number of elements in the collection, if adding a symbol that
+        /// refers to a collection. If the symbol should not represent a collection,
+        /// set this value to 0.
+        /// </param>
         /// <param name="symbol">
-        /// The newly created <see cref="Symbol"/>.
+        /// The newly created <see cref="SymbolTable"/>.
         /// If the insertion fails, this will be set to <code>Null</code>.
         /// </param>
         /// <returns>
         /// <code>True</code> if the insertion succeeded,
         /// <code>False</code> otherwise.
         /// </returns>
-        public bool TryInsert(string name, out Symbol symbol)
+        public bool TryInsert(string identifier, out SymbolTable symbol)
         {
-            if ((symbol = Insert(name)) == null)
-            {
-                return false;
-            }
-
-            return true;
+            return (symbol = Insert(identifier)) != null;
         }
 
         /// <summary>
-        /// Gets a value indicating whether a <see cref="Symbol"/> with
+        /// Attempts to add an entry to the symbol table and returns a value
+        /// indicating whether or not the operation was successful.
+        /// </summary>
+        /// <param name="identifier">
+        /// The name of the entry to add.
+        /// </param>
+        /// <param name="symbol">
+        /// The newly created <see cref="SymbolTable"/>.
+        /// If the insertion fails, this will be set to <code>Null</code>.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if the insertion succeeded,
+        /// <code>False</code> otherwise.
+        /// </returns>
+        public bool TryInsert(string identifier, int elemCount, out SymbolTable symbol)
+        {
+            return (symbol = Insert(identifier, elemCount)) != null;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether a symbol with
         /// the specified name exists as a first-level child.
         /// </summary>
-        /// <param name="name">
-        /// The name of the <see cref="Symbol"/> to check for.
+        /// <param name="identifier">
+        /// The name of the symbol to check for.
         /// </param>
         /// <returns>
         /// <code>True</code> if the entry exists,
         /// <code>False</code> otherwise.
         /// </returns>
-        public bool Contains(string name)
+        public bool Contains(string identifier)
         {
             if (IsCollection)
             {
-                return collectionSymbols[0].Contains(name);
+                // All elements have the same set of symbols, albeit with different addresses,
+                // so checking element 0 is sufficient
+                return collectionElements[0].Contains(identifier);
             }
 
-            return symbolTable.ContainsKey(name);
+            return members.ContainsKey(identifier);
         }
 
         /// <summary>
-        /// Searches the <see cref="Symbol"/> tree for specified name.
-        /// The search will be conducted relative to this <see cref="Symbol"/>.
+        /// Searches the symbol tree for specified symbol.
+        /// The search will be conducted relative to this <see cref="SymbolTable"/>.
         /// </summary>
-        /// <param name="name">
-        /// The name to search for.
+        /// <param name="identifier">
+        /// The symbol to search for.
         /// </param>
         /// <returns>
-        /// The <see cref="Symbol"/> if found,
+        /// The symbol's <see cref="SymbolTable"/> if found,
         /// <code>Null</code> otherwise.
         /// </returns>
-        public Symbol Lookup(string name)
+        public SymbolTable Lookup(string identifier)
         {
-            string[] splitName = name.Split(new char[] { StructureReferenceOperatorChar }, 2);
+            string[] splitIdent = identifier.Split(new char[] { StructureReferenceOperatorChar }, 2);
 
             // Get a list of all symbols in scope matching top-level name
-            List<Symbol> syms = SearchUp(splitName[0], this);
+            List<SymbolTable> syms = SearchUp(splitIdent[0], this);
             if (syms.Count == 0)
             {
                 return null;
             }
 
-            if (splitName.Length == 1)
+            // Return the first match if there are no more tables to search
+            if (splitIdent.Length == 1)
             {
                 return syms[0];
             }
 
             // Iterate through all matches and search down each one for the rest of the name.
-            Symbol retval = null;
-            foreach (Symbol s in syms)
+            SymbolTable retval = null;
+            foreach (SymbolTable s in syms)
             {
-                if ((retval = SearchDown(splitName[1], s)) != null)
+                if ((retval = SearchDown(splitIdent[1], s)) != null)
                 {
                     break;
                 }
@@ -596,42 +640,38 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Searches the <see cref="Symbol"/> tree for specified name.
-        /// The search will be conducted relative to this <see cref="Symbol"/>.
+        /// Attempts to search the symbol tree for specified symbol and returns
+        /// a value indicating whether the search was successful.
+        /// The search will be conducted relative to this <see cref="SymbolTable"/>.
         /// </summary>
-        /// <param name="name">
-        /// The name to search for.
+        /// <param name="identifier">
+        /// The symbol to search for.
         /// </param>
-        /// <param name="symbol">
+        /// <param name="table">
         /// The variable to store the result of the search in.
         /// If the search fails, this will be set to <code>Null</code>.
         /// </param>
         /// <returns>
-        /// <code>True</code> if a <see cref="Symbol"/> matching the provided
+        /// <code>True</code> if a <see cref="SymbolTable"/> matching the provided
         /// name was found, <code>False</code> otherwise.
         /// </returns>
-        public bool TryLookup(string name, out Symbol symbol)
+        public bool TryLookup(string identifier, out SymbolTable table)
         {
-            if ((symbol = Lookup(name)) == null)
-            {
-                return false;
-            }
-
-            return true;
+            return (table = Lookup(identifier)) != null;
         }
 
         /// <summary>
-        /// Gets the fully-qualified name of this <see cref="Symbol"/>.
+        /// Gets the fully-qualified name of this symbol.
         /// </summary>
         /// <returns>
-        /// The fully-qualified name of this <see cref="Symbol"/>.
+        /// The fully-qualified name of this symbol.
         /// </returns>
         public string GetFullName()
         {
             string fqName = "";
             string currName;
             string collectionElemSymbol = null;
-            Symbol curr = this;
+            SymbolTable curr = this;
 
             if (curr.Name == null)
             {
@@ -642,9 +682,11 @@ namespace WHampson.Cascara.Interpreter
             while (curr != null && curr.Name != null)
             {
                 currName = curr.Name;
+
+                // If symbol name begins with a digit, it is an internal name used for collection elements
                 if (char.IsDigit(currName[0]))
                 {
-                    // A symbol whose name starts with a number indicates a collection element
+                    // Append the "array brackets" to the name
                     collectionElemSymbol = "[" + currName + "]";
                     curr = curr.Parent;
                     continue;
@@ -652,11 +694,12 @@ namespace WHampson.Cascara.Interpreter
 
                 if (collectionElemSymbol != null)
                 {
-                    if (!curr.IsCollection)
-                    {
-                        // Bug! Should never be thrown...
-                        throw new InvalidOperationException(Resources.InvalidOperationExceptionReservedSymbolName);
-                    }
+                    //if (!curr.IsCollection)
+                    //{
+                    //    // Bug! Should never be thrown...
+                    //    string msg = "Bug! Found a numeric identifier on a symbol that does not represent a collection!";
+                    //    throw new InvalidOperationException(msg);
+                    //}
 
                     // Append collection element index to collection name
                     currName += collectionElemSymbol;
@@ -674,19 +717,19 @@ namespace WHampson.Cascara.Interpreter
 
         /// <summary>
         /// Gets a list of all fully-qualified names descending from and including
-        /// this <see cref="Symbol"/>.
+        /// this symbol.
         /// </summary>
         public List<string> GetAllFullNames()
         {
             // TODO: this is SLOW!
-            // Rather than getting the FQ name for every element
+            // CONSIDER: Rather than getting the FQ name for every element
             // using the above function, build the FQ name incrementally.
 
             List<string> names = new List<string>();
 
             if (IsCollection)
             {
-                foreach (Symbol sym in collectionSymbols)
+                foreach (SymbolTable sym in collectionElements)
                 {
                     names.Add(sym.FullName);
                     names.AddRange(sym.GetAllFullNames());
@@ -695,9 +738,9 @@ namespace WHampson.Cascara.Interpreter
                 return names;
             }
 
-            foreach (KeyValuePair<string, Symbol> entry in symbolTable)
+            foreach (KeyValuePair<string, SymbolTable> entry in members)
             {
-                Symbol sym = entry.Value;
+                SymbolTable sym = entry.Value;
                 names.Add(sym.FullName);
                 names.AddRange(sym.GetAllFullNames());
             }
@@ -706,30 +749,30 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets a list of all <see cref="Symbol"/>s that descend from this symbol.
+        /// Gets a list of all child <see cref="SymbolTable"/>s.
         /// </summary>
-        /// <returns>A list of member <see cref="Symbol"/>s.</returns>
-        public List<Symbol> GetAllMembers()
+        /// <returns>A list of child <see cref="SymbolTable"/>s.</returns>
+        public List<SymbolTable> GetAllMembers()
         {
-            return symbolTable.Select(x => x.Value).ToList();
+            return members.Select(x => x.Value).ToList();
         }
 
         /// <summary>
-        /// Inserts a <see cref="Symbol"/> into all elements of a collection.
+        /// Inserts a <see cref="SymbolTable"/> into all elements of a collection.
         /// </summary>
         /// <param name="name">
-        /// The name of the <see cref="Symbol"/> to insert.
+        /// The symbol to insert.
         /// </param>
         /// <returns>
-        /// The new <see cref="Symbol"/> from the first element of the collection
+        /// The new <see cref="SymbolTable"/> from the first element of the collection
         /// if the entry was successfully added, <code>Null</code> if the entry's
         /// name contains an invalid character, if the entry already exists in the
         /// symbol table, or if the current symbol does not represent a collection.
         /// </returns>
-        private Symbol InsertIntoCollection(string name)
+        private SymbolTable InsertIntoCollection(string name)
         {
-            Symbol sym = null;
-            foreach (Symbol elem in collectionSymbols)
+            SymbolTable sym = null;
+            foreach (SymbolTable elem in collectionElements)
             {
                 if (sym == null)
                 {
@@ -745,50 +788,47 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Adds a collection entry to this <see cref="Symbol"/>'s symbol table.
+        /// Adds a collection entry to this <see cref="SymbolTable"/>.
         /// </summary>
-        /// <param name="name">
+        /// <param name="identifier">
         /// The name of the entry to add.
         /// </param>
         /// <param name="elemCount">
         /// The number of elements in the collection.
         /// </param>
         /// <returns>
-        /// The new <see cref="Symbol"/> if the entry was successfully added,
+        /// The new <see cref="SymbolTable"/> if the entry was successfully added,
         /// <code>Null</code> if the entry's name contains an invalid character
         /// or if the entry already exists in the symbol table.
         /// </returns>
-        /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown if the <paramref name="elemCount"/> is negative.
-        /// </exception>
-        private Symbol InsertCollection(string name, int elemCount)
+        private SymbolTable InsertCollection(string identifier, int elemCount)
         {
             if (IsCollection)
             {
-                return InsertCollectionIntoCollection(name, elemCount);
+                return InsertCollectionIntoCollection(identifier, elemCount);
             }
 
-            Symbol sym = new Symbol(name, this, true, elemCount);
+            SymbolTable sym = new SymbolTable(identifier, this, true, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
-                sym.collectionSymbols.Add(new Symbol(i.ToString(), sym));
+                sym.collectionElements.Add(new SymbolTable(i.ToString(), sym));
             }
 
-            return (symbolTable[name] = sym);
+            return (members[identifier] = sym);
         }
 
         /// <summary>
-        /// Inserts a <see cref="Symbol"/> representing a collection into all
+        /// Inserts a <see cref="SymbolTable"/> representing a collection into all
         /// elements of another collection.
         /// </summary>
         /// <param name="name">
-        /// The name of the <see cref="Symbol"/> to insert.
+        /// The name of the <see cref="SymbolTable"/> to insert.
         /// </param>
         /// <param name="elemCount">
         /// The number of elements in the collection to add.
         /// </param>
         /// <returns>
-        /// The new <see cref="Symbol"/> from the first element of the collection
+        /// The new <see cref="SymbolTable"/> from the first element of the collection
         /// if the entry was successfully added, <code>Null</code> if the entry's
         /// name contains an invalid character, if the entry already exists in the
         /// symbol table, if the current symbol does not represent a collection.
@@ -796,15 +836,15 @@ namespace WHampson.Cascara.Interpreter
         /// /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown if the <paramref name="elemCount"/> is negative.
         /// </exception>
-        private Symbol InsertCollectionIntoCollection(string name, int elemCount)
+        private SymbolTable InsertCollectionIntoCollection(string name, int elemCount)
         {
             if (elemCount < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(elemCount));
+                throw new ArgumentOutOfRangeException(nameof(elemCount), Resources.ArgumentExceptionNonNegativeInteger);
             }
 
-            Symbol sym = null;
-            foreach (Symbol elem in collectionSymbols)
+            SymbolTable sym = null;
+            foreach (SymbolTable elem in collectionElements)
             {
                 if (sym == null)
                 {
@@ -820,15 +860,15 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Returns an enumerator that iterates through all <see cref="Symbol"/>s in the collection.
+        /// Returns an enumerator that iterates through all <see cref="SymbolTable"/>s in the collection.
         /// </summary>
         /// <returns>
         /// An <see cref="IEnumerator{Symbol}"/> that iterates through all
-        /// <see cref="Symbol"/>s in the collection.
+        /// <see cref="SymbolTable"/>s in the collection.
         /// </returns>
-        public IEnumerator<Symbol> GetEnumerator()
+        public IEnumerator<SymbolTable> GetEnumerator()
         {
-            return collectionSymbols.GetEnumerator();
+            return collectionElements.GetEnumerator();
         }
 
         /// <summary>
@@ -843,33 +883,6 @@ namespace WHampson.Cascara.Interpreter
             return GetEnumerator();
         }
 
-        //public override int GetHashCode()
-        //{
-        //    return base.GetHashCode();
-        //}
-
-        //public override bool Equals(object obj)
-        //{
-        //    if (!(obj is Symbol))
-        //    {
-        //        return false;
-        //    }
-
-        //    Symbol sym = (Symbol) obj;
-
-        //    if (IsLeaf)
-        //    {
-        //        if (!sym.IsLeaf)
-        //        {
-        //            return false;
-        //        }
-
-        //        return Name == sym.Name;
-        //    }
-
-        //    return false;
-        //}
-
         /// <summary>
         /// Gets the string representation of this <see cref="Symbol"/>.
         /// </summary>
@@ -878,9 +891,12 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public override string ToString()
         {
-            string elemCountStr = string.Format(", ElementCount = {0}", ElementCount);
-            return string.Format("Symbol: [ FullName = {0}, IsCollection = {1}{2} ]",
-                FullName, IsCollection, (IsCollection) ? elemCountStr : "");
+            string elemCountStr = string.Format(", {0} = {1}", nameof(ElementCount), ElementCount);
+            return string.Format("Symbol: [ {0} = {1}, {2} = {3}, {4} = {5}{6} ]",
+                nameof(FullName), FullName,
+                nameof(IsStruct), IsStruct,
+                nameof(IsCollection), IsCollection,
+                (IsCollection) ? elemCountStr : "");
         }
     }
 }
