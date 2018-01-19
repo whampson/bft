@@ -143,9 +143,6 @@
   <data name="ArgumentExceptionTypeMismatch" xml:space="preserve">
     <value>Parameter type does not match expected type.</value>
   </data>
-  <data name="InvalidOperationExceptionReservedSymbolName" xml:space="preserve">
-    <value>Internal name for collections used on a symbol that does not represent a collection!</value>
-  </data>
   <data name="LayoutExceptionLayoutExists" xml:space="preserve">
     <value>A layout named '{0}' already exists in the namespace.</value>
     <comment>{0} - layout name</comment>

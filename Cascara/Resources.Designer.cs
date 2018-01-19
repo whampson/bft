@@ -133,15 +133,6 @@ namespace WHampson.Cascara {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Internal name for collections used on a symbol that does not represent a collection!.
-        /// </summary>
-        internal static string InvalidOperationExceptionReservedSymbolName {
-            get {
-                return ResourceManager.GetString("InvalidOperationExceptionReservedSymbolName", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to A layout named &apos;{0}&apos; already exists in the namespace..
         /// </summary>
         internal static string LayoutExceptionLayoutExists {
