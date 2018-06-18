@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>WHampson.Cascara</RootNamespace>
@@ -7,8 +6,8 @@
     <Company />
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>(C) 2017-2018 Wes Hampson</Copyright>
-    <AssemblyVersion>0.21.0.17</AssemblyVersion>
-    <FileVersion>0.21.0.17</FileVersion>
+    <AssemblyVersion>0.21.0.63</AssemblyVersion>
+    <FileVersion>0.21.0.63</FileVersion>
     <Version>0.20.0</Version>
     <Description>A .NET class library for creating, reading, and and editing binary files.</Description>
     <RepositoryUrl>https://github.com/whampson/cascara</RepositoryUrl>
@@ -16,18 +15,16 @@
     <RepositoryType>git</RepositoryType>
     <ApplicationIcon />
     <OutputType>Library</OutputType>
-    <StartupObject></StartupObject>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <WarningLevel>0</WarningLevel>
     <DocumentationFile>bin\Debug\netstandard2.0\Cascara.xml</DocumentationFile>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Update="Resources.Designer.cs">
       <DesignTime>True</DesignTime>
@@ -35,12 +32,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Update="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-
 </Project>
