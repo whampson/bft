@@ -445,7 +445,16 @@ namespace WHampson.Cascara.Interpreter
         /// <summary>
         /// Gets or sets the absolute address of the data represented by the symbol.
         /// </summary>
-        public int DataAddress
+        public int GlobalDataAddress
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// Gets or sets the address of the data represented by the symbol relative to its parent's address.
+        /// </summary>
+        public int LocalDataAddress
         {
             get;
             set;
