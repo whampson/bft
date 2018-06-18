@@ -47,6 +47,16 @@ namespace WHampson.Cascara
             return PrimitiveTypes.Contains(t);
         }
 
+        public static bool IsCharacterType<T>()
+        {
+            return IsCharacterType(typeof(T));
+        }
+
+        public static bool IsCharacterType(Type t)
+        {
+            return t == typeof(char) || t == typeof(Char8);
+        }
+
         /// <summary>
         /// Gets the size of a primitive type.
         /// </summary>
