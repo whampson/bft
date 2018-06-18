@@ -109,7 +109,7 @@ namespace Cascara.Tests
         public void Parse_Xml_MissingName()
         {
             // Arrange
-            string src = BuildXmlElement(Keywords.XmlDocumentRoot, BuildXmlElement(Keywords.Int));
+            string src = BuildXmlElement(Keywords.XmlDocumentRoot, BuildXmlElement(Keywords.DataTypes.Int));
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
@@ -122,7 +122,7 @@ namespace Cascara.Tests
         {
             // Arrange
             string badVersion = "not a version number";
-            string src = CreateLayout("foo", badVersion, BuildXmlElement(Keywords.Int));
+            string src = CreateLayout("foo", badVersion, BuildXmlElement(Keywords.DataTypes.Int));
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(

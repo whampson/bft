@@ -22,7 +22,7 @@ namespace Cascara.Tests
         public void Parse_Simple()
         {
             // Arrange
-            string expectedKeyword = Keywords.Int;
+            string expectedKeyword = Keywords.DataTypes.Int;
             bool expectedHasParameters = false;
             int expectedParameterCount = 0;
             bool expectedHasNestedStatements = false;
@@ -48,8 +48,8 @@ namespace Cascara.Tests
         public void Parse_Complex()
         {
             // Arrange
-            string expectedKeywordParent = Keywords.Struct;
-            string[] expectedKeywordChild = { Keywords.Int, Keywords.Float };
+            string expectedKeywordParent = Keywords.DataTypes.Struct;
+            string[] expectedKeywordChild = { Keywords.DataTypes.Int, Keywords.DataTypes.Float };
             bool expectedHasParameters = false;
             int expectedParameterCount = 0;
             bool expectedHasNestedStatements = true;
@@ -82,7 +82,7 @@ namespace Cascara.Tests
         public void Parse_Invalid_UnexpectedText()
         {
             string text = "Hello, world!";
-            string elemName = Keywords.Int;
+            string elemName = Keywords.DataTypes.Int;
             string data = BuildXmlElement("outer", BuildXmlElement(elemName, text));
             XElement elem = ParseXmlElement(data);
 
