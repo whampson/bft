@@ -22,21 +22,20 @@
 #endregion
 
 using System.Collections.Generic;
+using System.Linq;
 using WHampson.Cascara.Extensions;
 
 namespace WHampson.Cascara.Interpreter
 {
-    internal static partial class ReservedWords
+    /// <summary>
+    /// Defines all valid symbols for beginning a statement in the layout script language.
+    /// </summary>
+    internal static class Keywords
     {
-        /// <summary>
-        /// Defines all valid XML element names.
-        /// </summary>
-        public static class Keywords
-        {
-            // XML root element
-            public const string XmlDocumentRoot = "cascaraLayout";
+        public const string XmlDocumentRoot = "cascaraLayout";
 
-            // Data types
+        public static class DataTypes
+        {
             public const string Bool = "bool";
             public const string Bool8 = "bool8";
             public const string Bool16 = "bool16";
@@ -66,15 +65,26 @@ namespace WHampson.Cascara.Interpreter
             public const string Union = "union";
             public const string UShort = "ushort";
 
-            // Imperatives
+            public static readonly HashSet<string> AllDataTypes = new HashSet<string>(
+                typeof(DataTypes).GetPublicConstants<string>());
+        }
+
+        public static class Directives
+        {
             public const string Align = "align";
+            public const string Branch = "branch";
             public const string Echo = "echo";
+            public const string Goto = "goto";
             public const string Include = "include";
+            public const string Label = "label";
             public const string Local = "local";
             public const string Typedef = "typedef";
 
-            public static readonly HashSet<string> AllKeywords = new HashSet<string>(
-                typeof(Keywords).GetPublicConstants<string>());
+            public static readonly HashSet<string> AllDirectives = new HashSet<string>(
+                typeof(Directives).GetPublicConstants<string>());
         }
+
+        public static readonly HashSet<string> AllKeywords = new HashSet<string>(
+            typeof(Keywords).GetPublicConstants<string>());
     }
 }

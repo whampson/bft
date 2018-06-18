@@ -15,7 +15,7 @@ namespace WHampson.Cascara
         private BinaryFile sourceFile;
         //private Symbol symbol;
 
-        internal Structure(BinaryFile sourceFile, Symbol symbol)
+        internal Structure(BinaryFile sourceFile, SymbolTable symbol)
         {
             this.sourceFile = sourceFile;
             Symbol = symbol;
@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int FilePosition
         {
-            get { return Symbol.DataOffset; }
+            get { return Symbol.DataAddress; }
         }
 
         /// <summary>
@@ -59,10 +59,10 @@ namespace WHampson.Cascara
             {
                 if (Symbol.Parent != null)
                 {
-                    return Symbol.DataOffset - Symbol.Parent.DataOffset;
+                    return Symbol.DataAddress - Symbol.Parent.DataAddress;
                 }
 
-                return Symbol.DataOffset;
+                return Symbol.DataAddress;
             }
         }
 
@@ -92,7 +92,7 @@ namespace WHampson.Cascara
             get { return Symbol.ElementCount; }
         }
 
-        internal Symbol Symbol
+        internal SymbolTable Symbol
         {
             get;
         }
@@ -139,7 +139,7 @@ namespace WHampson.Cascara
         /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise</returns>
         public Structure GetStructure(string name)
         {
-            bool exists = Symbol.TryLookup(name, out Symbol sym);
+            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
             if (!exists)
             {
                 return null;
@@ -161,7 +161,7 @@ namespace WHampson.Cascara
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
-            bool exists = Symbol.TryLookup(name, out Symbol sym);
+            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
             if (!exists)
             {
                 return null;

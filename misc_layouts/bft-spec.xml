@@ -1,0 +1,217 @@
+<bft comment="GTA LCS save file skeleton">
+    <!--
+    Primitive Types
+    ===============
+    * A primitive type is a unit of data with a fixed size.
+    * List of primitve types. Note that many types are aliases of other types.
+        Name        Size    Notes
+        ----        ----    -----
+        bool        1       8-bit Boolean value; 0 is false, nonzero is true
+        bool8       1       8-bit Boolean value; same rules as 'bool'
+        bool16      2       16-bit Boolean value; same rules as 'bool'
+        bool32      4       32-bit Boolean value; same rules as 'bool'
+        bool64      8       64-bit Boolean value; same rules as 'bool'
+        char        1       unsigned 8-bit integer
+        char8       1       unsigned 8-bit integer; intended for characters
+        char16      2       unsigned 16-bit integer; intended for characters
+        char32      4       unsigned 32-bit integer; intended for characters
+        char64      8       unsigned 64-bit integer; intended for characters
+        double      8       double-precision IEEE-754 floating-point number
+        dword       4       unsigned 32-bit integer
+        float       4       single-precision IEEE-754 floating-pont number
+        int         4       signed 32-bit integer
+        int8        1       signed 8-bit integer
+        int16       2       signed 16-bit integer
+        int32       4       signed 32-bit integer
+        int64       8       signed 64-bit integer
+        long        8       signed 64-bit integer
+        qword       8       unsigned 64-bit integer
+        short       2       signed 16-bit integer
+        uint        4       unsigned 32-bit integer
+        uint8       1       unsigned 8-bit integer
+        uint16      2       unsigned 16-bit integer
+        uint32      4       unsigned 32-bit integer
+        uint64      8       unsigned 64-bit integer
+        ulong       8       unsigned 64-bit integer
+        ushort      2       unsigned 16-bit integer
+        word        2       unsigned 16-bit integer
+        
+    * All primitive types have the following optional attributes:
+        Name        Type        Notes
+        ----        -----       -----
+        comment     string      - intended as an area for notes about the
+                                  specific type instance
+        count       integer     - number of times to repeat the type instance,
+                                  which in essence creates an array
+                                - if omitted, 1 is assumed
+        name        string      - identifier to refer to the type instance
+                                - can only contain alphanumeric characters and _
+                                - cannot start with a number
+                                - cannot contain variables
+        sentinel    <varies>    - repeats the type instance until the value
+                                  specified by this attribute is found
+                                - similar to 'count', but used to map arrays
+                                  without a pre-defined length
+                                - the type of this attribute should match the
+                                  type on which it is being used
+    
+    * 'float' and 'double' have one extra attribute, which is to be used only in
+      combination with the 'sentinel' attribute:
+        Name        Type        Notes
+        ----        ----        -----
+        thresh      decimal     - specifies a threshold which defines a range
+                                  of values around the sentinel value that
+                                  will trigger the end of repetition
+                                - accepts values between 0 and 1 (exclusive)
+                                - if omitted, 0.001 is assumed
+        
+    Structures
+    ==========
+    * Structures are made up of primitve types, as well as other structues.
+    * Structures are defined using the 'struct' tag.
+    * Structures must have at least one child element to be valid.
+    * Structures have the following optional attributes:
+        Name        Type        Notes
+        ----        -----       -----
+        comment     string      - intended as an area for notes about the
+                                  structue
+        count       integer     - number of times to repeat the structure,
+                                  which in essence creates an array of structs
+                                - if omitted, 1 is assumed
+        name        string      - identifier to refer to the structure
+    
+    Variables
+    =========
+    * <description>
+    * Variables are denoted using the following syntax:
+        ${<var_name>[.<var_name>[...]]}
+      where <var_name> represents a variable identifier.
+    * Special variables:
+        Name            Notes
+        ----            -----
+        __OFFSET__      - current position of the parser in the binary file
+                          (measured in bytes)
+                        - if appended to a type instance identifier or structure
+                          identifier, will retreive the offset of the first byte
+                          in the type/struct
+        __SIZE__        - size of the current binary file (measured in bytes)
+                        - if appended to a type instance identifier or structure
+                          identifier, will retrieve the number of bytes that
+                          comprises the type/struct
+                        - if appended to a structure identifier, the structure
+                          referenced must be fully defined
+    
+
+    Allow for the size and offset of a variable to be retrieved:
+        ${var_name.__OFFSET__}
+        ${var_name.__SIZE__}
+
+
+
+    Directives
+    ==========
+    * Directives instruct the parser to perform an action.
+    * A list of directives follows.
+
+    align
+    -----
+    Description
+        Directs the parser to skip ahead by a certain number of bytes, words,
+        dwords, or qwords.
+
+    Attributes
+        Name    Type    Required    Notes
+        ----    ----    --------    -----
+        count   integer yes         - number of bytes/words/dwords/qwords to
+                                      skip
+        kind    string  no          - data type to use as the unit of alignment
+                                    - must be a primitive type
+                                    - if omitted, 'byte' is assumed
+
+    echo
+    ----
+    Description
+        Prints a message to the standard output stream.
+    
+    Attributes
+        Name    Type    Required    Notes
+        ----    ----    --------    -----
+        message string  yes         - specifies the message to be printed
+                                    - may also use element's text content to
+                                      specify the message, but this attribute's
+                                      value will always take precedence if
+                                      present
+
+    typedef
+    -------
+    Description
+        Specifies a user-defined type. Can be an alias of a primitive type,
+        another user-defined type, or a fixed-size struct.
+
+    Attributes
+        Name    Type    Required    Notes
+        ----    ----    --------    -----
+        name    string  yes         - specifies the new type identifier
+        kind    string  yes         - existing type from which the new type is
+                                      derived
+        
+    -->
+
+    <!--
+        <string /> == <char sentinel="\0" />
+    -->
+    
+    <!-- allow for unions? -->
+
+    <!--typedef name="header" kind="struct">
+        <char name="id" count="4" />
+        <uint32 name="size" />
+    </typedef-->
+
+    <!-- Block 0: SimpleVars -->
+    <struct name="SimpleVars" />
+        <struct name="header">
+            <char name="id" count="4" />
+            <uint32 name="size" />
+        </struct>
+        <byte count="${header.size} - ${__OFFSET__}" />
+    </struct>
+
+    <!-- Block 1: Scripts -->
+    <struct name="Scripts" />
+        <struct name="header">
+            <char name="id" count="4" />
+            <uint32 name="size" />
+        </struct>
+        <byte count="${header.size} - ${__OFFSET__}" />
+    </struct>
+
+    <!-- Block 2: Garages -->
+    <struct name="Garages" />
+        <struct name="header">
+            <char name="id" count="4" />
+            <uint32 name="size" />
+        </struct>
+        <byte count="${header.size} - ${__OFFSET__}" />
+    </struct>
+
+    <!-- Block 3: PlayerInfo -->
+    <struct name="PlayerInfo" />
+        <struct name="header">
+            <char name="id" count="4" />
+            <uint32 name="size" />
+        </struct>
+        <byte count="${header.size} - ${__OFFSET__}" />
+    </struct>
+
+    <!-- Block 4: Stats -->
+    <struct name="Stats" />
+        <struct name="header">
+            <char name="id" count="4" />
+            <uint32 name="size" />
+        </struct>
+        <byte count="${header.size} - ${__OFFSET__}" />
+    </struct>
+
+    <uint32 name="checksum" />
+</bft>

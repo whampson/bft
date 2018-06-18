@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<!--
+    keywords
+        align
+        block
+        bool        size=1
+        bool16      size=2
+        bool32      size=4
+        echo
+        float       size=4
+        int         size=1
+        int16       size=2
+        int32       size=4
+        saveFile
+        string      charWidth=1
+        string16    charWidth=2
+        uint        size=1
+        uint16      size=2
+        uint32      size=4
+        
+        byte        size=1
+        word        size=2
+        dword       size=4
+-->
+
+<!--
+    type structure
+        byte
+            bool
+            int
+            uint
+        word
+            bool16
+            int16
+            uint16
+        dword
+            bool32
+            float
+            int32
+            uint32
+            
+        array
+            string
+            string16
+            
+        block
+-->
+
+<!-- 'name' and 'comment' optional for all keywords -->
+<!-- 'name' completely ignored if used on 'align' (no reference kept) -->
+
+<!-- saveFile must be root, 'game' and 'platform' required -->
+<!-- platforms: Android, iOS, PSP, PS2 -->
+<saveFile game="LCS" platform="Android">
+    <!-- 'name' required -->
+    <!-- cannot contain nested typedefs -->
+    <!-- arrays must have a fixed size -->
+    <typedef name="RwV2d">
+        <float name="X"/>
+        <float name="Y"/>
+    </typedef>
+    <typedef name="RwV3d">
+        <float name="X"/>
+        <float name="Y"/>
+        <float name="Z"/>
+    </typedef>
+
+    <!-- 'message' or text data required -->
+    <echo>Hello, world!</echo>
+    <echo message="Reading Android save file..."/>
+    
+    <!-- 'id' required -->
+    <!-- 'block' will take care of 4-char ID and 4-byte size -->
+    <block name="SimpleVars" id="SIMP">
+        <!-- 'size' required, must be integer -->
+        <!-- numbers may be given in hexadecimal too (prefix with 0x) -->
+        <align size="12"/>
+        <!-- 'length' required, must be integer -->
+        <string16   name="SaveNameGXT" length="8"/>
+        <align size="104"/>
+        <uint32     name="CurrLevel"/>
+        <uint32     name="CurrArea"/>
+        <uint32     name="PrefsLanguage"/>
+        <uint32     name="MillisecondsPerGameMinute"/>
+        <uint32     name="LastClockTick"/>
+        <uint32     name="GameClockHours"/>
+        <uint32     name="GameClockMinutes"/>
+        <uint32     name="GameClockSeconds"/>
+        <uint32     name="TotalTimePlayedInMilliseconds"/>
+        <float      name="TimeScale"/>
+        <float      name="TimeStep"/>
+        <float      name="TimeStepNonClipped"/>
+        <float      name="FramesPerUpdate"/>
+        <uint32     name="FrameCounter"/>
+        <int16      name="OldWeatherType"/>
+        <int16      name="NewWeatherType"/>
+        <int16      name="ForcedWeatherType"/>
+        <align size="2"/>
+        <uint32     name="WeatherTypeInList"/>
+        <float      name="InterpolationValue"/>
+        <RwV3d      name="CameraPosition"/>
+        <float      name="PrefsVehicleCameraMode"/>
+        <align size="0x10"/>
+        <uint32     name="PrefsBrightness"/>
+        <bool       name="PrefsDisplayHud"/>
+        <bool       name="PrefsShowSubtitles"/>
+        <align size="2"/>
+        <uint32     name="RadarMode"/>
+        <bool       name="BlurOn"/>
+        <align size="3"/>
+        <uint32     name="PrefsMusicVolume"/>
+        <uint32     name="PrefsSFXVolume"/>
+        <uint       name="PrefsRadioStation"/>
+        <uint       name="PrefsOutput"/>
+        <align size="48"/>
+        <bool       name="PrefsInvertLook"/>
+        <bool       name="SwapNippleAndDPad"/>
+        <bool       name="HasPlayerCheated"/>
+        <bool       name="AllTaxisHaveNitro"/>
+        <bool       name="TargetIsOn"/>
+        <align size="1"/>
+        <RwV2d      name="TargetPos"/>
+    </block>
+    
+    <block name="Script" id="SRPT">
+        <block name="TheScripts" id="SCR">
+            <uint32     name="ScriptSpace"/>
+            <!-- 'size' or 'elemCount' required -->
+            <!-- 'elemCount' preferred -->
+            <!-- size of elements must divide 'size' evenly; 'size' must be integer -->
+            <!-- 'elemCount' must be integer -->
+            <!-- variables may be referenced with '${<var_name>}' -->
+            <!-- '${VarName}' or '${Full.Path.To.VarName}' (if not in immediate scope) -->
+            <array      name="ScriptVars" size="${ScriptSpace}">
+                <dword/>
+            </array>
+            <align size="4"/>
+            <uint32     name="OnAMissionFlag"/>
+            <uint32     name="LastMissionPassedTime"/>
+            <array      name="CollectiveArray" elemCount="32">
+                <dword/>
+                <dword/>
+            </array>
+            <dword      name="NextFreeCollective"/>
+            <array      name="BuildingSwapArray" elemCount="80">
+                <uint32     name="ObjectType"/>
+                <uint32     name="ObjectIndex"/>
+                <int32      name="NewModel"/>
+                <int32      name="OldModel"/>
+            </array>
+            <array      name="InvisibilitySettingArray" elemCount="52">
+                <uint32     name="ObjectType"/>
+                <uint32     name="ObjectIndex"/>
+            </array>
+            <bool       name="UsingAMultiScriptFile"/>
+            <bool       name="PlayerHasMetDebbieHarry"/>
+            <align size="2"/>
+            <uint32     name="MainScriptSize"/>
+            <uint32     name="LargestMissionScriptSize"/>
+            <uint16     name="NumberOfMissionScripts"/>
+            <align size="2"/>
+            <uint16     name="NumberOfExclusiveMissionScripts"/>
+            <align size="2"/>
+            <array      name="RunningScripts" elemCount="${NumberOfExclusiveMissionScripts}">
+                <uint32     name="NextScriptPointer"/>
+                <uint32     name="PreviousScriptPointer"/>
+                <uint32     name="ThreadID"/>
+                <align size="4"/>
+                <string     name="name" length="8"/>
+                <uint32     name="CurrentInstruction"/>
+                <array      name="ReturnStack" elemCount="16">
+                    <dword/>
+                </array>
+                <uint16     name="ReturnStackCount"/>
+                <align size="2"/>
+                <array      name="LocalVars" elemCount="104">
+                    <dword/>
+                </array>
+                <uint32     name="TimerA"/>
+                <uint32     name="TimerB"/>
+                <align size="8"/>
+                <uint32     name="WakeTime"/>
+                <align size="4"/>
+            </array>
+        </block>
+    </block>
+    
+    <echo message="Local variable: ${Script.TheScripts.RunningScripts[4].LocalVars[1]}"/>
+    
+    <block name="Garages" id="GRGE"/>
+    
+    <block name="PlayerInfo" id="PLYR"/>
+    
+    <block name="Stats" id="STAT"/>
+</saveFile>

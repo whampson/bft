@@ -29,7 +29,8 @@ using static WHampson.Cascara.Interpreter.ReservedWords;
 namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
-    /// Represents an instruction to be carried out by the interpreter.
+    /// A complete clause in the layout script language. A <see cref="Statement"/>
+    /// is the smallest unit of execution in the layout script interpreter.
     /// </summary>
     internal abstract class Statement : ISourceEntity, IEquatable<Statement>
     {
@@ -37,10 +38,6 @@ namespace WHampson.Cascara.Interpreter
         private int _linePosition;
         private List<Statement> _nestedStatements;
         private Dictionary<string, string> _parameters;
-
-        //private Dictionary<StatementType, List<Tuple<string, bool>>> validParameters;
-        //private Dictionary<string, List<Tuple<string, bool>>> validParametersDirective;
-
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Statement"/> class.
@@ -58,11 +55,6 @@ namespace WHampson.Cascara.Interpreter
             _parameters = new Dictionary<string, string>();
             _nestedStatements = new List<Statement>();
             StatementType = StatementType.None;
-
-            //validParameters = new Dictionary<StatementType, List<Tuple<string, bool>>>();
-            //validParametersDirective = new Dictionary<string, List<Tuple<string, bool>>>();
-
-            //InitializeValidParametersMaps();
         }
 
         /// <summary>
@@ -128,21 +120,21 @@ namespace WHampson.Cascara.Interpreter
             get { return _nestedStatements; }
         }
 
-        /// <summary>
-        /// Gets a value indicating whether this <see cref="Statement"/>
-        /// defines a structure object.
-        /// </summary>
-        internal bool IsStructureDefinition
-        {
-            get
-            {
-                return StatementType == StatementType.FileObjectDefinition
-                    && (Keyword == Keywords.Struct || Keyword == Keywords.Union);
-            }
-        }
+        ///// <summary>
+        ///// Gets a value indicating whether this <see cref="Statement"/>
+        ///// defines a structure object.
+        ///// </summary>
+        //internal bool IsStructureDefinition
+        //{
+        //    get
+        //    {
+        //        return StatementType == StatementType.FileObjectDefinition
+        //            && (Keyword == Keywords.Struct || Keyword == Keywords.Union);
+        //    }
+        //}
 
         /// <summary>
-        /// Reads parameters and determines the statement type.
+        /// Reads parameters from the statement source code and determines the statement type.
         /// </summary>
         protected void Parse()
         {
@@ -197,25 +189,13 @@ namespace WHampson.Cascara.Interpreter
         {
             string msg;
 
-            switch (Keyword)
+            if (Keywords.Directives.AllDirectives.Contains(Keyword))
             {
-                case Keywords.Align:
-                case Keywords.Echo:
-                case Keywords.Include:
-                    StatementType = StatementType.Directive;
-                    break;
-
-                case Keywords.Local:
-                    StatementType = StatementType.LocalVariableDefinition;
-                    break;
-
-                case Keywords.Typedef:
-                    StatementType = StatementType.TypeDefinition;
-                    break;
-
-                default:
-                    StatementType = StatementType.FileObjectDefinition;
-                    break;
+                StatementType = StatementType.Directive;
+            }
+            else
+            {
+                StatementType = StatementType.FileObjectDefinition;
             }
         }
 
@@ -333,18 +313,5 @@ namespace WHampson.Cascara.Interpreter
         /// Defines an object at the current address in the file.
         /// </summary>
         FileObjectDefinition,
-
-        /// <summary>
-        /// Defines a variable with some value in the current scope.
-        /// </summary>
-        /// <remarks>
-        /// Local variables are not mapped to the file data.
-        /// </remarks>
-        LocalVariableDefinition,
-
-        /// <summary>
-        /// Defines a new data type and a globally-accessible identifier for that type.
-        /// </summary>
-        TypeDefinition,
     }
 }

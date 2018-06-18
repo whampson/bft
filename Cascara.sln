@@ -6,6 +6,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara", "Cascara\Cascara.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara.Tests", "Cascara.Tests\Cascara.Tests.csproj", "{2124F1CF-E709-4810-BE22-E2444CEF6BB0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cascara.Demo", "Cascara.Demo\Cascara.Demo.csproj", "{7083F50F-9528-469A-9299-B6C272EA40F0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +42,18 @@ Global
 		{2124F1CF-E709-4810-BE22-E2444CEF6BB0}.Release|x64.Build.0 = Release|Any CPU
 		{2124F1CF-E709-4810-BE22-E2444CEF6BB0}.Release|x86.ActiveCfg = Release|Any CPU
 		{2124F1CF-E709-4810-BE22-E2444CEF6BB0}.Release|x86.Build.0 = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|x64.Build.0 = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Debug|x86.Build.0 = Debug|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|x64.ActiveCfg = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|x64.Build.0 = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|x86.ActiveCfg = Release|Any CPU
+		{7083F50F-9528-469A-9299-B6C272EA40F0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

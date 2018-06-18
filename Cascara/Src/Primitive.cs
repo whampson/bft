@@ -37,9 +37,9 @@ namespace WHampson.Cascara
         where T : struct
     {
         private BinaryFile sourceFile;
-        private Symbol symbol;
+        private SymbolTable symbol;
 
-        internal Primitive(BinaryFile sourceFile, Symbol symbol)
+        internal Primitive(BinaryFile sourceFile, SymbolTable symbol)
         {
             if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
             {
@@ -86,7 +86,8 @@ namespace WHampson.Cascara
             {
                 if (IsCollection)
                 {
-                    string msg = "This property can only be used on elements of a collection, not the collection itself.";
+                    string fmt = "The '{0}' property can only be used on elements of a collection, not the collection itself.";
+                    string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
                 return sourceFile.Get<T>(FilePosition);
@@ -96,7 +97,8 @@ namespace WHampson.Cascara
             {
                 if (IsCollection)
                 {
-                    string msg = "This property can only be used on elements of a collection, not the collection itself.";
+                    string fmt = "The '{0}' property can only be used on elements of a collection, not the collection itself.";
+                    string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
                 sourceFile.Set<T>(FilePosition, value);
@@ -109,7 +111,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int FilePosition
         {
-            get { return symbol.DataOffset; }
+            get { return symbol.DataAddress; }
         }
 
         /// <summary>
@@ -122,10 +124,10 @@ namespace WHampson.Cascara
             {
                 if (symbol.Parent != null)
                 {
-                    return symbol.DataOffset - symbol.Parent.DataOffset;
+                    return symbol.DataAddress - symbol.Parent.DataAddress;
                 }
 
-                return symbol.DataOffset;
+                return symbol.DataAddress;
             }
         }
 

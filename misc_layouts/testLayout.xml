@@ -1,0 +1,168 @@
+<cascaraLayout name="Test Layout" platform="PS2">
+    <struct name="SimpleVarsHeader">
+        <char8 name="Tag" count="4" comment="SIMP"/>
+        <uint32 name="Size"/>
+    </struct>
+    <struct name="SimpleVars">
+        <uint32 name="_unknown1" count="3"/>
+        <char16 name="SaveNameKey" count="8"/>
+        <align count="${SimpleVarsHeader.Size} - ${__OFFSET__}"/>
+    </struct>
+    
+    <struct name="ScriptHeader">
+        <char8 name="Tag" count="4" comment="SRPT"/>
+        <uint32 name="Size"/>
+    </struct>
+    <struct name="Script">
+        <align count="${ScriptHeader.Size} - ${__OFFSET__}"/>
+    </struct>
+    
+    <struct name="GaragesHeader">
+        <char8 name="Tag" count="4" comment="GRGE"/>
+        <uint32 name="Size"/>
+    </struct>
+    <struct name="Garages">
+        <uint32 name="GaragesCount"/>
+        <bool32 name="BombsAreFree"/>
+        <bool32 name="RespraysAreFree"/>
+        <uint32 name="_CarsCollected"/>
+        <uint32 name="_BankVansCollected"/>
+        <uint32 name="_PoliceCarsCollected"/>
+        <uint32 name="CarTypesCollected"/>
+        <uint32 name="_CarTypesCollected2"/>
+        <uint32 name="_CarTypesCollected3"/>
+        <uint32 name="_CarTypesCollected4"/>
+        <uint32 name="LastTimeHelpMessage"/>
+        <struct name="CarsInSafehouse" count="48">
+            <uint32 name="ModelId"/>
+            <float name="Location" count="3"/>
+            <float name="Rotation" count="2"/>
+            <float name="Pitch"/>
+            <float name="HandlingMultiplier"/>
+            <uint32 name="SpecialProperties"/>
+            <int8 name="ColorId1"/>
+            <int8 name="ColorId2"/>
+            <int8 name="RadioStationId"/>
+            <int8 name="ExtraPart1"/>
+            <int8 name="ExtraPart2"/>
+            <align count="3"/>
+        </struct>
+        <align count="${GaragesHeader.Size} - ${__OFFSET__}"/>
+    </struct>
+    
+    
+    
+    
+    
+    
+    <!-- Might need to add all statements into a flat
+         list in order to get labels to work. Then keep
+         a table of list indices -> label names so the
+         interpreter knows where to continue execution.
+    -->
+<label name="MyLabel"/>
+    <uint32 name="IdPtr"/>
+    <bool32 name="Padding"/>
+    <float/>
+    
+    <branch cond="not ${Padding}" label="AnotherLabel"/>
+    <align count="50"/>
+    
+    <!-- Need to do recursive evaluation here! -->
+    <branch cond="$ValueAt(${IdPtr}) == 0xCAFEBABE" label="AnotherLabel">
+    <align count="32"/>
+
+<label name="AnotherLabel"/>
+    <struct>
+        <char16 name="BlockName" count="64"/>
+        <int32/>
+        <int32/>
+        <float>
+        <float>
+    </struct>
+    
+    <!-- Operators:
+        <       less than
+        >       greater than
+        <=      less than or equal to
+        >=      greater than or equal to
+        ==      equal to
+        and     logical AND
+        or      logical OR
+        not     logical NOT
+        +       addition
+        -       subtraction
+        *       multiplication
+        /       division
+        %       modulo
+        ( )     grouping
+    -->
+    
+    <!-- TODO:
+        1) Remove restriction on using reserved words for variable names
+           and parameters, as it is pointless.
+           a) Only put a restriction like this on things that create
+              new element names, as in the case where a new type is defined
+        2) Create 'label', 'branch', 'goto' tags
+        3) Create 'ValueAt()' operator
+        4) Filter expression operators; don't allow all .NET datatable operators
+        5) Handle base-2, base-8, and base-16 numbers
+           a) Base-2 denoted with '0b' prefix or 'b' suffix
+           b) Base-8 denoted with '0q' prefix or 'q' suffix
+           b) Base-16 denoted with '0h' or '0x' prefix, or 'h' suffix
+    -->
+    
+    <!-- Idea for all-in-one layout for LCS -->
+    <typedef name="BlockHeader" type="struct">
+        <char8 name="Signature" count="4"/> 
+        <uint32 name="Size"/>
+    </typedef>
+    
+    <local name="L_IsPs2" value="0"/>
+    <local name="L_IsPsp" value="0"/>
+    <local name="L_IsMobile" value="0"/>
+    
+    <!-- Careful! Gotta use single equals due to .NET's expression evalautor -->
+    <!-- I could also just relpace each '=' with '==' -->
+    <branch cond="$ValueAt(0x52C) == 0xFE" label="SetPs2"/>
+    <branch cond="$ValueAt(0x52C) == 0xFF" label="SetPsp"/>
+    <local name="L_IsMobile" value="1"/>
+    <goto label="FileStructure"/>
+    
+<label name="SetPs2"/>
+    <local name="L_IsPs2" value="1"/>
+    <goto label="FileStructure"/>
+    
+<label name="SetPsp"/>
+    <local name="L_IsPsp" value="1"/>
+    
+<label name="FileStructure"/>
+    <struct name="SIMP">
+        <BlockHeader name="Header"/>
+        <align count="${Header.Size} - ${__OFFSET__}"/>
+    </struct>
+    <struct name="SRPT">
+        <BlockHeader name="Header"/>
+        <align count="${Header.Size} - ${__OFFSET__}"/>
+    </struct>
+    <struct name="GRGE">
+        <BlockHeader name="Header"/>
+        <align count="${Header.Size} - ${__OFFSET__}"/>
+    </struct>
+    <struct name="PLYR">
+        <BlockHeader name="Header"/>
+        <align count="${Header.Size} - ${__OFFSET__}"/>
+    </struct>
+    <struct name="STAT">
+        <BlockHeader name="Header"/>
+        <align count="${Header.Size} - ${__OFFSET__}"/>
+    </struct>
+    
+    <branch cond="${L_IsPs2}" label="Checksum"/>
+    <align count="3"/>
+    <goto label="End"/>
+
+<label name="Checksum"/>
+    <uint32 name="Checksum"/>
+<label name="End"/>
+</cascaraLayout>

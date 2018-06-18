@@ -98,7 +98,7 @@ namespace WHampson.Cascara.Interpreter
             file = null;
         }
 
-        public void Execute(Symbol rootSymbol, BinaryFile file)
+        public void Execute(SymbolTable rootSymbol, BinaryFile file)
         {
             Reset();
 
@@ -170,7 +170,7 @@ namespace WHampson.Cascara.Interpreter
             bool hasName = GetParameter(stmt, Parameters.Name, out string objName);
 
             string typeName = stmt.Keyword;
-            bool isStruct = (typeName == Keywords.Struct || typeName == Keywords.Union);
+            bool isStruct = (typeName == Keywords.DataTypes.Struct || typeName == Keywords.DataTypes.Union);
 
             TypeInfo type = default(TypeInfo);
             if (!isStruct && !TryLookupType(typeName, out type))
@@ -201,10 +201,10 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Validate name and create object symbol
-            Symbol sym = Symbol.CreateRootSymbol();
+            SymbolTable sym = SymbolTable.CreateRootSymbolTable();
             if (hasName)
             {
-                if (!Symbol.IsNameValid(objName))
+                if (!SymbolTable.IsIdentifierValid(objName))
                 {
                     string msg = "Invalid identifier '{0}'. " +
                         "Identifiers must consist of only letters, numbers, and underscores. " +
@@ -228,20 +228,20 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Set symbol proprties
-            sym.DataOffset = GlobalOffset;
+            sym.DataAddress = GlobalOffset;
             sym.DataType = (hasCount && !(isStruct || type.IsStruct))
                 ? type.NativeType.MakeArrayType()
                 : type.NativeType;
             
             int totalDataLength = 0;
-            Symbol elemSym = sym;
+            SymbolTable elemSym = sym;
             for (int i = 0; i < count; i++)
             {
                 if (hasCount)
                 {
                     elemSym = sym[i];
                 }
-                elemSym.DataOffset = GlobalOffset;
+                elemSym.DataAddress = GlobalOffset;
 
                 if (isStruct || type.IsStruct)
                 {
@@ -251,9 +251,9 @@ namespace WHampson.Cascara.Interpreter
                     }
                     else
                     {
-                        scopeStack.Push(new CodeBlock(Symbol.CreateNamelessSymbol(CurrentCodeBlock.Symbol)));
+                        scopeStack.Push(new CodeBlock(SymbolTable.CreateNamelessSymbolTable(CurrentCodeBlock.Symbol)));
                     }
-                    CurrentCodeBlock.IsUnion = (stmt.Keyword == Keywords.Union);
+                    CurrentCodeBlock.IsUnion = (stmt.Keyword == Keywords.DataTypes.Union);
 
                     IEnumerable<Statement> members = (isStruct)
                         ? stmt.NestedStatements
@@ -326,7 +326,7 @@ namespace WHampson.Cascara.Interpreter
                 throw LayoutException.Create<LayoutException>(layout, stmt, msg, baseTypeName);
             }
 
-            if (!Symbol.IsNameValid(newTypeName))
+            if (!SymbolTable.IsIdentifierValid(newTypeName))
             {
                 string msg = "Invalid identifier '{0}'. " +
                     "Identifiers must consist of only letters, numbers, and underscores. " +
@@ -452,15 +452,23 @@ namespace WHampson.Cascara.Interpreter
 
         private double EvaluateExpression(string expr)
         {
+            DataTable dt;
+            object resultObj;
+            double result;
+            bool isDouble;
+
             expr = ResolveLayoutVariables(expr);
 
             // Clever way of evaluating math expressions using .NET's DataTable class.
-            DataTable dt = new DataTable();
-            DataColumn dc = new DataColumn(null, typeof(bool), expr);
-            dt.Columns.Add(dc);
-            dt.Rows.Add(0);
+            dt = new DataTable();
+            resultObj = dt.Compute(expr, string.Empty);
 
-            return (double) dt.Rows[0][0];
+            if (!double.TryParse(resultObj.ToString(), out result))
+            {
+                throw new SyntaxException("Result cannot be cast to double.");
+            }
+
+            return result;
         }
 
         //private T EvaluateExpression2<T>(string expr)
@@ -596,7 +604,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Handle file-mapped variables
-            if (!CurrentCodeBlock.Symbol.TryLookup(varName, out Symbol sym))
+            if (!CurrentCodeBlock.Symbol.TryLookup(varName, out SymbolTable sym))
             {
                 // TODO: get statement. Perhaps throw a different exception and have Caller of ResolveVariables catch and handle it
                 string msg = "Unknown layout variable '{0}'";
@@ -606,15 +614,15 @@ namespace WHampson.Cascara.Interpreter
             return StringValueOf(sym);
         }
 
-        private string StringValueOf(Symbol sym)
+        private string StringValueOf(SymbolTable sym)
         {
-            if (sym.IsLeaf && !sym.IsCollection)
+            if (sym.IsStruct && !sym.IsCollection)
             {
                 // file.Get<sym.DataType>(sym.DataOffset);
                 MethodInfo method = typeof(BinaryFile)
                     .GetMethod(nameof(BinaryFile.Get), new Type[] { typeof(int) })
                     .MakeGenericMethod(sym.DataType);
-                object val = method.Invoke(file, new object[] { sym.DataOffset });
+                object val = method.Invoke(file, new object[] { sym.DataAddress });
 
                 return val.ToString();
             }
@@ -624,7 +632,7 @@ namespace WHampson.Cascara.Interpreter
             // Treat character arrays as strings
             if (sym.IsCollection && (sym.DataType == typeof(char[]) || sym.DataType == typeof(Char8[])))
             {
-                foreach (Symbol childSym in sym)
+                foreach (SymbolTable childSym in sym)
                 {
                     string charValue = StringValueOf(childSym);
                     if (charValue == "\0")
@@ -644,7 +652,7 @@ namespace WHampson.Cascara.Interpreter
                 {
                     jw.Formatting = Formatting.None;
                     jw.WriteStartArray();
-                    foreach (Symbol elemSym in sym)
+                    foreach (SymbolTable elemSym in sym)
                     {
                         jw.WriteRawValue(StringValueOf(elemSym));
                     }
@@ -655,7 +663,7 @@ namespace WHampson.Cascara.Interpreter
                 {
                     jw.Formatting = Formatting.Indented;
                     jw.WriteStartObject();
-                    foreach (Symbol memberSym in sym.GetAllMembers())
+                    foreach (SymbolTable memberSym in sym.GetAllMembers())
                     {
                         jw.WritePropertyName(memberSym.Name);
                         jw.WriteRawValue(StringValueOf(memberSym));
@@ -695,43 +703,44 @@ namespace WHampson.Cascara.Interpreter
 
         private void InitializeInterpreterActionMaps()
         {
+            // TODO: fix
             statementTypeActionMap[StatementType.FileObjectDefinition] = InterpretFileObjectDefinition;
-            statementTypeActionMap[StatementType.LocalVariableDefinition] = InterpretLocalVariableDefinition;
-            statementTypeActionMap[StatementType.TypeDefinition] = InterpretTypeDefinition;
+            //statementTypeActionMap[StatementType.LocalVariableDefinition] = InterpretLocalVariableDefinition;
+            //statementTypeActionMap[StatementType.TypeDefinition] = InterpretTypeDefinition;
 
-            directiveActionMap[Keywords.Align] = InterpretAlign;
-            directiveActionMap[Keywords.Echo] = InterpretEcho;
-            directiveActionMap[Keywords.Include] = InterpretInclude;
+            directiveActionMap[Keywords.Directives.Align] = InterpretAlign;
+            directiveActionMap[Keywords.Directives.Echo] = InterpretEcho;
+            directiveActionMap[Keywords.Directives.Include] = InterpretInclude;
         }
 
         private static Dictionary<string, TypeInfo> BuiltInPrimitives = new Dictionary<string, TypeInfo>()
         {
-            { Keywords.Bool, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
-            { Keywords.Bool8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
-            { Keywords.Bool16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool16>(), typeof(Bool16)) },
-            { Keywords.Bool32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool32>(), typeof(Bool32)) },
-            { Keywords.Bool64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool64>(), typeof(Bool64)) },
-            { Keywords.Byte, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
-            { Keywords.Char, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
-            { Keywords.Char8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
-            { Keywords.Char16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<char>(), typeof(char)) },
-            { Keywords.Double, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<double>(), typeof(double)) },
-            { Keywords.Float, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
-            { Keywords.Int, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
-            { Keywords.Int8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<sbyte>(), typeof(sbyte)) },
-            { Keywords.Int16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
-            { Keywords.Int32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
-            { Keywords.Int64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(),  typeof(long)) },
-            { Keywords.Long, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(), typeof(long)) },
-            { Keywords.Short, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
-            { Keywords.Single, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
-            { Keywords.UInt, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
-            { Keywords.UInt8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
-            { Keywords.UInt16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) },
-            { Keywords.UInt32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
-            { Keywords.UInt64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
-            { Keywords.ULong, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
-            { Keywords.UShort, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) }
+            { Keywords.DataTypes.Bool, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
+            { Keywords.DataTypes.Bool8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<bool>(), typeof(bool)) },
+            { Keywords.DataTypes.Bool16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool16>(), typeof(Bool16)) },
+            { Keywords.DataTypes.Bool32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool32>(), typeof(Bool32)) },
+            { Keywords.DataTypes.Bool64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Bool64>(), typeof(Bool64)) },
+            { Keywords.DataTypes.Byte, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
+            { Keywords.DataTypes.Char, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
+            { Keywords.DataTypes.Char8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<Char8>(), typeof(Char8)) },
+            { Keywords.DataTypes.Char16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<char>(), typeof(char)) },
+            { Keywords.DataTypes.Double, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<double>(), typeof(double)) },
+            { Keywords.DataTypes.Float, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
+            { Keywords.DataTypes.Int, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
+            { Keywords.DataTypes.Int8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<sbyte>(), typeof(sbyte)) },
+            { Keywords.DataTypes.Int16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
+            { Keywords.DataTypes.Int32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<int>(), typeof(int)) },
+            { Keywords.DataTypes.Int64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(),  typeof(long)) },
+            { Keywords.DataTypes.Long, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<long>(), typeof(long)) },
+            { Keywords.DataTypes.Short, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<short>(), typeof(short)) },
+            { Keywords.DataTypes.Single, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<float>(), typeof(float)) },
+            { Keywords.DataTypes.UInt, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
+            { Keywords.DataTypes.UInt8, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<byte>(), typeof(byte)) },
+            { Keywords.DataTypes.UInt16, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) },
+            { Keywords.DataTypes.UInt32, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<uint>(), typeof(uint)) },
+            { Keywords.DataTypes.UInt64, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
+            { Keywords.DataTypes.ULong, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ulong>(), typeof(ulong)) },
+            { Keywords.DataTypes.UShort, TypeInfo.CreatePrimitive(PrimitiveTypeUtils.SizeOf<ushort>(), typeof(ushort)) }
         };
 
         private class CodeBlock
@@ -739,7 +748,7 @@ namespace WHampson.Cascara.Interpreter
             private int _offset;
             private int _maxOffset;
 
-            public CodeBlock(Symbol sym)
+            public CodeBlock(SymbolTable sym)
             {
                 _offset = 0;
                 _maxOffset = 0;
@@ -770,7 +779,7 @@ namespace WHampson.Cascara.Interpreter
                 set;
             }
 
-            public Symbol Symbol
+            public SymbolTable Symbol
             {
                 get;
             }

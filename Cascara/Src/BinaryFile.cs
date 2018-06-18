@@ -87,7 +87,7 @@ namespace WHampson.Cascara
             {
                 if (fStream.Length > MaxFileSize)
                 {
-                    // throw some exception
+                    // TODO: throw some exception
                 }
 
                 // Create file data buffer
@@ -121,7 +121,7 @@ namespace WHampson.Cascara
 
             hasBeenDisposed = false;
             dataPtr = IntPtr.Zero;
-            fileStructure = new Structure(this, Symbol.CreateRootSymbol());
+            fileStructure = new Structure(this, SymbolTable.CreateRootSymbolTable());
             Endianness = endianness;
         }
 
