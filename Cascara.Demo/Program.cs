@@ -10,11 +10,18 @@ namespace WHampson.CascaraDemo
     {
         const string LayoutXml = @"
 <cascaraLayout name='a layout' description='A Test Layout'>
-    <int name='foo'/>
-    <int name='bar'/>
-    <byte name='baz'/>
-    <byte name='bee'/>
-    <char name='str' count='4'/>
+    <struct name='test'>
+        <int name='foo'/>
+        <struct name='nest'>
+            <int name='bar'/>
+            <align count='2'/>
+            <char name='str' count='4'/>
+            <echo message='${__OFFSET__}'/>
+            <echo message='${__GLOBALOFFSET__}'/>
+        </struct>
+    </struct>
+    <echo message='$OffsetOf(test.nest.str)'/>
+    <echo message='$GlobalOffsetOf(test.nest.str)'/>
 </cascaraLayout>";
 
         static void Main(string[] args)
@@ -30,11 +37,10 @@ namespace WHampson.CascaraDemo
             Console.WriteLine("{0:X}", file.Get<byte>(8));
             Console.WriteLine("{0:X}", file.Get<byte>(9));
 
-            Console.WriteLine("{0:X}", file.GetPrimitive<int>("foo").Value);
-            Console.WriteLine("{0:X}", file.GetPrimitive<int>("foo").Value);
-            Console.WriteLine("{0:X}", file.GetPrimitive<byte>("baz").Value);
-            Console.WriteLine("{0:X}", file.GetPrimitive<byte>("bee").Value);
-            Console.WriteLine("{0:X}", file.GetPrimitive<bool>("str")[0].Value);
+            Console.WriteLine(file.GetStructure("test"));
+            Console.WriteLine(file.GetPrimitive<int>("test.foo"));
+            Console.WriteLine("{0:X}", file.GetPrimitive<int>("test.nest.bar").Value);
+            Console.WriteLine(file.GetPrimitive<Char8>("test.nest.str"));
 
             Console.ReadKey();
         }
