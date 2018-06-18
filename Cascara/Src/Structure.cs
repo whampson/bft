@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int FilePosition
         {
-            get { return Symbol.DataAddress; }
+            get { return Symbol.GlobalDataAddress; }
         }
 
         /// <summary>
@@ -55,15 +55,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int Offset
         {
-            get
-            {
-                if (Symbol.Parent != null)
-                {
-                    return Symbol.DataAddress - Symbol.Parent.DataAddress;
-                }
-
-                return Symbol.DataAddress;
-            }
+            get { return Symbol.LocalDataAddress; }
         }
 
         /// <summary>
@@ -140,12 +132,10 @@ namespace WHampson.Cascara
         public Structure GetStructure(string name)
         {
             bool exists = Symbol.TryLookup(name, out SymbolTable sym);
-            if (!exists)
+            if (!exists || !sym.IsStruct)
             {
                 return null;
             }
-
-            // TODO: ensure symbol referrs to a structure (not a primitive)
 
             return new Structure(sourceFile, sym);
         }
@@ -162,12 +152,10 @@ namespace WHampson.Cascara
             where T : struct
         {
             bool exists = Symbol.TryLookup(name, out SymbolTable sym);
-            if (!exists)
+            if (!exists || sym.IsStruct)
             {
                 return null;
             }
-
-            // TODO: ensure symbol referrs to a primitive (not a structure)
 
             return new Primitive<T>(sourceFile, sym);
         }
@@ -266,14 +254,31 @@ namespace WHampson.Cascara
         //    return GetPrimitive<T>(name);
         //}
 
-        /// <summary>
-        /// Converts this <see cref="Structure"/> object to an <see cref="int"/>
-        /// whose value equals <see cref="FilePosition"/>.
-        /// </summary>
-        /// <param name="p">The <see cref="Structure"/> object to convert to an <see cref="int"/>.</param>
-        public static implicit operator int(Structure s)
+        public override string ToString()
         {
-            return s.FilePosition;
+            string members = "";
+
+            foreach (SymbolTable sym in Symbol.GetAllMembers())
+            {
+                members += string.Format("{0} {1}", sym.DataType.Name, sym.Name);
+                if (sym.IsCollection)
+                {
+                    members += string.Format("[{0}]", sym.ElementCount);
+                }
+                members += "; ";
+            }
+
+            return string.Format("{0}: [ {1}]", GetType().Name, members);
         }
+
+        ///// <summary>
+        ///// Converts this <see cref="Structure"/> object to an <see cref="int"/>
+        ///// whose value equals <see cref="FilePosition"/>.
+        ///// </summary>
+        ///// <param name="p">The <see cref="Structure"/> object to convert to an <see cref="int"/>.</param>
+        //public static implicit operator int(Structure s)
+        //{
+        //    return s.FilePosition;
+        //}
     }
 }

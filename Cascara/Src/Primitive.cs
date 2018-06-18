@@ -111,7 +111,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int FilePosition
         {
-            get { return symbol.DataAddress; }
+            get { return symbol.GlobalDataAddress; }
         }
 
         /// <summary>
@@ -120,15 +120,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int Offset
         {
-            get
-            {
-                if (symbol.Parent != null)
-                {
-                    return symbol.DataAddress - symbol.Parent.DataAddress;
-                }
-
-                return symbol.DataAddress;
-            }
+            get { return symbol.LocalDataAddress; }
         }
 
         /// <summary>
@@ -205,14 +197,38 @@ namespace WHampson.Cascara
             return GetEnumerator();
         }
 
-        /// <summary>
-        /// Converts this <see cref="Primitive{T}"/> object to an <see cref="int"/>
-        /// whose value equals <see cref="FilePosition"/>.
-        /// </summary>
-        /// <param name="p">The <see cref="Primitive{T}"/> object to convert to an <see cref="int"/>.</param>
-        public static implicit operator int(Primitive<T> p)
+        public override string ToString()
         {
-            return p.FilePosition;
+            if (!IsCollection)
+            {
+                return Value.ToString();
+            }
+
+            string val = "";
+
+            if (PrimitiveTypeUtils.IsCharacterType<T>())
+            {
+                for (int i = 0; i < ElementCount; i++)
+                {
+                    val += this[i];
+                }
+            }
+            else
+            {
+                val = string.Format("{0}[{1}]", typeof(T).Name, ElementCount);
+            }
+
+            return val;
         }
+
+        ///// <summary>
+        ///// Converts this <see cref="Primitive{T}"/> object to an <see cref="int"/>
+        ///// whose value equals <see cref="FilePosition"/>.
+        ///// </summary>
+        ///// <param name="p">The <see cref="Primitive{T}"/> object to convert to an <see cref="int"/>.</param>
+        //public static implicit operator int(Primitive<T> p)
+        //{
+        //    return p.FilePosition;
+        //}
     }
 }
