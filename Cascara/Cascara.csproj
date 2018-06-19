@@ -6,7 +6,7 @@
     <Authors>Wes Hampson</Authors>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Copyright>Copyright (C) 2017-2018 Wes Hampson</Copyright>
-    <Version>0.23.0-dev031</Version>
+    <Version>0.23.0-dev048</Version>
     <Description>A .NET class library for creating, reading, and and editing binary files.</Description>
     <RepositoryUrl>https://github.com/whampson/cascara</RepositoryUrl>
     <RepositoryType>git</RepositoryType>

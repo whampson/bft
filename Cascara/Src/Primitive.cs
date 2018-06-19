@@ -22,6 +22,7 @@
 #endregion
 
 using System;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
@@ -147,6 +148,17 @@ namespace WHampson.Cascara
         public int ElementCount
         {
             get { return symbol.ElementCount; }
+        }
+
+        /// <summary>
+        /// Treats the sequence of bytes that make up this type as if they were
+        /// a different type. It is important to note that the properties of the
+        /// type (length, position, element count), do not change.
+        /// </summary>
+        public Primitive<U> ReinterpretCast<U>()
+            where U : struct
+        {
+            return new Primitive<U>(sourceFile, symbol);
         }
 
         /// <summary>

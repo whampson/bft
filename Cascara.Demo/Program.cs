@@ -16,7 +16,7 @@ namespace WHampson.CascaraDemo
         <int name='foo'/>
         <struct name='nest'>
             <int name='bar'/>
-            <align count='2'/>
+            <byte name='abc' count='2'/>
             <char name='str' count='4'/>
             <echo message='${__OFFSET__}'/>
             <echo message='${__GLOBALOFFSET__}'/>
@@ -34,17 +34,9 @@ namespace WHampson.CascaraDemo
             BinaryFile file = new BinaryFile(data);
             file.ApplyLayout(layout);
 
-            Console.WriteLine("{0:X}", file.Get<int>(0));
-            Console.WriteLine("{0:X}", file.Get<int>(4));
-            Console.WriteLine("{0:X}", file.Get<byte>(8));
-            Console.WriteLine("{0:X}", file.Get<byte>(9));
-
-            Console.WriteLine(file.GetStructure("test"));
-            Console.WriteLine(file.GetPrimitive<int>("test.foo"));
-            Console.WriteLine("{0:X}", file.GetPrimitive<int>("test.nest.bar").Value);
-            Console.WriteLine(file.GetPrimitive<Char8>("test.nest.str"));
-
-            Console.ReadKey();
+            var v = file.GetPrimitive<int>("test.foo");
+            var a = v.ReinterpretCast<byte>();
+            Console.WriteLine("{0:X}", a.Value);
         }
     }
 }
