@@ -44,7 +44,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
-        /// of the parent object.
+        /// of its parent object.
         /// </summary>
         int Offset
         {

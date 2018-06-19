@@ -6,6 +6,8 @@ using WHampson.Cascara;
 
 namespace WHampson.CascaraDemo
 {
+    // TODO: rename to CascaraExamples
+
     class Program
     {
         const string LayoutXml = @"

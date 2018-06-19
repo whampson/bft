@@ -62,7 +62,7 @@ namespace WHampson.Cascara.Interpreter.Xml
 
             Element = sourceElement;
         }
-        
+
         /// <summary>
         /// Gets the <see cref="XElement"/> that created this <see cref="Statement"/>.
         /// </summary>
@@ -84,7 +84,8 @@ namespace WHampson.Cascara.Interpreter.Xml
                 string text = Element.Value.Trim().Ellipses(25);
                 string fmt = Resources.SyntaxExceptionXmlUnexpectedText;
                 XNode textNode = textNodes.ElementAt(0);
-                throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(textNode), fmt, text, Keyword);
+                ISourceEntity src = new XmlSourceEntity(textNode);
+                throw LayoutException.Create<SyntaxException>(null, src, fmt, text, Keyword);
             }
 
             // Extract parameters

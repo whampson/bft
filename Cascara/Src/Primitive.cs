@@ -179,6 +179,10 @@ namespace WHampson.Cascara
             return new Primitive<T>(sourceFile, symbol[index]);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through a all elements of this
+        /// collection.
+        /// </summary>
         public IEnumerator<IFileObject> GetEnumerator()
         {
             if (!IsCollection)
@@ -197,6 +201,9 @@ namespace WHampson.Cascara
             return GetEnumerator();
         }
 
+        /// <summary>
+        /// Returns a string that represents this object.
+        /// </summary>
         public override string ToString()
         {
             if (!IsCollection)
@@ -220,15 +227,5 @@ namespace WHampson.Cascara
 
             return val;
         }
-
-        ///// <summary>
-        ///// Converts this <see cref="Primitive{T}"/> object to an <see cref="int"/>
-        ///// whose value equals <see cref="FilePosition"/>.
-        ///// </summary>
-        ///// <param name="p">The <see cref="Primitive{T}"/> object to convert to an <see cref="int"/>.</param>
-        //public static implicit operator int(Primitive<T> p)
-        //{
-        //    return p.FilePosition;
-        //}
     }
 }

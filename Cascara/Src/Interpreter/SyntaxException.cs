@@ -26,8 +26,8 @@ using System;
 namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
-    /// The exception that is thrown when a syntactical error is found while interpreting
-    /// the source code of a <see cref="BinaryLayout"/>.
+    /// The exception that is thrown when a syntactical error is found while
+    /// interpreting the source code of a <see cref="BinaryLayout"/> script.
     /// </summary>
     public class SyntaxException : LayoutException
     {
@@ -51,8 +51,12 @@ namespace WHampson.Cascara.Interpreter
         /// <summary>
         /// Initializes a new instance of the <see cref="SyntaxException"/> class.
         /// </summary>
-        /// <param name="message">A message that describes the error.</param>
-        /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
+        /// <param name="message">
+        /// A message that describes the error.
+        /// </param>
+        /// <param name="innerException">
+        /// The <see cref="Exception"/> that caused this exception.
+        /// </param>
         internal SyntaxException(string message, Exception innerException)
             : base(message, innerException)
         {

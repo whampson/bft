@@ -144,7 +144,8 @@ namespace WHampson.Cascara
             if (t == typeof(Bool64)) return BitConverter.GetBytes((ulong) Convert.ChangeType(value, typeof(ulong)));
             if (t == typeof(Char8)) return new byte[] { (byte) Convert.ChangeType(value, typeof(byte)) };
 
-            string msg = string.Format("Bug! Reached the end of {0}.{1}.", nameof(PrimitiveTypeUtils), nameof(GetBytes));
+            string msg = string.Format("Oops, you found a bug! (Reached the end of {0}.{1} and bytes were not gotten!).",
+                nameof(PrimitiveTypeUtils), nameof(GetBytes));
             throw new InvalidOperationException(msg);
         }
 
@@ -197,7 +198,8 @@ namespace WHampson.Cascara
             if (t == typeof(Bool64)) return (Bool64) (BitConverter.ToUInt64(b, 0) != 0);
             if (t == typeof(Char8)) return (Char8) ((char) Convert.ChangeType(b[0], typeof(char)));
 
-            string msg = string.Format("Bug! Reached the end of {0}.{1}.", nameof(PrimitiveTypeUtils), nameof(GetValue));
+            string msg = string.Format("Oops, you found a bug! (Reached the end of {0}.{1} and a value was not gotten!).",
+            nameof(PrimitiveTypeUtils), nameof(GetValue));
             throw new InvalidOperationException(msg);
         }
 

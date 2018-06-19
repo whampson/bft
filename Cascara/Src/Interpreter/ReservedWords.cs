@@ -28,7 +28,8 @@ using System.Linq;
 namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
-    /// Defines all strings that have special meaning in the interpreter.
+    /// Defines all strings that have special meaning in the layout script
+    /// interpreter.
     /// </summary>
     /// <remarks>
     /// Reserved words cannot be used as symbols.

@@ -37,20 +37,24 @@ namespace WHampson.Cascara.Extensions
         /// Gets the values of all public constants of the specified type.
         /// </summary>
         /// <typeparam name="T">The type of the constants to get.</typeparam>
-        /// <param name="clazz">The class to get constants from.</param>
+        /// <param name="t">The class to get constants from.</param>
         /// <returns>An <see cref="IEnumerable{T}"/> of the values of all constants.</returns>
-        public static IEnumerable<T> GetPublicConstants<T>(this Type clazz)
+        public static IEnumerable<T> GetPublicConstants<T>(this Type t)
             where T : IConvertible
         {
-            if (clazz == null)
+            BindingFlags flags;
+
+            if (t == null)
             {
-                throw new ArgumentNullException(nameof(clazz));
+                throw new ArgumentNullException(nameof(t));
             }
 
-            return clazz.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            flags = BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+            return t.GetFields(flags)
                 .Where(f => f.IsLiteral && !f.IsInitOnly && f.FieldType == typeof(T))
                 .Select(f => (T) f.GetRawConstantValue())
-                .Concat(clazz.GetNestedTypes(BindingFlags.Public).SelectMany(GetPublicConstants<T>));
+                .Concat(t.GetNestedTypes(BindingFlags.Public)
+                .SelectMany(GetPublicConstants<T>));
         }
     }
 }

@@ -29,8 +29,9 @@ using static WHampson.Cascara.Interpreter.ReservedWords;
 namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
-    /// A complete clause in the layout script language. A <see cref="Statement"/>
-    /// is the smallest unit of execution in the layout script interpreter.
+    /// A complete clause in the layout script language. A
+    /// <see cref="Statement"/> is the smallest unit of execution in the layout
+    /// script interpreter.
     /// </summary>
     internal abstract class Statement : ISourceEntity, IEquatable<Statement>
     {
@@ -61,8 +62,9 @@ namespace WHampson.Cascara.Interpreter
         /// Initializes a new instance of the <see cref="Statement"/> class.
         /// </summary>
         /// <param name="lineInfo">
-        /// An integer pair representing the text coordinates of the statement in the source code.
-        /// 'Item1' is the line number; 'Item2' is the column number.
+        /// An integer pair representing the text coordinates of the statement
+        /// in the source code. 'Item1' is the line number; 'Item2' is the
+        /// column number.
         /// </param>
         protected Statement(Tuple<int, int> lineInfo)
             : this(lineInfo.Item1, lineInfo.Item2)
@@ -88,7 +90,8 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets a value indicating whether this <see cref="Statement"/> has parameters.
+        /// Gets a value indicating whether this <see cref="Statement"/> has
+        /// parameters.
         /// </summary>
         public bool HasParameters
         {
@@ -120,21 +123,9 @@ namespace WHampson.Cascara.Interpreter
             get { return _nestedStatements; }
         }
 
-        ///// <summary>
-        ///// Gets a value indicating whether this <see cref="Statement"/>
-        ///// defines a structure object.
-        ///// </summary>
-        //internal bool IsStructureDefinition
-        //{
-        //    get
-        //    {
-        //        return StatementType == StatementType.FileObjectDefinition
-        //            && (Keyword == Keywords.Struct || Keyword == Keywords.Union);
-        //    }
-        //}
-
         /// <summary>
-        /// Reads parameters from the statement source code and determines the statement type.
+        /// Reads parameters from the statement source code and determines the
+        /// statement type.
         /// </summary>
         protected void Parse()
         {
@@ -143,9 +134,12 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Adds a <see cref="Statement"/> to the list of nested statements for this <see cref="Statement"/>.
+        /// Adds a <see cref="Statement"/> to the list of nested statements for
+        /// this <see cref="Statement"/>.
         /// </summary>
-        /// <param name="stmt">The nested <see cref="Statement"/> to add.</param>
+        /// <param name="stmt">
+        /// The nested <see cref="Statement"/> to add.
+        /// </param>
         protected void AddNestedStatement(Statement stmt)
         {
             if (stmt == null)
@@ -187,8 +181,6 @@ namespace WHampson.Cascara.Interpreter
         /// </summary>
         protected void DetermineType()
         {
-            string msg;
-
             if (Keywords.Directives.AllDirectives.Contains(Keyword))
             {
                 StatementType = StatementType.Directive;
@@ -305,7 +297,7 @@ namespace WHampson.Cascara.Interpreter
         None,
 
         /// <summary>
-        /// Directs the interpreter to carry out some command.
+        /// Directs the interpreter to carry out some action.
         /// </summary>
         Directive,
 

@@ -29,10 +29,10 @@ namespace WHampson.Cascara.Interpreter
     internal static partial class ReservedWords
     {
         /// <summary>
-        /// Defines all valid XML element attributes.
+        /// Defines all valid statement modifier keywords.
         /// </summary>
         /// <remarks>
-        /// Not all parameters are valid on all elements.
+        /// Not all parameters are valid on all statements.
         /// </remarks>
         public static class Parameters
         {

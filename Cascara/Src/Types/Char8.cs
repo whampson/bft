@@ -44,14 +44,15 @@ namespace WHampson.Cascara
             get { return (char) m_value; }
         }
 
+        /// <summary>
+        /// Compares the current instance with another object of the same type
+        /// and returns an integer that indicates whether the current instance
+        /// precedes, follows, or occurs in the same position in the sort order
+        /// as the other object.
+        /// </summary>
         public int CompareTo(Char8 other)
         {
             return CharValue.CompareTo(other.CharValue);
-        }
-
-        public bool Equals(Char8 other)
-        {
-            return CharValue == other.CharValue;
         }
 
         int IComparable.CompareTo(object obj)
@@ -70,6 +71,17 @@ namespace WHampson.Cascara
             return CompareTo((Char8) obj);
         }
 
+        /// <summary>
+        /// Determines whether the specified object is equal to this object.
+        /// </summary>
+        public bool Equals(Char8 other)
+        {
+            return CharValue == other.CharValue;
+        }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to this object.
+        /// </summary>
         public override bool Equals(object obj)
         {
             if (!(obj is Char8))
@@ -80,107 +92,169 @@ namespace WHampson.Cascara
             return Equals((Char8) obj);
         }
 
+        /// <summary>
+        /// Serves as this object's default hash function.
+        /// </summary>
         public override int GetHashCode()
         {
             return CharValue.GetHashCode();
         }
 
+        /// <summary>
+        /// Returns a string that represents this object.
+        /// </summary>
         public override string ToString()
         {
             return CharValue.ToString();
         }
 
+        /// <summary>
+        /// Implicitly casts this value to a <see cref="Char8"/> value.
+        /// </summary>
         public static implicit operator Char8(char value)
         {
             return new Char8(value);
         }
 
+        /// <summary>
+        /// Implicitly casts this value to a <see cref="char"/> value.
+        /// </summary>
         public static implicit operator char(Char8 value)
         {
             return value.CharValue;
         }
 
-        #region Type Conversion
+        /// <summary>
+        /// Returns the <see cref="TypeCode"/> for this object.
+        /// </summary>
         public TypeCode GetTypeCode()
         {
-            return TypeCode.Char;
+            return TypeCode.Boolean;
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="bool"/> value.
+        /// </summary>
         public bool ToBoolean(IFormatProvider provider)
         {
             return Convert.ToBoolean(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="char"/> value.
+        /// </summary>
         public char ToChar(IFormatProvider provider)
         {
             return CharValue;
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="sbyte"/> value.
+        /// </summary>
         public sbyte ToSByte(IFormatProvider provider)
         {
             return Convert.ToSByte(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="byte"/> value.
+        /// </summary>
         public byte ToByte(IFormatProvider provider)
         {
             return Convert.ToByte(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="short"/> value.
+        /// </summary>
         public short ToInt16(IFormatProvider provider)
         {
             return Convert.ToInt16(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="ushort"/> value.
+        /// </summary>
         public ushort ToUInt16(IFormatProvider provider)
         {
             return Convert.ToUInt16(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="int"/> value.
+        /// </summary>
         public int ToInt32(IFormatProvider provider)
         {
             return Convert.ToInt32(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="uint"/> value.
+        /// </summary>
         public uint ToUInt32(IFormatProvider provider)
         {
             return Convert.ToUInt32(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="long"/> value.
+        /// </summary>
         public long ToInt64(IFormatProvider provider)
         {
             return Convert.ToInt64(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="ulong"/> value.
+        /// </summary>
         public ulong ToUInt64(IFormatProvider provider)
         {
             return Convert.ToUInt64(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="float"/> value.
+        /// </summary>
         public float ToSingle(IFormatProvider provider)
         {
             return Convert.ToSingle(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="double"/> value.
+        /// </summary>
         public double ToDouble(IFormatProvider provider)
         {
             return Convert.ToDouble(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="decimal"/> value.
+        /// </summary>
         public decimal ToDecimal(IFormatProvider provider)
         {
             return Convert.ToDecimal(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="DateTime"/> value.
+        /// </summary>
         public DateTime ToDateTime(IFormatProvider provider)
         {
             return Convert.ToDateTime(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to the equivalent <see cref="string"/> value.
+        /// </summary>
         public string ToString(IFormatProvider provider)
         {
             return Convert.ToString(CharValue);
         }
 
+        /// <summary>
+        /// Converts this value to an equivalent value of the specified type.
+        /// </summary>
         public object ToType(Type conversionType, IFormatProvider provider)
         {
             if (conversionType == GetType())
@@ -190,6 +264,5 @@ namespace WHampson.Cascara
 
             return Convert.ChangeType(CharValue, conversionType);
         }
-        #endregion
     }
 }

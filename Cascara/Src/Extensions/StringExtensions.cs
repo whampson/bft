@@ -28,7 +28,7 @@ namespace WHampson.Cascara.Extensions
     /// </summary>
     internal static class StringExtensions
     {
-        private const string EllipesString = "...";
+        private const string EllipsesString = "...";
 
         /// <summary>
         /// Truncates a string with ellipses (...) if the string is
@@ -38,12 +38,12 @@ namespace WHampson.Cascara.Extensions
         /// </summary>
         /// <param name="s">The string to truncate.</param>
         /// <param name="length">The maximum desired length of the string.</param>
-        /// <returns></returns>
+        /// <returns>The truncated string.</returns>
         public static string Ellipses(this string s, int length)
         {
             if (s.Length > length)
             {
-                s = s.Substring(0, length - EllipesString.Length) + EllipesString;
+                s = s.Substring(0, length - EllipsesString.Length) + EllipsesString;
             }
 
             return s;

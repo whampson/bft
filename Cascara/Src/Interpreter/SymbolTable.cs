@@ -523,7 +523,8 @@ namespace WHampson.Cascara.Interpreter
 
             if (elemCount < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(elemCount), Resources.ArgumentExceptionNonNegativeInteger);
+                throw new ArgumentOutOfRangeException(nameof(elemCount),
+                    Resources.ArgumentExceptionNonNegativeInteger);
             }
 
             if (elemCount > 0)
@@ -546,11 +547,6 @@ namespace WHampson.Cascara.Interpreter
         /// <param name="identifier">
         /// The name of the entry to add.
         /// </param>
-        /// <param name="elemCount">
-        /// The number of elements in the collection, if adding a symbol that
-        /// refers to a collection. If the symbol should not represent a collection,
-        /// set this value to 0.
-        /// </param>
         /// <param name="symbol">
         /// The newly created <see cref="SymbolTable"/>.
         /// If the insertion fails, this will be set to <code>Null</code>.
@@ -570,6 +566,11 @@ namespace WHampson.Cascara.Interpreter
         /// </summary>
         /// <param name="identifier">
         /// The name of the entry to add.
+        /// </param>
+        /// <param name="elemCount">
+        /// The number of elements in the collection, if adding a symbol that
+        /// refers to a collection. If the symbol should not represent a collection,
+        /// set this value to 0.
         /// </param>
         /// <param name="symbol">
         /// The newly created <see cref="SymbolTable"/>.
@@ -623,8 +624,8 @@ namespace WHampson.Cascara.Interpreter
             string[] splitIdent = identifier.Split(new char[] { StructureReferenceOperatorChar }, 2);
 
             // Get a list of all symbols in scope matching top-level name
-            List<SymbolTable> syms = SearchUp(splitIdent[0], this);
-            if (syms.Count == 0)
+            List<SymbolTable> symbols = SearchUp(splitIdent[0], this);
+            if (symbols.Count == 0)
             {
                 return null;
             }
@@ -632,12 +633,12 @@ namespace WHampson.Cascara.Interpreter
             // Return the first match if there are no more tables to search
             if (splitIdent.Length == 1)
             {
-                return syms[0];
+                return symbols[0];
             }
 
             // Iterate through all matches and search down each one for the rest of the name.
             SymbolTable retval = null;
-            foreach (SymbolTable s in syms)
+            foreach (SymbolTable s in symbols)
             {
                 if ((retval = SearchDown(splitIdent[1], s)) != null)
                 {
@@ -703,13 +704,6 @@ namespace WHampson.Cascara.Interpreter
 
                 if (collectionElemSymbol != null)
                 {
-                    //if (!curr.IsCollection)
-                    //{
-                    //    // Bug! Should never be thrown...
-                    //    string msg = "Bug! Found a numeric identifier on a symbol that does not represent a collection!";
-                    //    throw new InvalidOperationException(msg);
-                    //}
-
                     // Append collection element index to collection name
                     currName += collectionElemSymbol;
                     collectionElemSymbol = null;
@@ -893,7 +887,7 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets the string representation of this <see cref="Symbol"/>.
+        /// Gets the string representation of this <see cref="SymbolTable"/>.
         /// </summary>
         /// <returns>
         /// The string representation of this object.

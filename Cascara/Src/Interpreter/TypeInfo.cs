@@ -27,6 +27,10 @@ using System.Linq;
 
 namespace WHampson.Cascara.Interpreter
 {
+    /// <summary>
+    /// Maintains all of the necessary information needed to instantiate
+    /// a user-defined type or structure.
+    /// </summary>
     internal class TypeInfo
     {
         public static TypeInfo CreatePrimitive(int size, Type nativeType)

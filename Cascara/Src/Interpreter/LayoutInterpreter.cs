@@ -239,7 +239,7 @@ namespace WHampson.Cascara.Interpreter
             {
                 sym.DataType = typeof(Structure);
             }
-            
+
             int totalDataLength = 0;
             SymbolTable elemSym = sym;
             for (int i = 0; i < count; i++)
@@ -450,7 +450,6 @@ namespace WHampson.Cascara.Interpreter
             DataTable dt;
             object resultObj;
             double result;
-            bool isDouble;
 
             expr = ResolveLayoutVariables(expr);
 
