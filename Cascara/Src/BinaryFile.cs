@@ -440,24 +440,30 @@ namespace WHampson.Cascara
         /// Gets a <see cref="Structure"/> by name. If no match exists,
         /// <c>null</c> is returned.
         /// </summary>
-        /// <param name="name">The name of the <see cref="Structure"/> to search for.</param>
+        /// <param name="name">The name of the <see cref="Structure"/> to get.</param>
         /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise.</returns>
         public Structure GetStructure(string name)
         {
             return fileStructure.GetStructure(name);
         }
 
-        // public bool HasStructure(string name)
-        // {
-        //     return GetStructure(name) != null;
-        // }
+        /// <summary>
+        /// Gets a value indicating whether a <see cref="Structure"/> with
+        /// the specified name exists.
+        /// </summary>
+        /// <param name="name">The name of the <see cref="Structure"/> to check for.</param>
+        /// <returns><c>True</c> if the structure exists.</returns>
+        public bool HasStructure(string name)
+        {
+            return GetStructure(name) != null;
+        }
 
         /// <summary>
         /// Gets a <see cref="Primitive{T}"/> by name and type. If no match is
         /// exists,  <c>null</c> is returned.
         /// </summary>
         /// <typeparam name="T">The type of primitive to get.</typeparam>
-        /// <param name="name">The name of the <see cref="Primitive{T}"/> to search for.</param>
+        /// <param name="name">The name of the <see cref="Primitive{T}"/> to get.</param>
         /// <returns>The <see cref="Primitive{T}"/> object, if found. <c>null</c> otherwise.</returns>
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
@@ -465,11 +471,18 @@ namespace WHampson.Cascara
             return fileStructure.GetPrimitive<T>(name);
         }
 
-        // public bool HasPrimitive<T>(string name)
-        //     where T : struct
-        // {
-        //     return GetPrimitive<T>(name) != null;
-        // }
+        /// <summary>
+        /// Gets a value indicating whether a <see cref="Primitive{T}"/> with
+        /// the specified name and type exists.
+        /// </summary>
+        /// <typeparam name="T">The type of primitive to check for.</typeparam>
+        /// <param name="name">The name of the <see cref="Primitive{T}"/> to check for.</param>
+        /// <returns><c>True</c> if the primitive type exists.</returns>
+        public bool HasPrimitive<T>(string name)
+            where T : struct
+        {
+            return GetPrimitive<T>(name) != null;
+        }
 
         public void ApplyLayout(BinaryLayout layout)
         {
