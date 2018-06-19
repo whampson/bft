@@ -111,46 +111,13 @@ namespace WHampson.Cascara
             get;
         }
 
-        //public int SizeOf(string name)
-        //{
-        //    bool exists = symbol.TryLookup(name, out Symbol sym);
-        //    if (!exists)
-        //    {
-        //        return 0;
-        //    }
-
-        //    return sym.DataLength;
-        //}
-
-        //public Type TypeOf(string name)
-        //{
-        //    bool exists = symbol.TryLookup(name, out Symbol sym);
-        //    if (!exists)
-        //    {
-        //        return null;
-        //    }
-
-        //    return sym.DataType;
-        //}
-
-        //public int OffsetOf(string name)
-        //{
-        //    bool exists = symbol.TryLookup(name, out Symbol sym);
-        //    if (!exists)
-        //    {
-        //        return -1;
-        //    }
-
-        //    return sym.DataOffset;
-        //}
-
         /// <summary>
         /// Gets a <see cref="Structure"/> by searching this structure's
         /// symbol table for the specified name. If no match is found,
         /// <c>null</c> is returned.
         /// </summary>
         /// <param name="name">The name of the <see cref="Structure"/> to search for.</param>
-        /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise</returns>
+        /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise.</returns>
         public Structure GetStructure(string name)
         {
             bool exists = Symbol.TryLookup(name, out SymbolTable sym);
@@ -169,12 +136,17 @@ namespace WHampson.Cascara
         /// </summary>
         /// <typeparam name="T">The type of primitive to get.</typeparam>
         /// <param name="name">The name of the <see cref="Primitive{T}"/> to search for.</param>
-        /// <returns>The <see cref="Primitive{T}"/> object, if found. <c>null</c> otherwise</returns>
+        /// <returns>The <see cref="Primitive{T}"/> object, if found. <c>null</c> otherwise.</returns>
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
             bool exists = Symbol.TryLookup(name, out SymbolTable sym);
             if (!exists || sym.IsStruct)
+            {
+                return null;
+            }
+
+            if (sym.DataType != typeof(T))
             {
                 return null;
             }

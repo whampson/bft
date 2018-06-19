@@ -32,11 +32,15 @@ using WHampson.Cascara.Interpreter;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Represents a non-text file.
+    /// Represents a file containing binary (non human-readable) data.
     /// </summary>
     public class BinaryFile : IDisposable
     {
+        /// <summary>
+        /// The maximum file size that can be loaded.
+        /// </summary>
         public const int MaxFileSize = int.MaxValue;
+
         private const int BufferSize = 4096;
 
         /// <summary>
@@ -87,7 +91,7 @@ namespace WHampson.Cascara
             {
                 if (fStream.Length > MaxFileSize)
                 {
-                    // TODO: throw some exception
+                    throw new IOException("File is too large.");
                 }
 
                 // Create file data buffer
@@ -114,11 +118,6 @@ namespace WHampson.Cascara
 
         private BinaryFile(Endianness endianness)
         {
-            if (endianness == null)
-            {
-                throw new ArgumentNullException(nameof(endianness));
-            }
-
             hasBeenDisposed = false;
             dataPtr = IntPtr.Zero;
             fileStructure = new Structure(this, SymbolTable.CreateRootSymbolTable());
@@ -212,7 +211,8 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets or sets the byte order.
         /// The value of this property affects the values of primitive types
-        /// returned by <see cref="GetValue{T}(int)"/> and set by <see cref="SetValue{T}(int, T)"/>.
+        /// returned by <see cref="Get{T}(int)"/> and set by
+        /// <see cref="Set{T}(int, T)"/>.
         /// </summary>
         public Endianness Endianness
         {
@@ -221,7 +221,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the number of bytes in the <see cref="BinaryFile"/>.
+        /// Gets the length of the <see cref="BinaryFile"/> in bytes.
         /// </summary>
         public int Length
         {
@@ -321,6 +321,7 @@ namespace WHampson.Cascara
         /// </remarks>
         /// <typeparam name="T">The type of the value to set.</typeparam>
         /// <param name="index">The position in the file data of the value to set.</param>
+        /// <param name="value">tThe value to write.</param>
         /// <exception cref="ArgumentOutOfRangeException">
         /// If the index is out of range.
         /// </exception>
@@ -435,16 +436,40 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Gets a <see cref="Structure"/> by name. If no match exists,
+        /// <c>null</c> is returned.
+        /// </summary>
+        /// <param name="name">The name of the <see cref="Structure"/> to search for.</param>
+        /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise.</returns>
         public Structure GetStructure(string name)
         {
             return fileStructure.GetStructure(name);
         }
 
+        // public bool HasStructure(string name)
+        // {
+        //     return GetStructure(name) != null;
+        // }
+
+        /// <summary>
+        /// Gets a <see cref="Primitive{T}"/> by name and type. If no match is
+        /// exists,  <c>null</c> is returned.
+        /// </summary>
+        /// <typeparam name="T">The type of primitive to get.</typeparam>
+        /// <param name="name">The name of the <see cref="Primitive{T}"/> to search for.</param>
+        /// <returns>The <see cref="Primitive{T}"/> object, if found. <c>null</c> otherwise.</returns>
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
             return fileStructure.GetPrimitive<T>(name);
         }
+
+        // public bool HasPrimitive<T>(string name)
+        //     where T : struct
+        // {
+        //     return GetPrimitive<T>(name) != null;
+        // }
 
         public void ApplyLayout(BinaryLayout layout)
         {
@@ -456,23 +481,6 @@ namespace WHampson.Cascara
             LayoutInterpreter interpreter = new LayoutInterpreter(layout, echoWriter);
             interpreter.Execute(fileStructure.Symbol, this);
         }
-
-        //public Structure AddStructure(string name, int offset, int length)
-        //{
-        //    return fileStructure.AddStructure(name, offset, length);
-        //}
-
-        //public Primitive<T> AddPrimitive<T>(string name, int offset)
-        //    where T : struct
-        //{
-        //    return fileStructure.AddPrimitive<T>(name, offset);
-        //}
-
-        //public Primitive<T> AddPrimitive<T>(string name, int offset, int count)
-        //    where T : struct
-        //{
-        //    return fileStructure.AddPrimitive<T>(name, offset, count);
-        //}
 
         #region Disposal
         protected virtual void Dispose(bool disposing)

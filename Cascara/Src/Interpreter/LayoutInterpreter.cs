@@ -231,9 +231,10 @@ namespace WHampson.Cascara.Interpreter
             sym.LocalDataAddress = CurrentCodeBlock.Offset;
             if (!(isStruct || type.IsStruct))
             {
-                sym.DataType = (hasCount)
-                    ? type.NativeType.MakeArrayType()
-                    : type.NativeType;
+                // sym.DataType = (hasCount)
+                //     ? type.NativeType.MakeArrayType()
+                //     : type.NativeType;
+                sym.DataType = type.NativeType;
             }
             else
             {
