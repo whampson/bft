@@ -174,7 +174,6 @@ namespace WHampson.Cascara
             bool hasExceptionMessage = !string.IsNullOrEmpty(exceptionMessage);
             bool hasInnerException = innerException != null;
             bool hasLayout = layout != null;
-            bool hasName = hasLayout && layout.Name != null;
             bool hasPath = hasLayout && layout.SourcePath != null;
             bool hasLineInfo = srcElem != null && srcElem.LineNumber > 0 && srcElem.LinePosition > 0;
 
@@ -191,13 +190,9 @@ namespace WHampson.Cascara
                 msg += innerException.Message.Replace(Environment.NewLine, Environment.NewLine + "    ");
             }
 
-            if (hasLayout && (hasName || hasPath))
+            if (hasLayout && hasPath)
             {
                 msg += Environment.NewLine + "In Layout:";
-                if (hasName)
-                {
-                    msg += Environment.NewLine + "  Name: " + layout.Name;
-                }
                 if (hasPath)
                 {
                     msg += Environment.NewLine + "  Path: " + layout.SourcePath;

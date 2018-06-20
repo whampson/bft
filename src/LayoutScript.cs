@@ -34,11 +34,8 @@ using static WHampson.Cascara.Interpreter.ReservedWords;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Contains information about the organization of a binary file.
+    /// A script that defines the structure of a <see cref="BinaryFile"/>.
     /// </summary>
-    /// <remarks>
-    /// A <see cref="LayoutScript"/> is represented on disk with an XML file.
-    /// </remarks>
     public abstract partial class LayoutScript : IEquatable<LayoutScript>
     {
         /// <summary>
@@ -47,8 +44,11 @@ namespace WHampson.Cascara
         /// <param name="path">The path to the file to load.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutScriptException">
-        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
-        /// contains a malformatted version, or contains a syntax error.
+        /// Thrown if the <see cref="LayoutScript"/> is empty or contains a
+        /// malformatted version string.
+        /// </exception>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the <see cref="LayoutScript"/> contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
@@ -65,24 +65,28 @@ namespace WHampson.Cascara
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutScriptException">
-        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
-        /// contains a malformatted version, or contains a syntax error.
+        /// Thrown if the <see cref="LayoutScript"/> is empty or contains a
+        /// malformatted version string.
+        /// </exception>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the <see cref="LayoutScript"/> contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
         /// </exception>
-        internal static LayoutScript Load(string path, LayoutFormat type)
+        internal static LayoutScript Load(string path, LayoutFormat format)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
                 throw new ArgumentException(Resources.ArgumentExceptionEmptyString, nameof(path));
             }
 
-            switch (type)
+            switch (format)
             {
                 case LayoutFormat.Xml:
                     return XmlLayoutScript.LoadSource(path);
                 default:
+                    // TODO: message
                     throw new NotSupportedException();
             }
         }
@@ -90,18 +94,21 @@ namespace WHampson.Cascara
         /// <summary>
         /// Creates a new <see cref="LayoutScript"/> object from a string.
         /// </summary>
-        /// <param name="source">The <see cref="LayoutScript"/> source code string.</param>
+        /// <param name="xmlSource">The <see cref="LayoutScript"/> XML source code.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutScriptException">
-        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
-        /// contains a malformatted version, or contains a syntax error.
+        /// Thrown if the <see cref="LayoutScript"/> is empty or contains a
+        /// malformatted version string.
+        /// </exception>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the <see cref="LayoutScript"/> contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
         /// </exception>
-        public static LayoutScript Parse(string source)
+        public static LayoutScript Parse(string xmlSource)
         {
-            return Parse(source, LayoutFormat.Xml);
+            return Parse(xmlSource, LayoutFormat.Xml);
         }
 
         /// <summary>
@@ -111,8 +118,11 @@ namespace WHampson.Cascara
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutScriptException">
-        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
-        /// contains a malformatted version, or contains a syntax error.
+        /// Thrown if the <see cref="LayoutScript"/> is empty or contains a
+        /// malformatted version string.
+        /// </exception>
+        /// <exception cref="SyntaxException">
+        /// Thrown if the <see cref="LayoutScript"/> contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
@@ -133,27 +143,20 @@ namespace WHampson.Cascara
             }
         }
 
-        protected Dictionary<string, string> _metadata;
+        internal Dictionary<string, string> _metadata;
 
         /// <summary>
         /// Creates a new <see cref="LayoutScript"/> object.
         /// </summary>
-        /// <param name="name">The name of the layout.</param>
         /// <param name="version">The Cascara version that the layout is designed for.</param>
         /// <param name="sourcePath">The path to the source file (if applicable).</param>
-        private LayoutScript(string name, Version version, string sourcePath)
+        private LayoutScript( Version version, string sourcePath)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                throw new ArgumentException(Resources.ArgumentExceptionEmptyString, nameof(name));
-            }
-
             if (version == null)
             {
                 throw new ArgumentNullException(nameof(version));
             }
 
-            Name = name;
             Version = version;
             SourcePath = sourcePath;
             _metadata = new Dictionary<string, string>();
@@ -188,16 +191,12 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the name of this <see cref="LayoutScript"/>.
+        /// Gets the version string encoded within this <see cref="LayoutScript"/>.
         /// </summary>
-        public string Name
-        {
-            get;
-        }
-
-        /// <summary>
-        /// Gets the version of Cascara that this <see cref="LayoutScript"/> is designed for.
-        /// </summary>
+        /// <remarks>
+        /// The version specifies the minimum version of Cascara that this script
+        /// can be run with.
+        /// </remarks>
         public Version Version
         {
             get;
@@ -234,7 +233,9 @@ namespace WHampson.Cascara
         /// </summary>
         protected abstract void Initialize();
 
-        #region Equality
+        /// <summary>
+        /// Determines whether the specified object is equal to this object.
+        /// </summary>
         public bool Equals(LayoutScript other)
         {
             if (other == null)
@@ -242,10 +243,12 @@ namespace WHampson.Cascara
                 return false;
             }
 
-            return Name == other.Name
-                && RootStatement.Equals(other.RootStatement);
+            return RootStatement.Equals(other.RootStatement);
         }
 
+        /// <summary>
+        /// Determines whether the specified object is equal to this object.
+        /// </summary>
         public sealed override bool Equals(object obj)
         {
             if (!(obj is LayoutScript))
@@ -260,19 +263,23 @@ namespace WHampson.Cascara
             return Equals(obj as LayoutScript);
         }
 
+        /// <summary>
+        /// Serves as this object's default hash function.
+        /// </summary>
         public sealed override int GetHashCode()
         {
             unchecked
             {
                 int hash = 13;
-                hash = (hash * 37) ^ Name.GetHashCode();
                 hash = (hash * 37) ^ RootStatement.GetHashCode();
 
                 return hash;
             }
         }
-        #endregion
 
+        /// <summary>
+        /// Returns a string that represents this object.
+        /// </summary>
         public sealed override string ToString()
         {
             Dictionary<string, string> meta = _metadata
@@ -285,9 +292,8 @@ namespace WHampson.Cascara
             }
             metaStr = metaStr.Substring(0, Math.Max(1, metaStr.Length - 1)) + " }";
 
-            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6}, {7} = {8} ]",
+            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6} ]",
                 GetType().Name,
-                nameof(Name), Name,
                 nameof(Version), Version,
                 nameof(SourcePath), (SourcePath == null) ? "(null)" : SourcePath,
                 nameof(Metadata), metaStr);

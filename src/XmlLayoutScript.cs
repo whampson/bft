@@ -106,7 +106,7 @@ namespace WHampson.Cascara
                 }
 
                 // Create and return layout object
-                return new XmlLayoutScript(doc, name, ver, sourcePath);
+                return new XmlLayoutScript(doc, ver, sourcePath);
             }
 
             private static string GetLayoutName(XDocument doc)
@@ -135,8 +135,8 @@ namespace WHampson.Cascara
                 return ver;
             }
 
-            private XmlLayoutScript(XDocument document, string name, Version version, string sourcePath)
-                : base(name, version, sourcePath)
+            private XmlLayoutScript(XDocument document, Version version, string sourcePath)
+                : base(version, sourcePath)
             {
                 if (document == null)
                 {
