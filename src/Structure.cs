@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,12 +36,9 @@ namespace WHampson.Cascara
     /// </summary>
     public class Structure : IFileObject
     {
-        private BinaryFile sourceFile;
-        //private Symbol symbol;
-
         internal Structure(BinaryFile sourceFile, SymbolTable symbol)
         {
-            this.sourceFile = sourceFile;
+            this.SourceFile = sourceFile;
             Symbol = symbol;
         }
 
@@ -66,7 +65,7 @@ namespace WHampson.Cascara
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the <see cref="BinaryFile"/>.
         /// </summary>
-        public int FilePosition
+        public int GlobalOffset
         {
             get { return Symbol.GlobalDataAddress; }
         }
@@ -75,7 +74,7 @@ namespace WHampson.Cascara
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the parent object.
         /// </summary>
-        public int Offset
+        public int LocalOffset
         {
             get { return Symbol.LocalDataAddress; }
         }
@@ -106,6 +105,11 @@ namespace WHampson.Cascara
             get { return Symbol.ElementCount; }
         }
 
+        public BinaryFile SourceFile
+        {
+            get;
+        }
+
         internal SymbolTable Symbol
         {
             get;
@@ -126,7 +130,7 @@ namespace WHampson.Cascara
                 return null;
             }
 
-            return new Structure(sourceFile, sym);
+            return new Structure(SourceFile, sym);
         }
 
         /// <summary>
@@ -151,7 +155,7 @@ namespace WHampson.Cascara
                 return null;
             }
 
-            return new Primitive<T>(sourceFile, sym);
+            return new Primitive<T>(SourceFile, sym);
         }
 
         /// <summary>
@@ -181,7 +185,7 @@ namespace WHampson.Cascara
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            return new Structure(sourceFile, Symbol[index]);
+            return new Structure(SourceFile, Symbol[index]);
         }
 
         /// <summary>
@@ -211,19 +215,35 @@ namespace WHampson.Cascara
         /// </summary>
         public override string ToString()
         {
-            string members = "";
+            JObject o = new JObject();
+            o.Add(nameof(Symbol.FullName), Symbol.FullName);
+            o.Add(nameof(Symbol.DataType), nameof(Structure));
+            o.Add(nameof(GlobalOffset), GlobalOffset);
+            o.Add(nameof(LocalOffset), LocalOffset);
+            o.Add(nameof(Length), Length);
+            o.Add(nameof(IsCollection), IsCollection);
+            o.Add(nameof(ElementCount), ElementCount);
 
-            foreach (SymbolTable sym in Symbol.GetAllMembers())
+            JArray a = new JArray();
+            object obj;
+            foreach (SymbolTable member in Symbol.GetAllMembers())
             {
-                members += string.Format("{0} {1}", sym.DataType.Name, sym.Name);
-                if (sym.IsCollection)
+                if (member.IsStruct)
                 {
-                    members += string.Format("[{0}]", sym.ElementCount);
+                    obj = GetStructure(member.Name);
                 }
-                members += "; ";
+                else
+                {
+                    MethodInfo getPrimitive = GetType()
+                        .GetMethod(nameof(GetPrimitive))
+                        .MakeGenericMethod(member.DataType);
+                    obj = getPrimitive.Invoke(this, new object[] { member.Name });
+                }
+                a.Add(JToken.Parse(obj.ToString()));
             }
+            o.Add("Members", a);
+            return o.ToString(Formatting.None);
 
-            return string.Format("{0}: [ {1}]", GetType().Name, members);
         }
     }
 }
