@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// </summary>
         /// <param name="path">The path to the file to load.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
-        /// <exception cref="LayoutException">
+        /// <exception cref="LayoutScriptException">
         /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
@@ -64,7 +64,7 @@ namespace WHampson.Cascara
         /// <param name="path">The path to the file to load.</param>
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
-        /// <exception cref="LayoutException">
+        /// <exception cref="LayoutScriptException">
         /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
@@ -92,7 +92,7 @@ namespace WHampson.Cascara
         /// </summary>
         /// <param name="source">The <see cref="LayoutScript"/> source code string.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
-        /// <exception cref="LayoutException">
+        /// <exception cref="LayoutScriptException">
         /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
@@ -110,7 +110,7 @@ namespace WHampson.Cascara
         /// <param name="source">The <see cref="LayoutScript"/> source code string.</param>
         /// <param name="format">The source code format.</param>
         /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
-        /// <exception cref="LayoutException">
+        /// <exception cref="LayoutScriptException">
         /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>

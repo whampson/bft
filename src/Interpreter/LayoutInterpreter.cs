@@ -45,7 +45,7 @@ namespace WHampson.Cascara.Interpreter
 
         private static readonly HashSet<Version> SupportedVersions = new HashSet<Version>(new Version[]
         {
-            AssemblyInfo.AssemblyVersion        // current version
+            Cascara.AssemblyVersion        // current version
         });
 
         private delegate void InterpretAction(Statement stmt);
@@ -115,7 +115,7 @@ namespace WHampson.Cascara.Interpreter
             if (stmt.Keyword != Keywords.XmlDocumentRoot)
             {
                 string msg = Resources.SyntaxExceptionXmlInvalidRootElement;
-                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, Keywords.XmlDocumentRoot);
+                throw LayoutScriptException.Create<SyntaxException>(layout, stmt, msg, Keywords.XmlDocumentRoot);
             }
 
             // Interpret nested statements
@@ -138,14 +138,14 @@ namespace WHampson.Cascara.Interpreter
                     if (!directiveActionMap.TryGetValue(stmt.Keyword, out interpret))
                     {
                         msg = "Unknown directive '{0}'.";
-                        throw LayoutException.Create<LayoutException>(layout, stmt, msg, stmt.Keyword);
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, stmt.Keyword);
                     }
                     break;
 
                 case StatementType.None:
                     // Invalid state. Should never happen if the statement was parsed correctly...
                     msg = "Invalid statement.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg);
 
                 default:
                     // Get action based on statement type
@@ -175,7 +175,7 @@ namespace WHampson.Cascara.Interpreter
             if (!isStruct && !TryLookupType(typeName, out type))
             {
                 string msg = "Unknown type '{0}'.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, typeName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, typeName);
             }
 
             // Evaluate 'count' expression
@@ -189,13 +189,13 @@ namespace WHampson.Cascara.Interpreter
                 catch (SyntaxErrorException e)
                 {
                     string msg = "'{0}' is not a valid expression.";
-                    throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, countStr);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, e, stmt, msg, countStr);
                 }
 
                 if (count <= 0)
                 {
                     string msg = "Parameter '{0}' must be a positive integer.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, Parameters.Count);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, Parameters.Count);
                 }
             }
 
@@ -208,12 +208,12 @@ namespace WHampson.Cascara.Interpreter
                     string msg = "Invalid identifier '{0}'. " +
                         "Identifiers must consist of only letters, numbers, and underscores. " +
                         "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, objName);
                 }
                 if (CurrentCodeBlock.Symbol.Lookup(objName) != null || TryLookupLocal(objName, out double dummyLocalValue))
                 {
                     string msg = "A variable with identifier '{0}' already exists in the current scope.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, objName);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, objName);
                 }
 
                 if (hasCount)
@@ -266,7 +266,7 @@ namespace WHampson.Cascara.Interpreter
                     if (!members.Any())
                     {
                         string msg = "Empty structures are not allowed.";
-                        throw LayoutException.Create<SyntaxException>(layout, stmt, msg);
+                        throw LayoutScriptException.Create<SyntaxException>(layout, stmt, msg);
                     }
 
                     foreach (Statement member in members)
@@ -296,7 +296,7 @@ namespace WHampson.Cascara.Interpreter
                     if (newOffset > file.Length)
                     {
                         string msg = "Object definition runs past the end of the file.";
-                        throw LayoutException.Create<LayoutException>(layout, stmt, msg);
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg);
                     }
 
                     if (!CurrentCodeBlock.IsUnion)
@@ -335,13 +335,13 @@ namespace WHampson.Cascara.Interpreter
                 catch (SyntaxErrorException e)
                 {
                     string msg = "'{0}' is not a valid expression.";
-                    throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, countStr);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, e, stmt, msg, countStr);
                 }
 
                 if (count <= 0)
                 {
                     string msg = "Parameter '{0}' must be a positive integer.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, Parameters.Count);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, Parameters.Count);
                 }
             }
 
@@ -350,7 +350,7 @@ namespace WHampson.Cascara.Interpreter
                 if (!TryLookupType(kindStr, out TypeInfo unit))
                 {
                     string msg = "Unknown type '{0}'.";
-                    throw LayoutException.Create<LayoutException>(layout, stmt, msg, kindStr);
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, kindStr);
                 }
                 unitSize = unit.Size;
             }
@@ -376,7 +376,7 @@ namespace WHampson.Cascara.Interpreter
 
             if (CurrentCodeBlock.Symbol.Lookup(varName) != null) {
                 string msg = "A variable with identifier '{0}' already exists in the current scope.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, varName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, varName);
             }
 
             try {
@@ -384,7 +384,7 @@ namespace WHampson.Cascara.Interpreter
                 CurrentCodeBlock.Locals[varName] = value;
             } catch (SyntaxErrorException e) {
                 string msg = "'{0}' is not a valid expression.";
-                throw LayoutException.Create<LayoutException>(layout, e, stmt, msg, valueStr);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, e, stmt, msg, valueStr);
             }
         }
 
@@ -399,19 +399,19 @@ namespace WHampson.Cascara.Interpreter
 
             if (!TryLookupType(baseTypeName, out TypeInfo baseType)) {
                 string msg = "Unknown type '{0}'.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, baseTypeName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, baseTypeName);
             }
 
             if (!SymbolTable.IsIdentifierValid(newTypeName)) {
                 string msg = "Invalid identifier '{0}'. " +
                     "Identifiers must consist of only letters, numbers, and underscores. " +
                     "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, newTypeName);
             }
 
             if (TryLookupType(newTypeName, out TypeInfo dummyType)) {
                 string msg = "Type '{0}' already exists.";
-                throw LayoutException.Create<LayoutException>(layout, stmt, msg, newTypeName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, newTypeName);
             }
 
             userDefinedTypes[newTypeName] = baseType;
@@ -473,7 +473,7 @@ namespace WHampson.Cascara.Interpreter
             if (unknownParams.Any())
             {
                 string msg = "Unknown parameter '{0}'.";
-                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, unknownParams[0]);
+                throw LayoutScriptException.Create<SyntaxException>(layout, stmt, msg, unknownParams[0]);
             }
         }
 
@@ -493,7 +493,7 @@ namespace WHampson.Cascara.Interpreter
             if (!hasParam && isRequired)
             {
                 string msg = "Missing required parameter '{0}'";
-                throw LayoutException.Create<SyntaxException>(layout, stmt, msg, paramName);
+                throw LayoutScriptException.Create<SyntaxException>(layout, stmt, msg, paramName);
             }
 
             return hasParam;
@@ -580,7 +580,7 @@ namespace WHampson.Cascara.Interpreter
             {
                 // TODO: get statement. Perhaps throw a different exception and have Caller of ResolveVariables catch and handle it
                 string msg = "Unknown layout variable '{0}'";
-                throw LayoutException.Create<LayoutException>(layout, null, msg, varName);
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
             }
 
             string val = "";

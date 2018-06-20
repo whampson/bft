@@ -85,7 +85,7 @@ namespace WHampson.Cascara.Interpreter.Xml
                 string fmt = Resources.SyntaxExceptionXmlUnexpectedText;
                 XNode textNode = textNodes.ElementAt(0);
                 ISourceEntity src = new XmlSourceEntity(textNode);
-                throw LayoutException.Create<SyntaxException>(null, src, fmt, text, Keyword);
+                throw LayoutScriptException.Create<SyntaxException>(null, src, fmt, text, Keyword);
             }
 
             // Extract parameters

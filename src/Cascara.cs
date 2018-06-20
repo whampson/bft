@@ -30,12 +30,12 @@ using System.Runtime.CompilerServices;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Utility class for getting information about the executing assembly.
+    /// Utility class for getting information about the Cascara library.
     /// </summary>
-    internal static class AssemblyInfo
+    internal static class Cascara
     {
         /// <summary>
-        /// Gets the version of the executing assembly.
+        /// Gets the current version of Cascara.
         /// </summary>
         internal static Version AssemblyVersion
         {

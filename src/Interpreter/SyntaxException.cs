@@ -27,9 +27,9 @@ namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// The exception that is thrown when a syntactical error is found while
-    /// interpreting the source code of a <see cref="LayoutScript"/> script.
+    /// interpreting the source code of a <see cref="LayoutScript"/>.
     /// </summary>
-    public class SyntaxException : LayoutException
+    public class SyntaxException : LayoutScriptException
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SyntaxException"/> class.

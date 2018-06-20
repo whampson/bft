@@ -77,7 +77,7 @@ namespace Cascara.Tests
             string src = "not xml";
 
             // Act, assert
-            var ex = Assert.ThrowsAny<LayoutException>(() => LayoutScript.Parse(src));
+            var ex = Assert.ThrowsAny<LayoutScriptException>(() => LayoutScript.Parse(src));
             Assert.True(ex.InnerException is XmlException);
         }
 
@@ -88,7 +88,7 @@ namespace Cascara.Tests
             string src = BuildXmlElement("badRoot");
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutScriptException>(
                 () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionXmlInvalidRootElement, Keywords.XmlDocumentRoot);
         }
@@ -100,7 +100,7 @@ namespace Cascara.Tests
             string src = CreateLayout("");
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutScriptException>(
                 () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionEmptyLayout);
         }
@@ -112,7 +112,7 @@ namespace Cascara.Tests
             string src = BuildXmlElement(Keywords.XmlDocumentRoot, BuildXmlElement(Keywords.DataTypes.Int));
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutScriptException>(
                 () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionMissingLayoutName);
         }
@@ -125,7 +125,7 @@ namespace Cascara.Tests
             string src = CreateLayout("foo", badVersion, BuildXmlElement(Keywords.DataTypes.Int));
 
             // Act, assert
-            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
+            AssertExtensions.ThrowsAnyWithMessageContaining<LayoutScriptException>(
                 () => LayoutScript.Parse(src),
                 Resources.LayoutExceptionMalformattedLayoutVersion, badVersion);
         }

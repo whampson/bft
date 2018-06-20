@@ -22,14 +22,14 @@ namespace Cascara.Tests
             string msg = null;
             Exception innerException = null;
 
-            string expectedMessage = string.Format("Exception of type '{0}' was thrown.", typeof(LayoutException).FullName);
+            string expectedMessage = string.Format("Exception of type '{0}' was thrown.", typeof(LayoutScriptException).FullName);
             string expectedDetailedMessage = expectedMessage;
             int expectedLineNum = 0;
             int expectedLinePos = 0;
             Exception expectedInnerException = null;
 
             // Act
-            LayoutException ex = LayoutException.Create<LayoutException>(layout, innerException, srcElem, msg);
+            LayoutScriptException ex = LayoutScriptException.Create<LayoutScriptException>(layout, innerException, srcElem, msg);
 
             // Assert
             Assert.Equal(expectedMessage, ex.Message);
@@ -55,7 +55,7 @@ namespace Cascara.Tests
             Exception expectedInnerException = null;
 
             // Act
-            LayoutException ex = LayoutException.Create<LayoutException>(layout, innerException, srcElem, msg);
+            LayoutScriptException ex = LayoutScriptException.Create<LayoutScriptException>(layout, innerException, srcElem, msg);
 
             // Assert
             Assert.Equal(expectedMessage, ex.Message);
@@ -85,7 +85,7 @@ Caused by:
             Exception expectedInnerException = innerException;
 
             // Execution
-            LayoutException ex = LayoutException.Create<LayoutException>(layout, innerException, srcElem, msg);
+            LayoutScriptException ex = LayoutScriptException.Create<LayoutScriptException>(layout, innerException, srcElem, msg);
 
             // Assertion
             Assert.Equal(expectedMessage, ex.Message);

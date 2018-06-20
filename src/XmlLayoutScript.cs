@@ -53,7 +53,7 @@ namespace WHampson.Cascara
                     }
 
                     string msg = e.Message;
-                    throw LayoutException.Create<LayoutException>(null, e, null, msg);
+                    throw LayoutScriptException.Create<LayoutScriptException>(null, e, null, msg);
                 }
 
                 // Create and return layout
@@ -71,7 +71,7 @@ namespace WHampson.Cascara
                 catch (XmlException e)
                 {
                     string msg = e.Message;
-                    throw LayoutException.Create<LayoutException>(null, e, null, msg);
+                    throw LayoutScriptException.Create<LayoutScriptException>(null, e, null, msg);
                 }
 
                 // Create and return layout
@@ -84,7 +84,7 @@ namespace WHampson.Cascara
                 if (doc.Root.Name.LocalName != Keywords.XmlDocumentRoot)
                 {
                     string msg = Resources.SyntaxExceptionXmlInvalidRootElement;
-                    throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg, Keywords.XmlDocumentRoot);
+                    throw LayoutScriptException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg, Keywords.XmlDocumentRoot);
                 }
 
                 // Read name; ensure it's present
@@ -92,7 +92,7 @@ namespace WHampson.Cascara
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     string msg = Resources.SyntaxExceptionMissingLayoutName;
-                    throw LayoutException.Create<LayoutException>(null, new XmlSourceEntity(doc.Root), msg);
+                    throw LayoutScriptException.Create<LayoutScriptException>(null, new XmlSourceEntity(doc.Root), msg);
                 }
 
                 // Read version
@@ -102,7 +102,7 @@ namespace WHampson.Cascara
                 if (!doc.Root.HasElements)
                 {
                     string msg = Resources.SyntaxExceptionEmptyLayout;
-                    throw LayoutException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg);
+                    throw LayoutScriptException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg);
                 }
 
                 // Create and return layout object
@@ -123,13 +123,13 @@ namespace WHampson.Cascara
                 XAttribute versionAttr = doc.Root.Attribute(Parameters.Version);
                 if (versionAttr == null)
                 {
-                    return AssemblyInfo.AssemblyVersion;
+                    return Cascara.AssemblyVersion;
                 }
 
                 if (!Version.TryParse(versionAttr.Value, out Version ver))
                 {
                     string msg = Resources.LayoutExceptionMalformattedLayoutVersion;
-                    throw LayoutException.Create<LayoutException>(null, new XmlSourceEntity(versionAttr), msg, versionAttr.Value);
+                    throw LayoutScriptException.Create<LayoutScriptException>(null, new XmlSourceEntity(versionAttr), msg, versionAttr.Value);
                 }
 
                 return ver;
