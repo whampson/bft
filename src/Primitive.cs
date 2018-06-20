@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Reflection;
 using System.Collections;
@@ -107,6 +109,45 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Gets the value of this primitive type as a string.
+        /// </summary>
+        public string StringValue
+        {
+            get
+            {
+                if (!IsCollection)
+                {
+                    return Value.ToString();
+                }
+
+                string val = "";
+
+                if (PrimitiveTypeUtils.IsCharacterType<T>())
+                {
+                    for (int i = 0; i < ElementCount; i++)
+                    {
+                        if (Convert.ToChar(this[i].Value) == '\0')
+                        {
+                            break;
+                        }
+                        val += this[i].StringValue;
+                    }
+                }
+                else
+                {
+                    JArray a = new JArray();
+                    for (int i = 0; i < ElementCount; i++)
+                    {
+                        a.Add(JToken.FromObject(this[i].Value));
+                    }
+                    val = a.ToString(Formatting.None);
+                }
+
+                return val;
+            }
+        }
+
+        /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the <see cref="BinaryFile"/>.
         /// </summary>
@@ -155,6 +196,10 @@ namespace WHampson.Cascara
         /// a different type. It is important to note that the properties of the
         /// type (length, position, element count), do not change.
         /// </summary>
+        /// <typeparam name="U">The value type to cast to.</typeparam>
+        /// <exception cref="ArgumentException">
+        /// Thrown if U is larger than <see cref="Length"/>
+        /// </exception>
         public Primitive<U> ReinterpretCast<U>()
             where U : struct
         {
@@ -218,26 +263,23 @@ namespace WHampson.Cascara
         /// </summary>
         public override string ToString()
         {
-            if (!IsCollection)
-            {
-                return Value.ToString();
-            }
-
-            string val = "";
-
+            JObject o = new JObject();
+            o.Add("FullName", symbol.FullName);
+            o.Add(nameof(FilePosition), FilePosition);
+            o.Add(nameof(Offset), Offset);
+            o.Add(nameof(Length), Length);
+            o.Add("Type", symbol.DataType.Name);
+            o.Add(nameof(IsCollection), IsCollection);
+            o.Add(nameof(ElementCount), ElementCount);
             if (PrimitiveTypeUtils.IsCharacterType<T>())
             {
-                for (int i = 0; i < ElementCount; i++)
-                {
-                    val += this[i];
-                }
+                o.Add(nameof(Value), StringValue);
             }
             else
             {
-                val = string.Format("{0}[{1}]", typeof(T).Name, ElementCount);
+                o.Add(nameof(Value), JToken.Parse(StringValue));
             }
-
-            return val;
+            return o.ToString(Newtonsoft.Json.Formatting.None);
         }
     }
 }

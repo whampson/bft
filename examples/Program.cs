@@ -28,13 +28,21 @@ namespace WHampson.CascaraExamples
         {
             byte[] data = { 0xBE, 0xBA, 0xFE, 0xCA, 0xEF, 0xBE, 0xAD, 0xDE, 0xAA, 0x55, 0x61, 0x62 ,0x63, 0x00 };
 
-            LayoutScript layout = LayoutScript.Parse(LayoutXml);
+            // LayoutScript layout = LayoutScript.Parse(LayoutXml);
+            LayoutScript layout = LayoutScript.Load("test.xml");
             BinaryFile file = new BinaryFile(data);
             file.ApplyLayout(layout);
 
-            var v = file.GetPrimitive<int>("test.foo");
+            var w = file.GetPrimitive<int>("test.foo");
+            var v = file.GetPrimitive<Char8>("test.nest.str");
             var a = v.ReinterpretCast<byte>();
-            Console.WriteLine("{0:X}", a.Value);
+            var b = file.GetStructure("test");
+            Console.WriteLine(w);
+            Console.WriteLine(v);
+            Console.WriteLine(a);
+            Console.WriteLine(b);
+            Console.WriteLine(file);
+            Console.WriteLine(layout);
         }
     }
 }

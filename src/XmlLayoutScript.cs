@@ -87,13 +87,13 @@ namespace WHampson.Cascara
                     throw LayoutScriptException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg, Keywords.XmlDocumentRoot);
                 }
 
-                // Read name; ensure it's present
-                string name = GetLayoutName(doc);
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    string msg = Resources.SyntaxExceptionMissingLayoutName;
-                    throw LayoutScriptException.Create<LayoutScriptException>(null, new XmlSourceEntity(doc.Root), msg);
-                }
+                // // Read name; ensure it's present
+                // string name = GetLayoutName(doc);
+                // if (string.IsNullOrWhiteSpace(name))
+                // {
+                //     string msg = Resources.SyntaxExceptionMissingLayoutName;
+                //     throw LayoutScriptException.Create<LayoutScriptException>(null, new XmlSourceEntity(doc.Root), msg);
+                // }
 
                 // Read version
                 Version ver = GetLayoutVersion(doc);
@@ -147,7 +147,7 @@ namespace WHampson.Cascara
                 Initialize();
             }
 
-            public XDocument Document
+            internal XDocument Document
             {
                 get;
             }

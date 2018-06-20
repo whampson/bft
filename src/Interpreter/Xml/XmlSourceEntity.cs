@@ -21,6 +21,7 @@
  */
 #endregion
 
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -61,9 +62,7 @@ namespace WHampson.Cascara.Interpreter.Xml
 
         public override string ToString()
         {
-            return string.Format("{0}: [ {1} = {2} ]",
-                GetType().Name,
-                nameof(SourceObject), SourceObject);
+            return JsonConvert.SerializeObject(this);
         }
     }
 }
