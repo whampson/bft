@@ -288,6 +288,13 @@ namespace WHampson.Cascara
             o.Add(nameof(Version), Version.ToString());
             o.Add(nameof(SourcePath), SourcePath);
             o.Add(nameof(Metadata), JToken.FromObject(Metadata));
+
+            JArray a = new JArray();
+            foreach (Statement s in RootStatement.NestedStatements)
+            {
+                a.Add(JToken.Parse(s.ToString()));
+            }
+            o.Add("ScriptContents", a);
             return o.ToString(Newtonsoft.Json.Formatting.None);
         }
     }

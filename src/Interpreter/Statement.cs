@@ -280,10 +280,14 @@ namespace WHampson.Cascara.Interpreter
                 o.Add("LineNumber", _lineNumber);
                 o.Add("LinePosition", _linePosition);
             }
-            o.Add(nameof(HasParameters), HasParameters);
             o.Add(nameof(Parameters), JToken.FromObject(Parameters));
-            o.Add(nameof(HasNestedStatements), HasNestedStatements);
-            o.Add(nameof(NestedStatements), JToken.FromObject(NestedStatements));
+
+            JArray a = new JArray();
+            foreach (Statement s in NestedStatements)
+            {
+                a.Add(JToken.Parse(s.ToString()));
+            }
+            o.Add(nameof(NestedStatements), a);
             return o.ToString(Formatting.None);
         }
     }
