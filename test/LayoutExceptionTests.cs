@@ -17,7 +17,7 @@ namespace Cascara.Tests
         public void Create_AllNull()
         {
             // Arrange
-            BinaryLayout layout = null;
+            LayoutScript layout = null;
             ISourceEntity srcElem = null;
             string msg = null;
             Exception innerException = null;
@@ -43,7 +43,7 @@ namespace Cascara.Tests
         public void Create_WithMessage()
         {
             // Arrange
-            BinaryLayout layout = null;
+            LayoutScript layout = null;
             ISourceEntity srcElem = null;
             string msg = "Test.";
             Exception innerException = null;
@@ -69,7 +69,7 @@ namespace Cascara.Tests
         public void Create_NestedWithMessage()
         {
             // Inputs
-            BinaryLayout layout = null;
+            LayoutScript layout = null;
             ISourceEntity srcElem = null;
             string msg = "Failed to process layout.";
             Exception innerException = new ArgumentNullException("foo", "The parameter was null."); ;

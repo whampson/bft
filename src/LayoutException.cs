@@ -33,7 +33,7 @@ using WHampson.Cascara.Interpreter;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// The exception that is thrown when an error occurs while processing a <see cref="BinaryLayout"/>.
+    /// The exception that is thrown when an error occurs while processing a <see cref="LayoutScript"/>.
     /// </summary>
     public class LayoutException : Exception
     {
@@ -41,11 +41,11 @@ namespace WHampson.Cascara
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
-        /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> that caused the exception.</param>
         /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, ISourceEntity srcElem, string msg)
+        internal static T Create<T>(LayoutScript layout, ISourceEntity srcElem, string msg)
             where T : LayoutException
         {
             string detailedMsg = BuildDetailedMessage(msg, null, layout, srcElem);
@@ -57,12 +57,12 @@ namespace WHampson.Cascara
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
-        /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> that caused the exception.</param>
         /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(LayoutScript layout, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
             where T : LayoutException
         {
             string msg;
@@ -78,12 +78,12 @@ namespace WHampson.Cascara
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
-        /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> that caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msg">A message that describes the error.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceEntity srcElem, string msg)
+        internal static T Create<T>(LayoutScript layout, Exception innerException, ISourceEntity srcElem, string msg)
             where T : LayoutException
         {
             string detailedMsg = BuildDetailedMessage(msg, innerException, layout, srcElem);
@@ -95,13 +95,13 @@ namespace WHampson.Cascara
         /// Initializes a new instance of the <see cref="LayoutException"/> class.
         /// </summary>
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
-        /// <param name="layout">The <see cref="BinaryLayout"/> that caused the exception.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> that caused the exception.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <param name="msgFmt">A composite format string for the message that describes the error.</param>
         /// <param name="fmtArgs">An object array that contains zero or more objects to format.</param>
         /// <returns>The new <see cref="LayoutException"/> instance.</returns>
-        internal static T Create<T>(BinaryLayout layout, Exception innerException, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
+        internal static T Create<T>(LayoutScript layout, Exception innerException, ISourceEntity srcElem, string msgFmt, params object[] fmtArgs)
             where T : LayoutException
         {
             string msg;
@@ -114,14 +114,14 @@ namespace WHampson.Cascara
         }
 
         /// <typeparam name="T">The type of <see cref="LayoutException"/> to create.</typeparam>
-        /// <param name="layout">The <see cref="BinaryLayout"/> whose XML data caused the exception.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> whose XML data caused the exception.</param>
         /// <param name="msg">A brief message that describes the error.</param>
         /// <param name="detailedMsg">A detailed message that describes the error.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused this exception.</param>
         /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the exception.</param>
         /// <returns></returns>
         private static T CreateException<T>(
-            BinaryLayout layout, string msg, string detailedMsg, Exception innerException, ISourceEntity srcElem)
+            LayoutScript layout, string msg, string detailedMsg, Exception innerException, ISourceEntity srcElem)
             where T : LayoutException
         {
             if (srcElem != null && srcElem.LineNumber > 0 && srcElem.LinePosition > 0)
@@ -157,11 +157,11 @@ namespace WHampson.Cascara
         /// </summary>
         /// <param name="exceptionMessage">A message describing the error.</param>
         /// <param name="innerException">The <see cref="Exception"/> that caused the error.</param>
-        /// <param name="layout">The <see cref="BinaryLayout"/> that caused the error.</param>
+        /// <param name="layout">The <see cref="LayoutScript"/> that caused the error.</param>
         /// /// <param name="srcElem">The <see cref="ISourceEntity"/> that caused the error.</param>
         /// <returns>The newly-created error message.</returns>
         private static string BuildDetailedMessage(
-            string exceptionMessage, Exception innerException, BinaryLayout layout, ISourceEntity srcElem)
+            string exceptionMessage, Exception innerException, LayoutScript layout, ISourceEntity srcElem)
         {
             if (exceptionMessage == null)
             {
@@ -259,16 +259,16 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="BinaryLayout"/> that caused the exception.
+        /// Gets the <see cref="LayoutScript"/> that caused the exception.
         /// </summary>
-        public BinaryLayout LayoutFile
+        public LayoutScript LayoutFile
         {
             get;
             private set;
         }
 
         /// <summary>
-        /// Gets the line number (y-coordinate) in the <see cref="BinaryLayout"/> source code
+        /// Gets the line number (y-coordinate) in the <see cref="LayoutScript"/> source code
         /// where the exception occurred.
         /// </summary>
         /// <remarks>
@@ -281,7 +281,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the line position (x-coordinate) in the <see cref="BinaryLayout"/> source code
+        /// Gets the line position (x-coordinate) in the <see cref="LayoutScript"/> source code
         /// where the exception occurred.
         /// </summary>
         /// <remarks>

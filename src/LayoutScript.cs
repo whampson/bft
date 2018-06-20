@@ -37,41 +37,41 @@ namespace WHampson.Cascara
     /// Contains information about the organization of a binary file.
     /// </summary>
     /// <remarks>
-    /// A <see cref="BinaryLayout"/> is represented on disk with an XML file.
+    /// A <see cref="LayoutScript"/> is represented on disk with an XML file.
     /// </remarks>
-    public abstract partial class BinaryLayout : IEquatable<BinaryLayout>
+    public abstract partial class LayoutScript : IEquatable<LayoutScript>
     {
         /// <summary>
-        /// Creates a new <see cref="BinaryLayout"/> object from a file.
+        /// Creates a new <see cref="LayoutScript"/> object from a file.
         /// </summary>
         /// <param name="path">The path to the file to load.</param>
-        /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
+        /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
         /// </exception>
-        public static BinaryLayout Load(string path)
+        public static LayoutScript Load(string path)
         {
             return Load(path, LayoutFormat.Xml);
         }
 
         /// <summary>
-        /// Creates a new <see cref="BinaryLayout"/> object from a file.
+        /// Creates a new <see cref="LayoutScript"/> object from a file.
         /// </summary>
         /// <param name="path">The path to the file to load.</param>
         /// <param name="format">The source code format.</param>
-        /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
+        /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the path is empty or null.
         /// </exception>
-        internal static BinaryLayout Load(string path, LayoutFormat type)
+        internal static LayoutScript Load(string path, LayoutFormat type)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -81,43 +81,43 @@ namespace WHampson.Cascara
             switch (type)
             {
                 case LayoutFormat.Xml:
-                    return XmlBinaryLayout.LoadSource(path);
+                    return XmlLayoutScript.LoadSource(path);
                 default:
                     throw new NotSupportedException();
             }
         }
 
         /// <summary>
-        /// Creates a new <see cref="BinaryLayout"/> object from a string.
+        /// Creates a new <see cref="LayoutScript"/> object from a string.
         /// </summary>
-        /// <param name="source">The <see cref="BinaryLayout"/> source code string.</param>
-        /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
+        /// <param name="source">The <see cref="LayoutScript"/> source code string.</param>
+        /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
         /// </exception>
-        public static BinaryLayout Parse(string source)
+        public static LayoutScript Parse(string source)
         {
             return Parse(source, LayoutFormat.Xml);
         }
 
         /// <summary>
-        /// Creates a new <see cref="BinaryLayout"/> object from a string.
+        /// Creates a new <see cref="LayoutScript"/> object from a string.
         /// </summary>
-        /// <param name="source">The <see cref="BinaryLayout"/> source code string.</param>
+        /// <param name="source">The <see cref="LayoutScript"/> source code string.</param>
         /// <param name="format">The source code format.</param>
-        /// <returns>The newly-created <see cref="BinaryLayout"/> object.</returns>
+        /// <returns>The newly-created <see cref="LayoutScript"/> object.</returns>
         /// <exception cref="LayoutException">
-        /// Thrown if the <see cref="BinaryLayout"/> is empty, does not have a name,
+        /// Thrown if the <see cref="LayoutScript"/> is empty, does not have a name,
         /// contains a malformatted version, or contains a syntax error.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// Thrown if the source string is empty or null.
         /// </exception>
-        internal static BinaryLayout Parse(string source, LayoutFormat format)
+        internal static LayoutScript Parse(string source, LayoutFormat format)
         {
             if (string.IsNullOrWhiteSpace(source))
             {
@@ -127,7 +127,7 @@ namespace WHampson.Cascara
             switch (format)
             {
                 case LayoutFormat.Xml:
-                    return XmlBinaryLayout.ParseSource(source);
+                    return XmlLayoutScript.ParseSource(source);
                 default:
                     throw new NotSupportedException();
             }
@@ -136,12 +136,12 @@ namespace WHampson.Cascara
         protected Dictionary<string, string> _metadata;
 
         /// <summary>
-        /// Creates a new <see cref="BinaryLayout"/> object.
+        /// Creates a new <see cref="LayoutScript"/> object.
         /// </summary>
         /// <param name="name">The name of the layout.</param>
         /// <param name="version">The Cascara version that the layout is designed for.</param>
         /// <param name="sourcePath">The path to the source file (if applicable).</param>
-        private BinaryLayout(string name, Version version, string sourcePath)
+        private LayoutScript(string name, Version version, string sourcePath)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -160,7 +160,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets metadata associated with this <see cref="BinaryLayout"/>.
+        /// Gets metadata associated with this <see cref="LayoutScript"/>.
         /// </summary>
         /// <remarks>
         /// For XML-formatted layouts, metadata is encoded as attributes in the root element.
@@ -188,7 +188,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the name of this <see cref="BinaryLayout"/>.
+        /// Gets the name of this <see cref="LayoutScript"/>.
         /// </summary>
         public string Name
         {
@@ -196,7 +196,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the version of Cascara that this <see cref="BinaryLayout"/> is designed for.
+        /// Gets the version of Cascara that this <see cref="LayoutScript"/> is designed for.
         /// </summary>
         public Version Version
         {
@@ -204,7 +204,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the path to the file that created this <see cref="BinaryLayout"/> object.
+        /// Gets the path to the file that created this <see cref="LayoutScript"/> object.
         /// If the layout was not loaded from a file, this value is <c>null</c>.
         /// </summary>
         public string SourcePath
@@ -213,7 +213,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets metadata associated with this <see cref="BinaryLayout"/>.
+        /// Gets metadata associated with this <see cref="LayoutScript"/>.
         /// </summary>
         public IReadOnlyDictionary<string, string> Metadata
         {
@@ -221,7 +221,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the top-level <see cref="Statement"/> that defines this <see cref="BinaryLayout"/>.
+        /// Gets the top-level <see cref="Statement"/> that defines this <see cref="LayoutScript"/>.
         /// </summary>
         internal Statement RootStatement
         {
@@ -235,7 +235,7 @@ namespace WHampson.Cascara
         protected abstract void Initialize();
 
         #region Equality
-        public bool Equals(BinaryLayout other)
+        public bool Equals(LayoutScript other)
         {
             if (other == null)
             {
@@ -248,7 +248,7 @@ namespace WHampson.Cascara
 
         public sealed override bool Equals(object obj)
         {
-            if (!(obj is BinaryLayout))
+            if (!(obj is LayoutScript))
             {
                 return false;
             }
@@ -257,7 +257,7 @@ namespace WHampson.Cascara
                 return true;
             }
 
-            return Equals(obj as BinaryLayout);
+            return Equals(obj as LayoutScript);
         }
 
         public sealed override int GetHashCode()
@@ -295,12 +295,12 @@ namespace WHampson.Cascara
     }
 
     /// <summary>
-    /// Defines all possible source code formats for a <see cref="BinaryLayout"/>.
+    /// Defines all possible source code formats for a <see cref="LayoutScript"/>.
     /// </summary>
     internal enum LayoutFormat
     {
         /// <summary>
-        /// Indicates a <see cref="BinaryLayout"/> that is formatted as an XML document.
+        /// Indicates a <see cref="LayoutScript"/> that is formatted as an XML document.
         /// </summary>
         Xml
     }

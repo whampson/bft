@@ -484,12 +484,12 @@ namespace WHampson.Cascara
             return GetPrimitive<T>(name) != null;
         }
 
-        public void ApplyLayout(BinaryLayout layout)
+        public void ApplyLayout(LayoutScript layout)
         {
             ApplyLayout(layout, Console.Out);
         }
 
-        public void ApplyLayout(BinaryLayout layout, TextWriter echoWriter)
+        public void ApplyLayout(LayoutScript layout, TextWriter echoWriter)
         {
             LayoutInterpreter interpreter = new LayoutInterpreter(layout, echoWriter);
             interpreter.Execute(fileStructure.Symbol, this);

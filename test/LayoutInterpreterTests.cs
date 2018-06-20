@@ -20,7 +20,7 @@ namespace Cascara.Tests
         {
             StringWriter sw = new StringWriter();
             BinaryFile file = BinaryFile.Load(@"C:\Users\Wes\Desktop\GTA3LCSsf1.b", Endianness.Little);
-            BinaryLayout layout = BinaryLayout.Load(@"C:\Users\Wes\Desktop\testLayout.xml");
+            LayoutScript layout = LayoutScript.Load(@"C:\Users\Wes\Desktop\testLayout.xml");
             file.ApplyLayout(layout, sw);
             Output.WriteLine(sw.ToString());
         }

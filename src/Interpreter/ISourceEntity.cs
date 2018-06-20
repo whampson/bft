@@ -25,7 +25,7 @@ namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// Represents a generalized piece of semantically-correct source code for
-    /// a <see cref="BinaryLayout"/>.
+    /// a <see cref="LayoutScript"/>.
     /// </summary>
     internal interface ISourceEntity
     {

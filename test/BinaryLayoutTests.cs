@@ -57,7 +57,7 @@ namespace Cascara.Tests
             string src = null;
 
             // Act, assert
-            Assert.Throws<ArgumentException>(() => BinaryLayout.Parse(src));
+            Assert.Throws<ArgumentException>(() => LayoutScript.Parse(src));
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace Cascara.Tests
             string src = "";
 
             // Act, assert
-            Assert.Throws<ArgumentException>(() => BinaryLayout.Parse(src));
+            Assert.Throws<ArgumentException>(() => LayoutScript.Parse(src));
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace Cascara.Tests
             string src = "not xml";
 
             // Act, assert
-            var ex = Assert.ThrowsAny<LayoutException>(() => BinaryLayout.Parse(src));
+            var ex = Assert.ThrowsAny<LayoutException>(() => LayoutScript.Parse(src));
             Assert.True(ex.InnerException is XmlException);
         }
 
@@ -89,7 +89,7 @@ namespace Cascara.Tests
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
-                () => BinaryLayout.Parse(src),
+                () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionXmlInvalidRootElement, Keywords.XmlDocumentRoot);
         }
 
@@ -101,7 +101,7 @@ namespace Cascara.Tests
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
-                () => BinaryLayout.Parse(src),
+                () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionEmptyLayout);
         }
 
@@ -113,7 +113,7 @@ namespace Cascara.Tests
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
-                () => BinaryLayout.Parse(src),
+                () => LayoutScript.Parse(src),
                 Resources.SyntaxExceptionMissingLayoutName);
         }
 
@@ -126,7 +126,7 @@ namespace Cascara.Tests
 
             // Act, assert
             AssertExtensions.ThrowsAnyWithMessageContaining<LayoutException>(
-                () => BinaryLayout.Parse(src),
+                () => LayoutScript.Parse(src),
                 Resources.LayoutExceptionMalformattedLayoutVersion, badVersion);
         }
     }

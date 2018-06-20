@@ -27,7 +27,7 @@ namespace WHampson.Cascara.Interpreter
 {
     /// <summary>
     /// The exception that is thrown when a syntactical error is found while
-    /// interpreting the source code of a <see cref="BinaryLayout"/> script.
+    /// interpreting the source code of a <see cref="LayoutScript"/> script.
     /// </summary>
     public class SyntaxException : LayoutException
     {

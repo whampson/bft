@@ -33,11 +33,11 @@ using static WHampson.Cascara.Interpreter.ReservedWords;
 
 namespace WHampson.Cascara
 {
-    public abstract partial class BinaryLayout
+    public abstract partial class LayoutScript
     {
-        internal sealed class XmlBinaryLayout : BinaryLayout
+        internal sealed class XmlLayoutScript : LayoutScript
         {
-            public static XmlBinaryLayout LoadSource(string path)
+            public static XmlLayoutScript LoadSource(string path)
             {
                 // Load XML document
                 XDocument doc;
@@ -60,7 +60,7 @@ namespace WHampson.Cascara
                 return CreateXmlBinaryLayout(doc, path);
             }
 
-            public static XmlBinaryLayout ParseSource(string source)
+            public static XmlLayoutScript ParseSource(string source)
             {
                 // Parse XML document string
                 XDocument doc;
@@ -78,7 +78,7 @@ namespace WHampson.Cascara
                 return CreateXmlBinaryLayout(doc, null);
             }
 
-            private static XmlBinaryLayout CreateXmlBinaryLayout(XDocument doc, string sourcePath)
+            private static XmlLayoutScript CreateXmlBinaryLayout(XDocument doc, string sourcePath)
             {
                 // Ensure root element is named correctly
                 if (doc.Root.Name.LocalName != Keywords.XmlDocumentRoot)
@@ -106,7 +106,7 @@ namespace WHampson.Cascara
                 }
 
                 // Create and return layout object
-                return new XmlBinaryLayout(doc, name, ver, sourcePath);
+                return new XmlLayoutScript(doc, name, ver, sourcePath);
             }
 
             private static string GetLayoutName(XDocument doc)
@@ -135,7 +135,7 @@ namespace WHampson.Cascara
                 return ver;
             }
 
-            private XmlBinaryLayout(XDocument document, string name, Version version, string sourcePath)
+            private XmlLayoutScript(XDocument document, string name, Version version, string sourcePath)
                 : base(name, version, sourcePath)
             {
                 if (document == null)

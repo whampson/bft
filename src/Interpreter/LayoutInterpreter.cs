@@ -50,10 +50,10 @@ namespace WHampson.Cascara.Interpreter
 
         private delegate void InterpretAction(Statement stmt);
 
-        private BinaryLayout layout;
+        private LayoutScript layout;
         private BinaryFile file;
         private Stack<CodeBlock> scopeStack;
-        private HashSet<BinaryLayout> includedLayouts;
+        private HashSet<LayoutScript> includedLayouts;
         private TextWriter echoWriter;
 
         private Dictionary<string, TypeInfo> userDefinedTypes;
@@ -61,7 +61,7 @@ namespace WHampson.Cascara.Interpreter
         private Dictionary<StatementType, InterpretAction> statementTypeActionMap;
         private Dictionary<string, InterpretAction> directiveActionMap;
 
-        public LayoutInterpreter(BinaryLayout layout, TextWriter echoWriter)
+        public LayoutInterpreter(LayoutScript layout, TextWriter echoWriter)
         {
             if (!SupportedVersions.Contains(layout.Version))
             {
@@ -72,7 +72,7 @@ namespace WHampson.Cascara.Interpreter
             this.layout = layout;
             this.echoWriter = echoWriter;
             scopeStack = new Stack<CodeBlock>();
-            includedLayouts = new HashSet<BinaryLayout>();
+            includedLayouts = new HashSet<LayoutScript>();
             userDefinedTypes = new Dictionary<string, TypeInfo>();
 
             statementTypeActionMap = new Dictionary<StatementType, InterpretAction>();
