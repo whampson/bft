@@ -206,52 +206,6 @@ namespace WHampson.Cascara
             return GetEnumerator();
         }
 
-        // public T Deserialize<T>()
-        // {
-        //     throw new NotImplementedException();
-        // }
-
-        //public Structure AddStructure(string name, int offset, int length)
-        //{
-        //    Symbol sym = symbol.Insert(name);
-        //    sym.DataOffset = offset;
-        //    sym.DataLength = length;
-
-        //    return (Structure) GetStructure(name);
-        //}
-
-        //public Primitive<T> AddPrimitive<T>(string name, int offset)
-        //    where T : struct
-        //{
-        //    Symbol sym = symbol.Insert(name);
-        //    sym.DataOffset = offset;
-        //    sym.DataLength = PrimitiveTypeUtils.SizeOf<T>();
-        //    sym.DataType = typeof(T);
-
-        //    return GetPrimitive<T>(name);
-        //}
-
-        //public Primitive<T> AddPrimitive<T>(string name, int offset, int count)
-        //    where T : struct
-        //{
-        //    int typeSize = PrimitiveTypeUtils.SizeOf<T>();
-
-        //    Symbol sym = symbol.Insert(name, count);
-        //    sym.DataOffset = offset;
-        //    sym.DataLength = typeSize * count;
-        //    sym.DataType = typeof(T[]);
-
-        //    int i = 0;
-        //    foreach (Symbol elem in sym)
-        //    {
-        //        elem.DataOffset = sym.DataOffset + (i * typeSize);
-        //        elem.DataLength = typeSize;
-        //        i++;
-        //    }
-
-        //    return GetPrimitive<T>(name);
-        //}
-
         /// <summary>
         /// Returns a string that represents this object.
         /// </summary>

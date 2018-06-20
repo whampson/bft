@@ -25,7 +25,7 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Cascara.Tests")]
+[assembly: InternalsVisibleTo("CascaraTests")]
 
 namespace WHampson.Cascara
 {

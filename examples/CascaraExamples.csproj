@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Cascara\Cascara.csproj" />
+    <ProjectReference Include="..\src\Cascara.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

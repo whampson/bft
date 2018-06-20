@@ -495,7 +495,9 @@ namespace WHampson.Cascara
             interpreter.Execute(fileStructure.Symbol, this);
         }
 
-        #region Disposal
+        /// <summary>
+        /// Frees all unmanaged memory and disposes this object.
+        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (!hasBeenDisposed)
@@ -515,18 +517,26 @@ namespace WHampson.Cascara
             }
         }
 
+        /// <summary>
+        /// Destructor.
+        /// </summary>
         ~BinaryFile()
         {
             Dispose(false);
         }
 
+        /// <summary>
+        /// Frees all unmanaged memory and disposes this object.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        #endregion
 
+        /// <summary>
+        /// Returns a string that represents this object.
+        /// </summary>
         public override string ToString()
         {
             const int MaxBytes = 16;

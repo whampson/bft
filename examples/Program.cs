@@ -4,10 +4,8 @@ using System.Linq;
 using System.Text;
 using WHampson.Cascara;
 
-namespace WHampson.CascaraDemo
+namespace WHampson.CascaraExamples
 {
-    // TODO: rename to CascaraExamples
-
     class Program
     {
         const string LayoutXml = @"

@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cascara\Cascara.csproj" />
+    <ProjectReference Include="..\src\Cascara.csproj" />
   </ItemGroup>
 
   <ItemGroup>

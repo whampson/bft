@@ -2,11 +2,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara", "Cascara\Cascara.csproj", "{A80E04D9-147D-4E55-ADBC-804D3F81155E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara", "src\Cascara.csproj", "{A80E04D9-147D-4E55-ADBC-804D3F81155E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara.Tests", "Cascara.Tests\Cascara.Tests.csproj", "{2124F1CF-E709-4810-BE22-E2444CEF6BB0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CascaraTests", "test\CascaraTests.csproj", "{2124F1CF-E709-4810-BE22-E2444CEF6BB0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cascara.Demo", "Cascara.Demo\Cascara.Demo.csproj", "{7083F50F-9528-469A-9299-B6C272EA40F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CascaraExamples", "examples\CascaraExamples.csproj", "{7083F50F-9528-469A-9299-B6C272EA40F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

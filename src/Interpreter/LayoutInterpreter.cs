@@ -226,14 +226,11 @@ namespace WHampson.Cascara.Interpreter
                 }
             }
 
-            // Set symbol proprties
+            // Set symbol properties
             sym.GlobalDataAddress = GlobalOffset;
             sym.LocalDataAddress = CurrentCodeBlock.Offset;
             if (!(isStruct || type.IsStruct))
             {
-                // sym.DataType = (hasCount)
-                //     ? type.NativeType.MakeArrayType()
-                //     : type.NativeType;
                 sym.DataType = type.NativeType;
             }
             else
@@ -465,26 +462,6 @@ namespace WHampson.Cascara.Interpreter
 
             return result;
         }
-
-        //private T EvaluateExpression2<T>(string expr)
-        //    where T : struct
-        //{
-        //    expr = ResolveLayoutVariables(expr);
-
-        //    // Clever way of evaluating math expressions using .NET's DataTable class.
-        //    DataTable dt = new DataTable();
-        //    DataColumn dc = new DataColumn(null, typeof(T), expr);
-        //    dt.Columns.Add(dc);
-        //    dt.Rows.Add(0);
-
-        //    return (T) dt.Rows[0][0];
-        //}
-
-        /* Put these in 'Parameters.cs' */
-        /* Or maybe an internal class within the interpreter (make this a partial class) */
-        // bool GetCondParam(Statement stmt) { }
-        // int GetNameParam(Statement stmt) { }
-        // double GetValueParam(Statement stmt) { }
 
         private void EnsureParameters(Statement stmt, params string[] paramNames)
         {
