@@ -65,7 +65,7 @@ namespace WHampson.Cascara.Interpreter
         {
             if (!SupportedVersions.Contains(layout.Version))
             {
-                string msg = "This layout version is not supported by this version of Cascara.";
+                string msg = "This layout script is not supported by this version of Cascara.";
                 throw new NotSupportedException(msg);
             }
 
