@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -75,6 +77,16 @@ namespace WHampson.Cascara.Interpreter
         public bool IsStruct
         {
             get { return NativeType == null && Members.Any(); }
+        }
+
+        public override string ToString()
+        {
+            JObject o = new JObject();
+            o.Add(nameof(Size), Size);
+            o.Add(nameof(NativeType), NativeType.FullName);
+            o.Add(nameof(IsStruct), IsStruct);
+            o.Add(nameof(Members), JToken.FromObject(Members));
+            return o.ToString(Formatting.None);
         }
     }
 }

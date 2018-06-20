@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -46,16 +48,6 @@ namespace WHampson.Cascara.Interpreter
         /// Regex pattern for matching identifiers that refer to collection elements.
         /// </summary>
         private const string CollectionNotationPattern = @"\[(\d+)\]$";
-
-        /// <summary>
-        /// A dictionary of member identifiers to child <see cref="SymbolTable"/>s.
-        /// </summary>
-        private Dictionary<string, SymbolTable> members;
-
-        /// <summary>
-        /// A list of child <see cref="SymbolTable"/>s corresponding to each element of the collection.
-        /// </summary>
-        private List<SymbolTable> collectionElements;
 
         /// <summary>
         /// Creates a nameless, parentless <see cref="SymbolTable"/> for use
@@ -185,13 +177,13 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Add entry to list if it exists in the current table
-            if (sym.members.TryGetValue(tempName, out SymbolTable entry))
+            if (sym.Members.TryGetValue(tempName, out SymbolTable entry))
             {
                 if (isSearchingForCollection)
                 {
                     if (entry.IsCollection && index < entry.ElementCount)
                     {
-                        results.Add(entry.collectionElements[index]);
+                        results.Add(entry.CollectionElements[index]);
                     }
                 }
                 else
@@ -235,7 +227,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Look for top-level name in current symbol table
-            if (!sym.members.TryGetValue(splitIdent[0], out SymbolTable entry))
+            if (!sym.Members.TryGetValue(splitIdent[0], out SymbolTable entry))
             {
                 return null;
             }
@@ -248,7 +240,7 @@ namespace WHampson.Cascara.Interpreter
                 }
 
                 // Get collection element symbol table
-                entry = entry.collectionElements[index];
+                entry = entry.CollectionElements[index];
             }
 
             // If only a top-level name was specified (no dot), return the entry (base case)
@@ -352,8 +344,8 @@ namespace WHampson.Cascara.Interpreter
             Name = identifier;
             Parent = parent;
             IsCollection = isCollection;
-            members = new Dictionary<string, SymbolTable>();
-            collectionElements = new List<SymbolTable>(elemCount);
+            Members = new Dictionary<string, SymbolTable>();
+            CollectionElements = new List<SymbolTable>(elemCount);
         }
 
         /// <summary>
@@ -386,7 +378,7 @@ namespace WHampson.Cascara.Interpreter
                     throw new ArgumentOutOfRangeException(nameof(index));
                 }
 
-                return collectionElements[index];
+                return CollectionElements[index];
             }
         }
 
@@ -425,21 +417,21 @@ namespace WHampson.Cascara.Interpreter
         }
 
         /// <summary>
-        /// Gets value indicating whether this <see cref="SymbolTable"/> represents a composite data structure.
-        /// Composite data structure symbols have child tables, one for each member of the structure.
-        /// </summary>
-        public bool IsStruct
-        {
-            get { return members.Any(); }
-        }
-
-        /// <summary>
         /// Gets the number of elements in the collection.
         /// Returns 0 if the <see cref="SymbolTable"/> does not represent a collection.
         /// </summary>
         public int ElementCount
         {
-            get { return collectionElements.Count; }
+            get { return CollectionElements.Count; }
+        }
+
+        /// <summary>
+        /// Gets value indicating whether this <see cref="SymbolTable"/> represents a composite data structure.
+        /// Composite data structure symbols have child tables, one for each member of the structure.
+        /// </summary>
+        public bool IsStruct
+        {
+            get { return Members.Any(); }
         }
 
         /// <summary>
@@ -474,6 +466,24 @@ namespace WHampson.Cascara.Interpreter
         /// if the symbol represents a primitive type.
         /// </summary>
         public Type DataType
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// A dictionary of member identifiers to child <see cref="SymbolTable"/>s.
+        /// </summary>
+        private Dictionary<string, SymbolTable> Members
+        {
+            get;
+            set;
+        }
+
+        /// <summary>
+        /// A list of child <see cref="SymbolTable"/>s corresponding to each element of the collection.
+        /// </summary>
+        private List<SymbolTable> CollectionElements
         {
             get;
             set;
@@ -537,7 +547,7 @@ namespace WHampson.Cascara.Interpreter
                 return InsertIntoCollection(identifier);
             }
 
-            return (members[identifier] = new SymbolTable(identifier, this));
+            return (Members[identifier] = new SymbolTable(identifier, this));
         }
 
         /// <summary>
@@ -602,10 +612,10 @@ namespace WHampson.Cascara.Interpreter
             {
                 // All elements have the same set of symbols, albeit with different addresses,
                 // so checking element 0 is sufficient
-                return collectionElements[0].Contains(identifier);
+                return CollectionElements[0].Contains(identifier);
             }
 
-            return members.ContainsKey(identifier);
+            return Members.ContainsKey(identifier);
         }
 
         /// <summary>
@@ -732,7 +742,7 @@ namespace WHampson.Cascara.Interpreter
 
             if (IsCollection)
             {
-                foreach (SymbolTable sym in collectionElements)
+                foreach (SymbolTable sym in CollectionElements)
                 {
                     names.Add(sym.FullName);
                     names.AddRange(sym.GetAllFullNames());
@@ -741,7 +751,7 @@ namespace WHampson.Cascara.Interpreter
                 return names;
             }
 
-            foreach (KeyValuePair<string, SymbolTable> entry in members)
+            foreach (KeyValuePair<string, SymbolTable> entry in Members)
             {
                 SymbolTable sym = entry.Value;
                 names.Add(sym.FullName);
@@ -757,7 +767,7 @@ namespace WHampson.Cascara.Interpreter
         /// <returns>A list of child <see cref="SymbolTable"/>s.</returns>
         public List<SymbolTable> GetAllMembers()
         {
-            return members.Select(x => x.Value).ToList();
+            return Members.Select(x => x.Value).ToList();
         }
 
         /// <summary>
@@ -775,7 +785,7 @@ namespace WHampson.Cascara.Interpreter
         private SymbolTable InsertIntoCollection(string name)
         {
             SymbolTable sym = null;
-            foreach (SymbolTable elem in collectionElements)
+            foreach (SymbolTable elem in CollectionElements)
             {
                 if (sym == null)
                 {
@@ -814,10 +824,10 @@ namespace WHampson.Cascara.Interpreter
             SymbolTable sym = new SymbolTable(identifier, this, true, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
-                sym.collectionElements.Add(new SymbolTable(i.ToString(), sym));
+                sym.CollectionElements.Add(new SymbolTable(i.ToString(), sym));
             }
 
-            return (members[identifier] = sym);
+            return (Members[identifier] = sym);
         }
 
         /// <summary>
@@ -847,7 +857,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             SymbolTable sym = null;
-            foreach (SymbolTable elem in collectionElements)
+            foreach (SymbolTable elem in CollectionElements)
             {
                 if (sym == null)
                 {
@@ -871,7 +881,7 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public IEnumerator<SymbolTable> GetEnumerator()
         {
-            return collectionElements.GetEnumerator();
+            return CollectionElements.GetEnumerator();
         }
 
         /// <summary>
@@ -894,12 +904,17 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public override string ToString()
         {
-            string elemCountStr = string.Format(", {0} = {1}", nameof(ElementCount), ElementCount);
-            return string.Format("Symbol: [ {0} = {1}, {2} = {3}, {4} = {5}{6} ]",
-                nameof(FullName), FullName,
-                nameof(IsStruct), IsStruct,
-                nameof(IsCollection), IsCollection,
-                (IsCollection) ? elemCountStr : "");
+            JObject o = new JObject();
+            o.Add(nameof(Name), Name);
+            o.Add(nameof(IsCollection), IsCollection);
+            o.Add(nameof(ElementCount), ElementCount);
+            o.Add(nameof(IsStruct), IsStruct);
+            o.Add(nameof(GlobalDataAddress), GlobalDataAddress);
+            o.Add(nameof(LocalDataAddress), LocalDataAddress);
+            o.Add(nameof(DataLength), DataLength);
+            o.Add(nameof(DataType), DataType.FullName);
+            o.Add(nameof(Members), JToken.FromObject(Members));
+            return o.ToString(Formatting.None);
         }
     }
 }

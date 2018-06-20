@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -282,21 +284,18 @@ namespace WHampson.Cascara
         /// </summary>
         public sealed override string ToString()
         {
-            Dictionary<string, string> meta = _metadata
-                .Where(p => (p.Key != Parameters.Name && p.Key != Parameters.Version))
-                .ToDictionary(p => p.Key, q => q.Value);
-            string metaStr = "{";
-            foreach (var kvp in meta)
-            {
-                metaStr += " " + kvp.Key + " => " + kvp.Value + ",";
-            }
-            metaStr = metaStr.Substring(0, Math.Max(1, metaStr.Length - 1)) + " }";
+            JObject o = new JObject();
+            o.Add(nameof(Version), Version.ToString());
+            o.Add(nameof(SourcePath), SourcePath);
+            o.Add(nameof(Metadata), JToken.FromObject(Metadata));
 
-            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6} ]",
-                GetType().Name,
-                nameof(Version), Version,
-                nameof(SourcePath), (SourcePath == null) ? "(null)" : SourcePath,
-                nameof(Metadata), metaStr);
+            JArray a = new JArray();
+            foreach (Statement s in RootStatement.NestedStatements)
+            {
+                a.Add(JToken.Parse(s.ToString()));
+            }
+            o.Add("ScriptContents", a);
+            return o.ToString(Newtonsoft.Json.Formatting.None);
         }
     }
 

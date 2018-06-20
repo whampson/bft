@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -270,19 +272,23 @@ namespace WHampson.Cascara.Interpreter
 
         public sealed override string ToString()
         {
-            string paramStr = "{";
-            foreach (var kvp in Parameters)
+            JObject o = new JObject();
+            o.Add(nameof(Keyword), Keyword);
+            o.Add(nameof(StatementType), StatementType.ToString());
+            if (_lineNumber > 0 && _linePosition > 0)
             {
-                paramStr += " " + kvp.Key + " => " + kvp.Value + ",";
+                o.Add("LineNumber", _lineNumber);
+                o.Add("LinePosition", _linePosition);
             }
-            paramStr = paramStr.Substring(0, Math.Max(1, paramStr.Length - 1)) + " }";
+            o.Add(nameof(Parameters), JToken.FromObject(Parameters));
 
-            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6}, {7} = {8} ]",
-                GetType().Name,
-                nameof(StatementType), StatementType,
-                nameof(Keyword), Keyword,
-                nameof(Parameters), paramStr,
-                nameof(HasNestedStatements), HasNestedStatements);
+            JArray a = new JArray();
+            foreach (Statement s in NestedStatements)
+            {
+                a.Add(JToken.Parse(s.ToString()));
+            }
+            o.Add(nameof(NestedStatements), a);
+            return o.ToString(Formatting.None);
         }
     }
 

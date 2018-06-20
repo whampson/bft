@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Reflection;
 using System.Collections;
@@ -37,9 +39,6 @@ namespace WHampson.Cascara
     public class Primitive<T> : IFileObject
         where T : struct
     {
-        private BinaryFile sourceFile;
-        private SymbolTable symbol;
-
         internal Primitive(BinaryFile sourceFile, SymbolTable symbol)
         {
             if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
@@ -53,8 +52,8 @@ namespace WHampson.Cascara
                 throw new ArgumentException(msg, nameof(T));
             }
 
-            this.sourceFile = sourceFile;
-            this.symbol = symbol;
+            this.SourceFile = sourceFile;
+            this.Symbol = symbol;
         }
 
         /// <summary>
@@ -79,7 +78,7 @@ namespace WHampson.Cascara
         /// <summary>
         /// Gets or sets the value of this primitive type.
         /// Setting this property will change the bytes in the <see cref="BinaryFile"/>
-        /// at the location specified by <see cref="FilePosition"/>.
+        /// at the location specified by <see cref="GlobalOffset"/>.
         /// </summary>
         public T Value
         {
@@ -91,7 +90,7 @@ namespace WHampson.Cascara
                     string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
-                return sourceFile.Get<T>(FilePosition);
+                return SourceFile.Get<T>(GlobalOffset);
             }
 
             set
@@ -102,7 +101,46 @@ namespace WHampson.Cascara
                     string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
-                sourceFile.Set<T>(FilePosition, value);
+                SourceFile.Set<T>(GlobalOffset, value);
+            }
+        }
+
+        /// <summary>
+        /// Gets the value of this primitive type as a string.
+        /// </summary>
+        public string StringValue
+        {
+            get
+            {
+                if (!IsCollection)
+                {
+                    return Value.ToString();
+                }
+
+                string val = "";
+
+                if (PrimitiveTypeUtils.IsCharacterType<T>())
+                {
+                    for (int i = 0; i < ElementCount; i++)
+                    {
+                        if (Convert.ToChar(this[i].Value) == '\0')
+                        {
+                            break;
+                        }
+                        val += this[i].StringValue;
+                    }
+                }
+                else
+                {
+                    JArray a = new JArray();
+                    for (int i = 0; i < ElementCount; i++)
+                    {
+                        a.Add(JToken.FromObject(this[i].Value));
+                    }
+                    val = a.ToString(Formatting.None);
+                }
+
+                return val;
             }
         }
 
@@ -110,18 +148,18 @@ namespace WHampson.Cascara
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the <see cref="BinaryFile"/>.
         /// </summary>
-        public int FilePosition
+        public int GlobalOffset
         {
-            get { return symbol.GlobalDataAddress; }
+            get { return Symbol.GlobalDataAddress; }
         }
 
         /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the parent object.
         /// </summary>
-        public int Offset
+        public int LocalOffset
         {
-            get { return symbol.LocalDataAddress; }
+            get { return Symbol.LocalDataAddress; }
         }
 
         /// <summary>
@@ -129,7 +167,7 @@ namespace WHampson.Cascara
         /// </summary>
         public int Length
         {
-            get { return symbol.DataLength; }
+            get { return Symbol.DataLength; }
         }
 
         /// <summary>
@@ -137,7 +175,7 @@ namespace WHampson.Cascara
         /// </summary>
         public bool IsCollection
         {
-            get { return symbol.IsCollection; }
+            get { return Symbol.IsCollection; }
         }
 
         /// <summary>
@@ -147,7 +185,17 @@ namespace WHampson.Cascara
         /// <seealso cref="IsCollection"/>
         public int ElementCount
         {
-            get { return symbol.ElementCount; }
+            get { return Symbol.ElementCount; }
+        }
+
+        public BinaryFile SourceFile
+        {
+            get;
+        }
+
+        internal SymbolTable Symbol
+        {
+            get;
         }
 
         /// <summary>
@@ -155,10 +203,14 @@ namespace WHampson.Cascara
         /// a different type. It is important to note that the properties of the
         /// type (length, position, element count), do not change.
         /// </summary>
+        /// <typeparam name="U">The value type to cast to.</typeparam>
+        /// <exception cref="ArgumentException">
+        /// Thrown if U is larger than <see cref="Length"/>
+        /// </exception>
         public Primitive<U> ReinterpretCast<U>()
             where U : struct
         {
-            return new Primitive<U>(sourceFile, symbol);
+            return new Primitive<U>(SourceFile, Symbol);
         }
 
         /// <summary>
@@ -188,7 +240,7 @@ namespace WHampson.Cascara
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            return new Primitive<T>(sourceFile, symbol[index]);
+            return new Primitive<T>(SourceFile, Symbol[index]);
         }
 
         /// <summary>
@@ -218,26 +270,23 @@ namespace WHampson.Cascara
         /// </summary>
         public override string ToString()
         {
-            if (!IsCollection)
-            {
-                return Value.ToString();
-            }
-
-            string val = "";
-
+            JObject o = new JObject();
+            o.Add(nameof(Symbol.FullName), Symbol.FullName);
+            o.Add(nameof(Symbol.DataType), Symbol.DataType.Name);
+            o.Add(nameof(GlobalOffset), GlobalOffset);
+            o.Add(nameof(LocalOffset), LocalOffset);
+            o.Add(nameof(Length), Length);
+            o.Add(nameof(IsCollection), IsCollection);
+            o.Add(nameof(ElementCount), ElementCount);
             if (PrimitiveTypeUtils.IsCharacterType<T>())
             {
-                for (int i = 0; i < ElementCount; i++)
-                {
-                    val += this[i];
-                }
+                o.Add(nameof(Value), StringValue);
             }
             else
             {
-                val = string.Format("{0}[{1}]", typeof(T).Name, ElementCount);
+                o.Add(nameof(Value), JToken.Parse(StringValue));
             }
-
-            return val;
+            return o.ToString(Newtonsoft.Json.Formatting.None);
         }
     }
 }

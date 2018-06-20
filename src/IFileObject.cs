@@ -37,7 +37,7 @@ namespace WHampson.Cascara
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of the <see cref="BinaryFile"/>.
         /// </summary>
-        int FilePosition
+        int GlobalOffset
         {
             get;
         }
@@ -46,7 +46,7 @@ namespace WHampson.Cascara
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
         /// of its parent object.
         /// </summary>
-        int Offset
+        int LocalOffset
         {
             get;
         }

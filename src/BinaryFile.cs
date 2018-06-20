@@ -21,6 +21,8 @@
  */
 #endregion
 
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -539,21 +541,11 @@ namespace WHampson.Cascara
         /// </summary>
         public override string ToString()
         {
-            const int MaxBytes = 16;
-
-            byte[] data = Get<byte>(0, Math.Min(Length, MaxBytes));
-            string dataStr = "";
-            foreach (byte b in data)
-            {
-                dataStr += string.Format(" {0:X2}", b);
-            }
-            dataStr = (Length > MaxBytes) ? dataStr.Trim() + "..." : dataStr.Trim();
-
-            return string.Format("{0}: [ {1} = {2}, {3} = {4}, {5} = {6} ]",
-                GetType().Name,
-                nameof(Length), Length,
-                nameof(Endianness), Endianness,
-                "Data", dataStr);
+            JObject o = new JObject();
+            o.Add(nameof(Length), Length);
+            o.Add(nameof(Endianness), Endianness.ToString());
+            o.Add("SymbolTable", JObject.Parse(fileStructure.ToString()));
+            return o.ToString(Formatting.None);
         }
     }
 
