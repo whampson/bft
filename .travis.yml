@@ -13,6 +13,7 @@ install:
   - wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
   - chmod +x /tmp/dotnet-install.sh
   - /tmp/dotnet-install.sh -v 2.1.200   # Latest .NET Core SDK 2.0
+  - export PATH=$DOTNETPATH:$PATH
   - dotnet --info
   - dotnet restore
 
