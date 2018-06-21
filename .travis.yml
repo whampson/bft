@@ -1,7 +1,7 @@
 language: csharp
 mono: none
 dotnet:
-  - latest
+  - 2.1.300
   - 2.0.0
 
 branches:
@@ -14,3 +14,6 @@ install:
 
 script:
   - dotnet test ./test/
+
+notifications:
+  email: false
