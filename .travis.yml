@@ -1,7 +1,6 @@
 language: csharp
 mono: none
-dotnet:
-  - 2.0.0
+dotnet: none
 
 branches:
   only:
@@ -9,6 +8,10 @@ branches:
     - dev
 
 install:
+  - wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh
+  - chmod +x /tmp/dotnet-install.sh
+  - /tmp/dotnet-install.sh -v 2.1.200   # Latest .NET Core SDK 2.0
+  - dotnet --info
   - dotnet restore
 
 script:
