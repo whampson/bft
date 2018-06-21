@@ -315,7 +315,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Sets a value from in file data.
+        /// Sets a value in the file data.
         /// </summary>
         /// /// <remarks>
         /// If <typeparamref name="T"/> is a multi-byte type, the bytes will be written
@@ -334,7 +334,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Sets an array of values from in file data.
+        /// Sets an array of values in the file data.
         /// </summary>
         /// <remarks>
         /// If <typeparamref name="T"/> is a multi-byte type, the bytes of each element
