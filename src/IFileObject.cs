@@ -78,6 +78,15 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Gets the <see cref="BinaryFile"/> that this <see cref="IFileObject"/>
+        /// belongs to.
+        /// </summary>
+        BinaryFile SourceFile
+        {
+            get;
+        }
+
+        /// <summary>
         /// Gets the element at the specified index in the collection as an <see cref="IFileObject"/>.
         /// If this <see cref="IFileObject"/> does not represent a collection, an
         /// <see cref="InvalidOperationException"/> will be thrown.

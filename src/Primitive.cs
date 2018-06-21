@@ -188,6 +188,10 @@ namespace WHampson.Cascara
             get { return Symbol.ElementCount; }
         }
 
+        /// <summary>
+        /// Gets the <see cref="BinaryFile"/> that this <see cref="IFileObject"/>
+        /// belongs to.
+        /// </summary>
         public BinaryFile SourceFile
         {
             get;
