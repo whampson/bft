@@ -1,10 +1,21 @@
 language: csharp
 mono: none
-dotnet: 2.0.0
-script:
-  - dotnet build ./test/
-#  - dotnet test ./Cascara.Tests/Cascara.Tests.csproj
+dotnet:
+  - latest
+  # .NET Core 2.1 SDK
+  - 2.1.300
+  # .NET Core 2.0 SDK
+  - 2.1.201
+  - 2.0.0
+  # What a stupid versioning convention...
+
+branches:
+  only:
+    - master
+    - dev
+
 install:
   - dotnet restore
 
-# TODO: Add mono support
+script:
+  - dotnet test ./test/
