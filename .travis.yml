@@ -2,12 +2,7 @@ language: csharp
 mono: none
 dotnet:
   - latest
-  # .NET Core 2.1 SDK
-  - 2.1.300
-  # .NET Core 2.0 SDK
-  - 2.1.201
   - 2.0.0
-  # What a stupid versioning convention...
 
 branches:
   only:
