@@ -311,7 +311,7 @@ namespace WHampson.Cascara.Interpreter
         /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> is a child of.
         /// </param>
         private SymbolTable(string name, SymbolTable parent)
-            : this(name, parent, false, 1)
+            : this(name, parent, 0)
         {
         }
 
@@ -324,26 +324,22 @@ namespace WHampson.Cascara.Interpreter
         /// <param name="parent">
         /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> is a child of.
         /// </param>
-        /// <param name="isCollection">
-        /// A value indicating whether this symbol represents a collection.
-        /// </param>
         /// <param name="elemCount">
         /// The number of elements in the collection.
-        /// MUST be 1 if the symbol is not a collection.
+        /// 0 indicates that the symbol is not a collection.
         /// </param>
         /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown if the <paramref name="elemCount"/> is out of range.
         /// </exception>
-        private SymbolTable(string identifier, SymbolTable parent, bool isCollection, int elemCount)
+        private SymbolTable(string identifier, SymbolTable parent, int elemCount)
         {
-            if (elemCount < 0 || (!isCollection && elemCount != 1))
+            if (elemCount < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(elemCount));
             }
 
             Name = identifier;
             Parent = parent;
-            IsCollection = isCollection;
             Members = new Dictionary<string, SymbolTable>();
             CollectionElements = new List<SymbolTable>(elemCount);
         }
@@ -413,7 +409,7 @@ namespace WHampson.Cascara.Interpreter
         /// </summary>
         public bool IsCollection
         {
-            get;
+            get { return CollectionElements.Count != 0; }
         }
 
         /// <summary>
@@ -821,7 +817,7 @@ namespace WHampson.Cascara.Interpreter
                 return InsertCollectionIntoCollection(identifier, elemCount);
             }
 
-            SymbolTable sym = new SymbolTable(identifier, this, true, elemCount);
+            SymbolTable sym = new SymbolTable(identifier, this, elemCount);
             for (int i = 0; i < elemCount; i++)
             {
                 sym.CollectionElements.Add(new SymbolTable(i.ToString(), sym));

@@ -180,7 +180,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the number of elements in the collection represented by this <see cref="IFileObject"/>.
-        /// If this <see cref="IFileObject"/> does not represent a collection, this value is -1.
+        /// Returns 0 if this <see cref="IFileObject"/> does not represent a collection.
         /// </summary>
         /// <seealso cref="IsCollection"/>
         public int ElementCount
@@ -276,8 +276,12 @@ namespace WHampson.Cascara
             o.Add(nameof(GlobalOffset), GlobalOffset);
             o.Add(nameof(LocalOffset), LocalOffset);
             o.Add(nameof(Length), Length);
-            o.Add(nameof(IsCollection), IsCollection);
-            o.Add(nameof(ElementCount), ElementCount);
+
+            if (IsCollection)
+            {
+                o.Add(nameof(ElementCount), ElementCount);
+            }
+
             if (PrimitiveTypeUtils.IsCharacterType<T>())
             {
                 o.Add(nameof(Value), StringValue);
@@ -286,6 +290,7 @@ namespace WHampson.Cascara
             {
                 o.Add(nameof(Value), JToken.Parse(StringValue));
             }
+
             return o.ToString(Newtonsoft.Json.Formatting.None);
         }
     }
