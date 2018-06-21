@@ -125,6 +125,14 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Implicitly casts this value to a <see cref="Char8"/> value.
+        /// </summary>
+        public static explicit operator Char8(int value)
+        {
+            return new Char8((char) value);
+        }
+
+        /// <summary>
         /// Returns the <see cref="TypeCode"/> for this object.
         /// </summary>
         public TypeCode GetTypeCode()
