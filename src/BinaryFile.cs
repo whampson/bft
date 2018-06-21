@@ -378,6 +378,18 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Returns a copy of the data of this <see cref="BinaryFile"/> as a byte array.
+        /// </summary>
+        /// <returns>A copy of the file data as a byte array.</returns>
+        public byte[] ToArray()
+        {
+            byte[] buf = new byte[Length];
+            Marshal.Copy(dataPtr, buf, 0, Length);
+
+            return buf;
+        }
+
+        /// <summary>
         /// Writes the binary data to a file.
         /// If the file already exists, it will be overwritten.
         /// </summary>
