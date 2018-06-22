@@ -5,12 +5,13 @@ dotnet: 2.1.300
 branches:
   only:
     - master
+    - dev
 
 install:
   - dotnet restore
 
 script:
-  - dotnet test ./test/
+  - dotnet test -v n ./test/
 
 notifications:
   email: false
