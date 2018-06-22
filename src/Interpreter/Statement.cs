@@ -189,6 +189,9 @@ namespace WHampson.Cascara.Interpreter
             }
             else
             {
+                // Assume file object definition. We can't know for sure until
+                // the statement is parsed by the interpreter because the
+                // keyword may be a user-defined type name.
                 StatementType = StatementType.FileObjectDefinition;
             }
         }
