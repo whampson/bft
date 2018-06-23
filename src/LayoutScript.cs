@@ -152,7 +152,7 @@ namespace WHampson.Cascara
         /// </summary>
         /// <param name="version">The Cascara version that the layout is designed for.</param>
         /// <param name="sourcePath">The path to the source file (if applicable).</param>
-        private LayoutScript( Version version, string sourcePath)
+        private LayoutScript(Version version, string sourcePath)
         {
             if (version == null)
             {

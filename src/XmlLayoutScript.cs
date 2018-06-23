@@ -87,14 +87,6 @@ namespace WHampson.Cascara
                     throw LayoutScriptException.Create<SyntaxException>(null, new XmlSourceEntity(doc.Root), msg, Keywords.XmlDocumentRoot);
                 }
 
-                // // Read name; ensure it's present
-                // string name = GetLayoutName(doc);
-                // if (string.IsNullOrWhiteSpace(name))
-                // {
-                //     string msg = Resources.SyntaxExceptionMissingLayoutName;
-                //     throw LayoutScriptException.Create<LayoutScriptException>(null, new XmlSourceEntity(doc.Root), msg);
-                // }
-
                 // Read version
                 Version ver = GetLayoutVersion(doc);
 
@@ -107,15 +99,6 @@ namespace WHampson.Cascara
 
                 // Create and return layout object
                 return new XmlLayoutScript(doc, ver, sourcePath);
-            }
-
-            private static string GetLayoutName(XDocument doc)
-            {
-                XAttribute nameAttr = doc.Root.Attribute(ReservedWords.Parameters.Name);
-
-                return (nameAttr == null)
-                    ? null
-                    : nameAttr.Value;
             }
 
             private static Version GetLayoutVersion(XDocument doc)
