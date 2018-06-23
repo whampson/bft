@@ -177,7 +177,6 @@ namespace CascaraTests
 
             if (innerData == null) {
                 xml += "/>";
-                innerData = "";
             }
             else {
                 xml += string.Format(">{0}</{1}>", innerData, name);
