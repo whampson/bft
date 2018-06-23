@@ -389,6 +389,11 @@ namespace WHampson.Cascara
             return buf;
         }
 
+        public T Deserialize<T>() where T : new()
+        {
+            return fileStructure.Deserialize<T>();
+        }
+
         /// <summary>
         /// Writes the binary data to a file.
         /// If the file already exists, it will be overwritten.
