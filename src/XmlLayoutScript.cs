@@ -37,7 +37,7 @@ namespace WHampson.Cascara
     {
         internal sealed class XmlLayoutScript : LayoutScript
         {
-            public static XmlLayoutScript LoadSource(string path)
+            public static new XmlLayoutScript Load(string path)
             {
                 // Load XML document
                 XDocument doc;
@@ -60,7 +60,7 @@ namespace WHampson.Cascara
                 return CreateXmlBinaryLayout(doc, path);
             }
 
-            public static XmlLayoutScript ParseSource(string source)
+            public static new XmlLayoutScript Parse(string source)
             {
                 // Parse XML document string
                 XDocument doc;

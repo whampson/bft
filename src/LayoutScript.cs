@@ -86,7 +86,7 @@ namespace WHampson.Cascara
             switch (format)
             {
                 case LayoutFormat.Xml:
-                    return XmlLayoutScript.LoadSource(path);
+                    return XmlLayoutScript.Load(path);
                 default:
                     // TODO: message
                     throw new NotSupportedException();
@@ -139,7 +139,7 @@ namespace WHampson.Cascara
             switch (format)
             {
                 case LayoutFormat.Xml:
-                    return XmlLayoutScript.ParseSource(source);
+                    return XmlLayoutScript.Parse(source);
                 default:
                     throw new NotSupportedException();
             }
