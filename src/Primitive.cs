@@ -114,7 +114,13 @@ namespace WHampson.Cascara
             {
                 if (!IsCollection)
                 {
-                    return Value.ToString();
+                    string s = Value.ToString();
+                    if (s == "True" || s == "False")
+                    {
+                        // The JSON parser doesn't like .NET's capitalized Boolean values
+                        s = s.ToLower();
+                    }
+                    return s;
                 }
 
                 string val = "";
