@@ -119,6 +119,67 @@ namespace WHampson.Cascara
             get;
         }
 
+        public T Deserialize<T>() where T : new()
+        {
+            return (T) Deserialize(typeof(T));
+        }
+
+        private object Deserialize(Type t)
+        {
+            object o = Activator.CreateInstance(t);
+            PropertyInfo[] prop = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (PropertyInfo p in prop)
+            {
+                Type type = p.PropertyType;
+                bool isArray = type.IsArray;
+                Type elemType = type.GetElementType();
+                bool isGeneric = type.IsGenericType;
+
+                if (p.GetSetMethod() == null)
+                {
+                    continue;
+                }
+
+                if (isGeneric && type.GetGenericTypeDefinition() == typeof(Primitive<>))
+                {
+                    type = type.GetGenericArguments()[0];
+
+                    object prim = GetPrimitive(type, p.Name);
+                    if (prim != null)
+                    {
+                        p.SetValue(o, prim);
+                    }
+                }
+                else if (isArray && PrimitiveTypeUtils.IsPrimitiveType(elemType))
+                {
+                    Console.WriteLine("Value Array: {0}", p.Name);
+                }
+                else if (PrimitiveTypeUtils.IsPrimitiveType(type))
+                {
+                    Console.WriteLine("Value: {0}", p.Name, type.Name);
+                }
+                else
+                {
+                    Structure s = GetStructure(p.Name);
+                    if (s == null) {
+                        continue;
+                    }
+
+                    if (isArray)
+                    {
+                        p.SetValue(o, s.Deserialize(elemType));
+                    }
+                    else
+                    {
+                        p.SetValue(o, s.Deserialize(type));
+                    }
+                }
+            }
+
+            return o;
+        }
+
         /// <summary>
         /// Gets a <see cref="Structure"/> by searching this structure's
         /// symbol table for the specified name. If no match is found,
@@ -160,6 +221,14 @@ namespace WHampson.Cascara
             }
 
             return new Primitive<T>(SourceFile, sym);
+        }
+
+        private object GetPrimitive(Type t, string name)
+        {
+            MethodInfo m = this.GetType().GetMethod(nameof(GetPrimitive));
+            m = m.MakeGenericMethod(t);
+
+            return m.Invoke(this, new object[] { name });
         }
 
         /// <summary>
