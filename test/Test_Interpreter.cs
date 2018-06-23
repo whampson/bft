@@ -24,6 +24,40 @@ namespace CascaraTests
             Assert.Equal(expOutput, test.Output);
         }
 
+        [Fact]
+        public void Interpreter_InvalidKeyword()
+        {
+            // Arrange
+            string src = "<invalid/>";
+            string script = BuildXmlLayoutScript(src);
+            TestEnv test = new TestEnv(script);
+
+            // Act, Assert
+            Assert.Throws<LayoutScriptException>(() => test.Run()); // TODO: check message
+        }
+
+        [Fact]
+        public void Interpreter_EchoFileObject()
+        {
+            // Arrange
+            uint val = 0xDEADBEEF;
+            byte[] data = BitConverter.GetBytes(val);
+            string expOutput = val.ToString();
+            string src = @"
+                <uint name='Foo'/>
+                <echo message='${Foo}'/>
+            ";
+
+            string script = BuildXmlLayoutScript(src);
+            TestEnv test = new TestEnv(script, data);
+
+            // Act
+            test.Run();
+
+            // Assert
+            Assert.Equal(expOutput, test.Output);
+        }
+
         private string BuildXmlLayoutScript(string src, params Tuple<string, string>[] metadata)
         {
             const string DocRoot = ReservedWords.Keywords.XmlDocumentRoot;
