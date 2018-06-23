@@ -216,7 +216,6 @@ namespace WHampson.Cascara.Interpreter
             get { return _linePosition; }
         }
 
-        #region Equality
         public bool Equals(Statement other)
         {
             if (other == null)
@@ -224,14 +223,18 @@ namespace WHampson.Cascara.Interpreter
                 return false;
             }
 
-            if (Keyword != other.Keyword
-                || _parameters.Count != other._parameters.Count
-                || _nestedStatements.Count != other._nestedStatements.Count)
-            {
-                return false;
+            bool result = true;
+
+            result &= Keyword == other.Keyword;
+            result &= _parameters.Count == other._parameters.Count;
+            result &= _nestedStatements.Count == other._nestedStatements.Count;
+
+            if (result) {
+                result &= !_parameters.Except(other._parameters).Any();
+                result &= _nestedStatements.SequenceEqual(other._nestedStatements);
             }
 
-            return _nestedStatements.SequenceEqual(other._nestedStatements);
+            return result;
         }
 
         public sealed override bool Equals(object obj)
@@ -271,7 +274,6 @@ namespace WHampson.Cascara.Interpreter
                 return hash;
             }
         }
-        #endregion
 
         public sealed override string ToString()
         {
