@@ -151,6 +151,16 @@ namespace CascaraTests
             else Assert.False(hash1 == hash2);
         }
 
+        [Fact]
+        public void XmlStatement_InnerText()
+        {
+            // Arrange
+            string testXml = BuildXmlElement("int", "This is invalid.");
+
+            // Act, Assert
+            Assert.Throws<SyntaxException>(() => XmlStatement.Parse(XElement.Parse(testXml)));
+        }
+
         private string BuildXmlElement(string name, params Tuple<string, string>[] parameters)
         {
             return BuildXmlElement(name, null, parameters);

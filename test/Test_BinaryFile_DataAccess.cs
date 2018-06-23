@@ -7,7 +7,7 @@ namespace CascaraTests
     public class Test_BinaryFile_DataAccess
     {
         [Fact]
-        public void Read_AllData()
+        public void BinaryFile_DataAccess_Read_AllData()
         {
             // Arrange
             byte[] testData = new byte[256];
@@ -23,7 +23,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Data_LittleEndian()
+        public void BinaryFile_DataAccess_ReadWrite_Data_LittleEndian()
         {
             // Arrange
             byte[] testData = new byte[8];
@@ -48,7 +48,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Data_BigEndian()
+        public void BinaryFile_DataAccess_ReadWrite_Data_BigEndian()
         {
             // Arrange
             byte[] testData = new byte[8];
@@ -73,7 +73,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_DataArray()
+        public void BinaryFile_DataAccess_ReadWrite_DataArray()
         {
             // Arrange
             byte[] testData = new byte[64];
@@ -107,7 +107,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Bool8()
+        public void BinaryFile_DataAccess_ReadWrite_Bool8()
         {
             // Arrange
             Random rand = new Random();
@@ -134,7 +134,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Bool16()
+        public void BinaryFile_DataAccess_ReadWrite_Bool16()
         {
             // Arrange
             Random rand = new Random();
@@ -161,7 +161,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Bool32()
+        public void BinaryFile_DataAccess_ReadWrite_Bool32()
         {
             // Arrange
             Random rand = new Random();
@@ -188,7 +188,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Bool64()
+        public void BinaryFile_DataAccess_ReadWrite_Bool64()
         {
             // Arrange
             Random rand = new Random();
@@ -215,7 +215,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Byte()
+        public void BinaryFile_DataAccess_ReadWrite_Byte()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -240,7 +240,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_SByte()
+        public void BinaryFile_DataAccess_ReadWrite_SByte()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -265,7 +265,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Char8()
+        public void BinaryFile_DataAccess_ReadWrite_Char8()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -290,7 +290,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Char16()
+        public void BinaryFile_DataAccess_ReadWrite_Char16()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -315,7 +315,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Double()
+        public void BinaryFile_DataAccess_ReadWrite_Double()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -340,7 +340,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Float()
+        public void BinaryFile_DataAccess_ReadWrite_Float()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -365,7 +365,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Int()
+        public void BinaryFile_DataAccess_ReadWrite_Int()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -390,7 +390,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Long()
+        public void BinaryFile_DataAccess_ReadWrite_Long()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -415,7 +415,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_Short()
+        public void BinaryFile_DataAccess_ReadWrite_Short()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -440,7 +440,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_UInt()
+        public void BinaryFile_DataAccess_ReadWrite_UInt()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -465,7 +465,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_ULong()
+        public void BinaryFile_DataAccess_ReadWrite_ULong()
         {
             // Arrange
             byte[] testData = new byte[16];
@@ -490,7 +490,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void ReadWrite_UShort()
+        public void BinaryFile_DataAccess_ReadWrite_UShort()
         {
             // Arrange
             byte[] testData = new byte[16];
