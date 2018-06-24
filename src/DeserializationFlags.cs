@@ -25,13 +25,38 @@ using System;
 
 namespace WHampson.Cascara
 {
+    /// <summary>
+    /// Flags that control the behavior of binary data deserialization.
+    /// </summary>
     [Flags]
     public enum DeserializationFlags
     {
+        /// <summary>
+        /// Ignore the case of identifier names when deserializing an object.
+        /// </summary>
         IgnoreCase = 1,
+
+        /// <summary>
+        /// Deserialize binary data into fields of an object with matching
+        /// names.
+        /// </summary>
         Fields = 2,
+
+        /// <summary>
+        /// Deserialize binary data into properties of an object with matching
+        /// names.
+        /// </summary>
         Properties = 4,
+
+        /// <summary>
+        /// Deserialize binary data into public members of an object.
+        /// </summary>
         Public = 8,
+
+        /// <summary>
+        /// Deserialize binary data into private, protected, or internal
+        /// members of an object.
+        /// </summary>
         NonPublic = 16
     }
 }

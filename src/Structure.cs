@@ -119,6 +119,14 @@ namespace WHampson.Cascara
             get;
         }
 
+        /// <summary>
+        /// Converts the data in this <see cref="Structure"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>.
+        /// <see cref="DeserializationFlags"/> for this method are set to
+        /// <see cref="DeserializationFlags.Public"/> and
+        /// <see cref="DeserializationFlags.Properties"/>.
+        /// </summary>
         public T Deserialize<T>() where T : new()
         {
             DeserializationFlags flags =
@@ -126,6 +134,15 @@ namespace WHampson.Cascara
             return Deserialize<T>(flags);
         }
 
+        /// <summary>
+        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>.
+        /// </summary>
+        /// <param name="flags">
+        /// A <see cref="DeserializationFlags"/> bitfield that controls the
+        /// behavior of deserialization.
+        /// </param>
         public T Deserialize<T>(DeserializationFlags flags) where T : new()
         {
             return (T) Deserialize(typeof(T), flags);
