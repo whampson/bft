@@ -121,63 +121,180 @@ namespace WHampson.Cascara
 
         public T Deserialize<T>() where T : new()
         {
-            return (T) Deserialize(typeof(T));
+            DeserializationFlags flags =
+                DeserializationFlags.Public | DeserializationFlags.Properties;
+            return Deserialize<T>(flags);
         }
 
-        private object Deserialize(Type t)
+        public T Deserialize<T>(DeserializationFlags flags) where T : new()
         {
-            object o = Activator.CreateInstance(t);
-            PropertyInfo[] prop = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            return (T) Deserialize(typeof(T), flags);
+        }
 
-            foreach (PropertyInfo p in prop)
+        private object Deserialize(Type t, DeserializationFlags flags)
+        {
+            object o;
+            BindingFlags bindFlags;
+
+            o = Activator.CreateInstance(t);
+
+            bindFlags = BindingFlags.Instance;
+            if (flags.HasFlag(DeserializationFlags.NonPublic))
             {
-                Type type = p.PropertyType;
-                bool isArray = type.IsArray;
-                Type elemType = type.GetElementType();
-                bool isGeneric = type.IsGenericType;
+                bindFlags |= BindingFlags.NonPublic;
+            }
+            if (flags.HasFlag(DeserializationFlags.Public))
+            {
+                bindFlags |= BindingFlags.Public;
+            }
+
+            o = DeserializeToProperties(t, o, flags, bindFlags);
+            // o = DeserializeToFields(t, o, flags, bindFlags);
+
+            return o;
+        }
+
+        private object DeserializeToProperties(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
+        {
+            PropertyInfo[] allProperties;
+            Type propType;
+            bool isArray;
+            Type elemType;
+            bool isGeneric;
+            Type genType;
+            object val;
+
+            if (!flags.HasFlag(DeserializationFlags.Properties))
+            {
+                return o;
+            }
+
+            allProperties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            foreach (PropertyInfo p in allProperties)
+            {
+                propType = p.PropertyType;
+                isArray = propType.IsArray;
+                elemType = propType.GetElementType();
+                isGeneric = propType.IsGenericType;
 
                 if (p.GetSetMethod() == null)
                 {
                     continue;
                 }
 
-                if (isGeneric && type.GetGenericTypeDefinition() == typeof(Primitive<>))
+                if (isGeneric && propType.GetGenericTypeDefinition() == typeof(Primitive<>))
                 {
-                    type = type.GetGenericArguments()[0];
-
-                    object prim = GetPrimitive(type, p.Name);
-                    if (prim != null)
+                    genType = propType.GetGenericArguments()[0];
+                    val = DeserializePrimitive(p.Name, genType, o, flags);
+                }
+                else if (isArray)
+                {
+                    if (PrimitiveTypeUtils.IsPrimitiveType(elemType))
                     {
-                        p.SetValue(o, prim);
-                    }
-                }
-                else if (isArray && PrimitiveTypeUtils.IsPrimitiveType(elemType))
-                {
-                    Console.WriteLine("Value Array: {0}", p.Name);
-                }
-                else if (PrimitiveTypeUtils.IsPrimitiveType(type))
-                {
-                    Console.WriteLine("Value: {0}", p.Name, type.Name);
-                }
-                else
-                {
-                    Structure s = GetStructure(p.Name);
-                    if (s == null) {
-                        continue;
-                    }
-
-                    if (isArray)
-                    {
-                        p.SetValue(o, s.Deserialize(elemType));
+                        val = DeserializeValueArray(p.Name, elemType, o, flags);
                     }
                     else
                     {
-                        p.SetValue(o, s.Deserialize(type));
+                        val = DeserializeStructureArray(p.Name, elemType, o, flags);
                     }
+                }
+                else if (PrimitiveTypeUtils.IsPrimitiveType(propType))
+                {
+                    val = DeserializeValue(p.Name, propType, o, flags);
+                }
+                else
+                {
+                    val = DeserializeStructure(p.Name, propType, o, flags);
+                }
+
+                if (val != null)
+                {
+                    p.SetValue(o, val);
                 }
             }
 
             return o;
+        }
+
+        // private object DeserializeToFields(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
+        // {
+        //     if (!flags.HasFlag(DeserializationFlags.Fields))
+        //     {
+        //         return o;
+        //     }
+        // }
+
+        private object DeserializePrimitive(string name, Type t, object o, DeserializationFlags flags)
+        {
+            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+
+            return prim;
+        }
+
+        private object DeserializeValue(string name, Type t, object o, DeserializationFlags flags)
+        {
+            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+            if (prim == null)
+            {
+                return null;
+            }
+
+            PropertyInfo valueProp = prim.GetType().GetProperty(nameof(Primitive<byte>.Value));
+            return valueProp.GetValue(prim, null);
+        }
+
+        private object DeserializeValueArray(string name, Type t, object o, DeserializationFlags flags)
+        {
+            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+            if (prim == null)
+            {
+                return null;
+            }
+
+            PropertyInfo elemCountProp = prim.GetType().GetProperty(nameof(Primitive<byte>.ElementCount));
+            PropertyInfo valueProp = prim.GetType().GetProperty(nameof(Primitive<byte>.Value));
+            MethodInfo indexerMeth = prim.GetType().GetMethod("get_Item");   // 'this[int i]' property
+
+            int elemCount = (int) elemCountProp.GetValue(prim, null);
+            Array arr = Array.CreateInstance(t, elemCount);
+            for (int i = 0; i < elemCount; i++)
+            {
+                object elem = indexerMeth.Invoke(prim, new object[] { i });
+                object val = valueProp.GetValue(elem);
+                arr.SetValue(val, i);
+            }
+
+            return arr;
+        }
+
+        private object DeserializeStructure(string name, Type t, object o, DeserializationFlags flags)
+        {
+            Structure s = GetStructure(name); // TODO: case sensitivity
+            if (s == null)
+            {
+                return null;
+            }
+
+            return s.Deserialize(t, flags);
+        }
+
+        private object DeserializeStructureArray(string name, Type t, object o, DeserializationFlags flags)
+        {
+            Structure s = GetStructure(name); // TODO: case sensitivity
+            if (s == null)
+            {
+                return null;
+            }
+
+            Array arr = Array.CreateInstance(t, s.ElementCount);
+            for (int i = 0; i < s.ElementCount; i++)
+            {
+                object elem = s[i].Deserialize(t, flags);
+                arr.SetValue(elem, i);
+            }
+
+            return arr;
         }
 
         /// <summary>
