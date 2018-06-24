@@ -149,7 +149,7 @@ namespace WHampson.Cascara
             }
 
             o = DeserializeToProperties(t, o, flags, bindFlags);
-            // o = DeserializeToFields(t, o, flags, bindFlags);
+            o = DeserializeToFields(t, o, flags, bindFlags);
 
             return o;
         }
@@ -169,7 +169,7 @@ namespace WHampson.Cascara
                 return o;
             }
 
-            allProperties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            allProperties = t.GetProperties(bindFlags);
 
             foreach (PropertyInfo p in allProperties)
             {
@@ -217,13 +217,66 @@ namespace WHampson.Cascara
             return o;
         }
 
-        // private object DeserializeToFields(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
-        // {
-        //     if (!flags.HasFlag(DeserializationFlags.Fields))
-        //     {
-        //         return o;
-        //     }
-        // }
+        private object DeserializeToFields(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
+        {
+            // TODO: there /has/ to be some way to generalize this process
+            //       for both fields and properties...
+
+            FieldInfo[] allFields;
+            Type fieldType;
+            bool isArray;
+            Type elemType;
+            bool isGeneric;
+            Type genType;
+            object val;
+
+            if (!flags.HasFlag(DeserializationFlags.Fields))
+            {
+                return o;
+            }
+
+            allFields = t.GetFields(bindFlags);
+
+            foreach (FieldInfo f in allFields)
+            {
+                fieldType = f.FieldType;
+                isArray = fieldType.IsArray;
+                elemType = fieldType.GetElementType();
+                isGeneric = fieldType.IsGenericType;
+
+                if (isGeneric && fieldType.GetGenericTypeDefinition() == typeof(Primitive<>))
+                {
+                    genType = fieldType.GetGenericArguments()[0];
+                    val = DeserializePrimitive(f.Name, genType, o, flags);
+                }
+                else if (isArray)
+                {
+                    if (PrimitiveTypeUtils.IsPrimitiveType(elemType))
+                    {
+                        val = DeserializeValueArray(f.Name, elemType, o, flags);
+                    }
+                    else
+                    {
+                        val = DeserializeStructureArray(f.Name, elemType, o, flags);
+                    }
+                }
+                else if (PrimitiveTypeUtils.IsPrimitiveType(fieldType))
+                {
+                    val = DeserializeValue(f.Name, fieldType, o, flags);
+                }
+                else
+                {
+                    val = DeserializeStructure(f.Name, fieldType, o, flags);
+                }
+
+                if (val != null)
+                {
+                    f.SetValue(o, val);
+                }
+            }
+
+            return o;
+        }
 
         private object DeserializePrimitive(string name, Type t, object o, DeserializationFlags flags)
         {
