@@ -36,7 +36,7 @@ namespace WHampson.Cascara
     /// <summary>
     /// Represents a file containing binary (non human-readable) data.
     /// </summary>
-    public class BinaryFile : IDisposable
+    public class BinaryData : IDisposable
     {
         /// <summary>
         /// The maximum file size that can be loaded.
@@ -46,11 +46,11 @@ namespace WHampson.Cascara
         private const int BufferSize = 4096;
 
         /// <summary>
-        /// Creates a new little-endian <see cref="BinaryFile"/> object from the data
+        /// Creates a new little-endian <see cref="BinaryData"/> object from the data
         /// stored inside a file.
         /// </summary>
         /// <param name="path">The path to the file to load.</param>
-        /// <returns>The newly-created <see cref="BinaryFile"/> object.</returns>
+        /// <returns>The newly-created <see cref="BinaryData"/> object.</returns>
         /// /// <exception cref="ArgumentException">
         /// Thrown if the path is malformatted.
         /// </exception>
@@ -60,18 +60,18 @@ namespace WHampson.Cascara
         /// <exception cref="UnauthorizedAccessException">
         /// Thrown if the process does not have permission to access to the specified path.
         /// </exception>
-        public static BinaryFile Load(string path)
+        public static BinaryData Load(string path)
         {
             return Load(path, Endianness.Little);
         }
 
         /// <summary>
-        /// Creates a new <see cref="BinaryFile"/> object from the data
+        /// Creates a new <see cref="BinaryData"/> object from the data
         /// stored inside a file.
         /// </summary>
         /// <param name="path">The path to the file to load.</param>
         /// <param name="endianness">The byte order for primitive types.</param>
-        /// <returns>The newly-created <see cref="BinaryFile"/> object.</returns>
+        /// <returns>The newly-created <see cref="BinaryData"/> object.</returns>
         /// /// <exception cref="ArgumentException">
         /// Thrown if the path is malformatted or if the endianness is not specified.
         /// </exception>
@@ -81,7 +81,7 @@ namespace WHampson.Cascara
         /// <exception cref="UnauthorizedAccessException">
         /// Thrown if the process does not have permission to access to the specified path.
         /// </exception>
-        public static BinaryFile Load(string path, Endianness endianness)
+        public static BinaryData Load(string path, Endianness endianness)
         {
             if (string.IsNullOrWhiteSpace(path))
             {
@@ -110,7 +110,7 @@ namespace WHampson.Cascara
                     offset += bytesRead;
                 }
 
-                return new BinaryFile(data, len, endianness);
+                return new BinaryData(data, len, endianness);
             }
         }
 
@@ -118,7 +118,7 @@ namespace WHampson.Cascara
         private IntPtr dataPtr;
         private Structure fileStructure;
 
-        private BinaryFile(Endianness endianness)
+        private BinaryData(Endianness endianness)
         {
             hasBeenDisposed = false;
             dataPtr = IntPtr.Zero;
@@ -127,29 +127,29 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Initializes a new <see cref="BinaryFile"/> object of the specified length
+        /// Initializes a new <see cref="BinaryData"/> object of the specified length
         /// with little-endian byte order.
         /// </summary>
         /// <param name="length">The number of bytes to allocate.</param>
         /// <exception cref="OutOfMemoryException">
-        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// Thrown if there is not enough memory to create the <see cref="BinaryData"/>
         /// with the length provided.
         /// </exception>
-        public BinaryFile(int length)
+        public BinaryData(int length)
             : this(length, Endianness.Little)
         {
         }
 
         /// <summary>
-        /// Initializes a new <see cref="BinaryFile"/> object of the specified length.
+        /// Initializes a new <see cref="BinaryData"/> object of the specified length.
         /// </summary>
         /// <param name="length">The number of bytes to allocate.</param>
         /// <param name="endianness">The byte order for primitive types.</param>
         /// <exception cref="OutOfMemoryException">
-        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// Thrown if there is not enough memory to create the <see cref="BinaryData"/>
         /// with the length provided.
         /// </exception>
-        public BinaryFile(int length, Endianness endianness)
+        public BinaryData(int length, Endianness endianness)
             : this(endianness)
         {
             if (length < 1)
@@ -162,30 +162,30 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Initializes a new <see cref="BinaryFile"/> object with data
+        /// Initializes a new <see cref="BinaryData"/> object with data
         /// from the specified byte array with little-endian byte order.
         /// </summary>
         /// <param name="data">The array to initialize the file with.</param>
         /// <exception cref="OutOfMemoryException">
-        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// Thrown if there is not enough memory to create the <see cref="BinaryData"/>
         /// with the length provided.
         /// </exception>
-        public BinaryFile(byte[] data)
+        public BinaryData(byte[] data)
             : this(data, Endianness.Little)
         {
         }
 
         /// <summary>
-        /// Initializes a new <see cref="BinaryFile"/> object with data
+        /// Initializes a new <see cref="BinaryData"/> object with data
         /// from the specified byte array.
         /// </summary>
         /// <param name="data">The array to initialize the file with.</param>
         /// <param name="endianness">The byte order for primitive types.</param>
         /// <exception cref="OutOfMemoryException">
-        /// Thrown if there is not enough memory to create the <see cref="BinaryFile"/>
+        /// Thrown if there is not enough memory to create the <see cref="BinaryData"/>
         /// with the length provided.
         /// </exception>
-        public BinaryFile(byte[] data, Endianness endianness)
+        public BinaryData(byte[] data, Endianness endianness)
             : this(endianness)
         {
             if (data == null)
@@ -203,7 +203,7 @@ namespace WHampson.Cascara
             Set<byte>(0, data);
         }
 
-        private BinaryFile(IntPtr data, int length, Endianness endianness)
+        private BinaryData(IntPtr data, int length, Endianness endianness)
             : this(endianness)
         {
             dataPtr = data;
@@ -223,7 +223,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the length of the <see cref="BinaryFile"/> in bytes.
+        /// Gets the length of the <see cref="BinaryData"/> in bytes.
         /// </summary>
         public int Length
         {
@@ -378,7 +378,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Returns a copy of the data of this <see cref="BinaryFile"/> as a byte array.
+        /// Returns a copy of the data of this <see cref="BinaryData"/> as a byte array.
         /// </summary>
         /// <returns>A copy of the file data as a byte array.</returns>
         public byte[] ToArray()
@@ -390,7 +390,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// Converts the data in this <see cref="BinaryData"/> into an object
         /// by setting properties or fields using the names specified in a
         /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
         /// method must have been called prior for this to work properly.
@@ -404,7 +404,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// Converts the data in this <see cref="BinaryData"/> into an object
         /// by setting properties or fields using the names specified in a
         /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
         /// method must have been called prior for this to work properly.
@@ -474,7 +474,7 @@ namespace WHampson.Cascara
         {
             if (index < 0 || index >= Length)
             {
-                string msg = Resources.ArgumentExceptionBinaryFileIndexOutOfRange;
+                string msg = Resources.ArgumentExceptionBinaryDataIndexOutOfRange;
                 throw new ArgumentOutOfRangeException(null, index, msg);
             }
         }
@@ -563,7 +563,7 @@ namespace WHampson.Cascara
         /// <summary>
         /// Destructor.
         /// </summary>
-        ~BinaryFile()
+        ~BinaryData()
         {
             Dispose(false);
         }

@@ -4,10 +4,10 @@ using Xunit;
 
 namespace CascaraTests
 {
-    public class Test_BinaryFile_DataAccess
+    public class Test_BinaryData_DataAccess
     {
         [Fact]
-        public void BinaryFile_DataAccess_Read_AllData()
+        public void BinaryData_DataAccess_Read_AllData()
         {
             // Arrange
             byte[] testData = new byte[256];
@@ -15,7 +15,7 @@ namespace CascaraTests
             rand.NextBytes(testData);
 
             // Act
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             byte[] outData = bf.ToArray();
 
             // Assert
@@ -23,14 +23,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Data_LittleEndian()
+        public void BinaryData_DataAccess_ReadWrite_Data_LittleEndian()
         {
             // Arrange
             byte[] testData = new byte[8];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData, Endianness.Little);
+            BinaryData bf = new BinaryData(testData, Endianness.Little);
             int rAddress = 0x00;
             int wAddress = 0x04;
             uint expRValue = GetUInt(rAddress, testData);
@@ -48,14 +48,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Data_BigEndian()
+        public void BinaryData_DataAccess_ReadWrite_Data_BigEndian()
         {
             // Arrange
             byte[] testData = new byte[8];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData, Endianness.Big);
+            BinaryData bf = new BinaryData(testData, Endianness.Big);
             int rAddress = 0x00;
             int wAddress = 0x04;
             uint expRValue = GetUInt_BigEndian(rAddress, testData);
@@ -73,14 +73,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_DataArray()
+        public void BinaryData_DataAccess_ReadWrite_DataArray()
         {
             // Arrange
             byte[] testData = new byte[64];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x20;
             uint[] expRValue = new uint[8];
@@ -107,7 +107,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Bool8()
+        public void BinaryData_DataAccess_ReadWrite_Bool8()
         {
             // Arrange
             Random rand = new Random();
@@ -116,7 +116,7 @@ namespace CascaraTests
                 testData[i] = (byte) 0x00;
             }
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             bool expRValue = false;
@@ -134,7 +134,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Bool16()
+        public void BinaryData_DataAccess_ReadWrite_Bool16()
         {
             // Arrange
             Random rand = new Random();
@@ -143,7 +143,7 @@ namespace CascaraTests
                 testData[i] = (byte) 0x00;
             }
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             Bool16 expRValue = false;
@@ -161,7 +161,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Bool32()
+        public void BinaryData_DataAccess_ReadWrite_Bool32()
         {
             // Arrange
             Random rand = new Random();
@@ -170,7 +170,7 @@ namespace CascaraTests
                 testData[i] = (byte) 0x00;
             }
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             Bool32 expRValue = false;
@@ -188,7 +188,7 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Bool64()
+        public void BinaryData_DataAccess_ReadWrite_Bool64()
         {
             // Arrange
             Random rand = new Random();
@@ -197,7 +197,7 @@ namespace CascaraTests
                 testData[i] = (byte) 0x00;
             }
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             Bool64 expRValue = false;
@@ -215,14 +215,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Byte()
+        public void BinaryData_DataAccess_ReadWrite_Byte()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             byte expRValue = GetByte(rAddress, testData);
@@ -240,14 +240,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_SByte()
+        public void BinaryData_DataAccess_ReadWrite_SByte()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             sbyte expRValue = GetSByte(rAddress, testData);
@@ -265,14 +265,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Char8()
+        public void BinaryData_DataAccess_ReadWrite_Char8()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             Char8 expRValue = GetChar8(rAddress, testData);
@@ -290,14 +290,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Char16()
+        public void BinaryData_DataAccess_ReadWrite_Char16()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             char expRValue = GetChar16(rAddress, testData);
@@ -315,14 +315,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Double()
+        public void BinaryData_DataAccess_ReadWrite_Double()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             double expRValue = GetDouble(rAddress, testData);
@@ -340,14 +340,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Float()
+        public void BinaryData_DataAccess_ReadWrite_Float()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             float expRValue = GetFloat(rAddress, testData);
@@ -365,14 +365,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Int()
+        public void BinaryData_DataAccess_ReadWrite_Int()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             int expRValue = GetInt(rAddress, testData);
@@ -390,14 +390,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Long()
+        public void BinaryData_DataAccess_ReadWrite_Long()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             long expRValue = GetLong(rAddress, testData);
@@ -415,14 +415,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_Short()
+        public void BinaryData_DataAccess_ReadWrite_Short()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             short expRValue = GetShort(rAddress, testData);
@@ -440,14 +440,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_UInt()
+        public void BinaryData_DataAccess_ReadWrite_UInt()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             uint expRValue = GetUInt(rAddress, testData);
@@ -465,14 +465,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_ULong()
+        public void BinaryData_DataAccess_ReadWrite_ULong()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             ulong expRValue = GetULong(rAddress, testData);
@@ -490,14 +490,14 @@ namespace CascaraTests
         }
 
         [Fact]
-        public void BinaryFile_DataAccess_ReadWrite_UShort()
+        public void BinaryData_DataAccess_ReadWrite_UShort()
         {
             // Arrange
             byte[] testData = new byte[16];
             Random rand = new Random();
             rand.NextBytes(testData);
 
-            BinaryFile bf = new BinaryFile(testData);
+            BinaryData bf = new BinaryData(testData);
             int rAddress = 0x00;
             int wAddress = 0x08;
             ushort expRValue = GetUShort(rAddress, testData);

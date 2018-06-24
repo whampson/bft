@@ -36,7 +36,7 @@ using static WHampson.Cascara.Interpreter.ReservedWords;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// A script that defines the structure of a <see cref="BinaryFile"/>.
+    /// A script that defines the structure of a <see cref="BinaryData"/>.
     /// </summary>
     public abstract partial class LayoutScript : IEquatable<LayoutScript>
     {

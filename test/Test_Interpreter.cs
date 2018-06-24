@@ -114,7 +114,7 @@ namespace CascaraTests
 
             private void Init(string scriptSrc, byte[] data)
             {
-                Data = new BinaryFile(data);
+                Data = new BinaryData(data);
                 SymbolTable = SymbolTable.CreateRootSymbolTable();
                 Script = LayoutScript.Parse(scriptSrc);
                 Interpreter = new LayoutInterpreter(Script, _outputWriter);
@@ -125,7 +125,7 @@ namespace CascaraTests
                 Interpreter.Execute(SymbolTable, Data);
             }
 
-            public BinaryFile Data { get; private set; }
+            public BinaryData Data { get; private set; }
             public SymbolTable SymbolTable { get; private set; }
             public string Output { get { return _outputWriter.ToString().Trim(); } }
             public LayoutScript Script { get; private set; }

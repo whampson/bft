@@ -33,13 +33,13 @@ using WHampson.Cascara.Interpreter;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Represents a primitive data type found in a <see cref="BinaryFile"/>.
+    /// Represents a primitive data type found in a <see cref="BinaryData"/>.
     /// </summary>
     /// <typeparam name="T">The .NET or Cascara type that this object encapsulates.</typeparam>
     public class Primitive<T> : IFileObject
         where T : struct
     {
-        internal Primitive(BinaryFile sourceFile, SymbolTable symbol)
+        internal Primitive(BinaryData sourceFile, SymbolTable symbol)
         {
             if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
             {
@@ -77,7 +77,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets or sets the value of this primitive type.
-        /// Setting this property will change the bytes in the <see cref="BinaryFile"/>
+        /// Setting this property will change the bytes in the <see cref="BinaryData"/>
         /// at the location specified by <see cref="GlobalOffset"/>.
         /// </summary>
         public T Value
@@ -152,7 +152,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
-        /// of the <see cref="BinaryFile"/>.
+        /// of the <see cref="BinaryData"/>.
         /// </summary>
         public int GlobalOffset
         {
@@ -195,10 +195,10 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="BinaryFile"/> that this <see cref="IFileObject"/>
+        /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        public BinaryFile SourceFile
+        public BinaryData SourceFile
         {
             get;
         }

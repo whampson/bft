@@ -10,8 +10,8 @@
 
 namespace WHampson.Cascara {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -23,15 +23,15 @@ namespace WHampson.Cascara {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -45,7 +45,7 @@ namespace WHampson.Cascara {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -59,16 +59,16 @@ namespace WHampson.Cascara {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Index is out of range. Must be non-negative and less than the size of the binary file..
         /// </summary>
-        internal static string ArgumentExceptionBinaryFileIndexOutOfRange {
+        internal static string ArgumentExceptionBinaryDataIndexOutOfRange {
             get {
-                return ResourceManager.GetString("ArgumentExceptionBinaryFileIndexOutOfRange", resourceCulture);
+                return ResourceManager.GetString("ArgumentExceptionBinaryDataIndexOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Collection must contain at least one element..
         /// </summary>
@@ -77,7 +77,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionEmptyCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter cannot be empty or null..
         /// </summary>
@@ -86,7 +86,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionEmptyString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Object is not an instance of &apos;{0}&apos;..
         /// </summary>
@@ -95,7 +95,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionInvalidType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Nested statement cannot be the same object reference as the current statement..
         /// </summary>
@@ -104,7 +104,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionNestedStatementReference", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter must be a non-negative integer..
         /// </summary>
@@ -113,7 +113,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionNonNegativeInteger", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter must be a primitive type..
         /// </summary>
@@ -122,7 +122,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionPrimitiveType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter type does not match expected type..
         /// </summary>
@@ -131,7 +131,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("ArgumentExceptionTypeMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A layout named &apos;{0}&apos; already exists in the namespace..
         /// </summary>
@@ -140,7 +140,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("LayoutExceptionLayoutExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is not a valid version number..
         /// </summary>
@@ -149,7 +149,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("LayoutExceptionMalformattedLayoutVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Layout version &apos;{0}&apos; is not currently supported..
         /// </summary>
@@ -158,7 +158,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("LayoutExceptionUnsupportedLayoutVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot access the element of a symbol that does not represent a collection..
         /// </summary>
@@ -167,7 +167,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("NotSupportedExceptionElementAccess", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty layout. At least one statement is required..
         /// </summary>
@@ -176,7 +176,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionEmptyLayout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to At least one file object declaration required..
         /// </summary>
@@ -185,7 +185,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionEmptyStructure", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing name for Binary Layout..
         /// </summary>
@@ -194,7 +194,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionMissingLayoutName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing required parameter &apos;{0}&apos;..
         /// </summary>
@@ -203,7 +203,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionMissingRequiredParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected nested statement..
         /// </summary>
@@ -212,7 +212,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionUnexpectedNestedStatement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unknown identifier &apos;{0}&apos;..
         /// </summary>
@@ -221,7 +221,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionUnknownIdentifier", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Root element must be named &apos;{0}&apos;..
         /// </summary>
@@ -230,7 +230,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionXmlInvalidRootElement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The identifier &apos;{0}&apos; can only be used for the root element..
         /// </summary>
@@ -239,7 +239,7 @@ namespace WHampson.Cascara {
                 return ResourceManager.GetString("SyntaxExceptionXmlInvalidUsageOfRootElement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected text &apos;{0}&apos; in element &apos;{1}&apos;..
         /// </summary>

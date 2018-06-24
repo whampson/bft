@@ -29,13 +29,13 @@ namespace WHampson.Cascara
 {
     /// <summary>
     /// Defines a file object, which is a meaningful piece of data
-    /// made up of bytes in a <see cref="BinaryFile"/>.
+    /// made up of bytes in a <see cref="BinaryData"/>.
     /// </summary>
     public interface IFileObject : IEnumerable<IFileObject>
     {
         /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
-        /// of the <see cref="BinaryFile"/>.
+        /// of the <see cref="BinaryData"/>.
         /// </summary>
         int GlobalOffset
         {
@@ -78,10 +78,10 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="BinaryFile"/> that this <see cref="IFileObject"/>
+        /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        BinaryFile SourceFile
+        BinaryData SourceFile
         {
             get;
         }

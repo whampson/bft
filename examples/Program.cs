@@ -29,11 +29,11 @@ namespace WHampson.CascaraExamples
         //     byte[] data = { 0xBE, 0xBA, 0xFE, 0xCA, 0xEF, 0xBE, 0xAD, 0xDE, 0xAA, 0x55, 0x61, 0x62 ,0x63, 0x00 };
 
         //     LayoutScript layout = LayoutScript.Parse(LayoutXml);
-        //     BinaryFile file = new BinaryFile(data);
+        //     BinaryData file = new BinaryData(data);
         //     file.ApplyLayout(layout);
 
         //     Console.WriteLine("{0}: {1}", nameof(LayoutScript), layout);
-        //     Console.WriteLine("{0}: {1}", nameof(BinaryFile), file);
+        //     Console.WriteLine("{0}: {1}", nameof(BinaryData), file);
 
             Deserialize();
         }
@@ -98,7 +98,7 @@ namespace WHampson.CascaraExamples
                 </cascaraLayout>
             ";
 
-            BinaryFile b = new BinaryFile(data);
+            BinaryData b = new BinaryData(data);
             b.ApplyLayout(LayoutScript.Parse(src));
             DeserializationFlags flags = DeserializationFlags.Fields
                 | DeserializationFlags.IgnoreCase

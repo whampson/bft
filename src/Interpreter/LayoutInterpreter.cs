@@ -51,7 +51,7 @@ namespace WHampson.Cascara.Interpreter
         private delegate void InterpretAction(Statement stmt);
 
         private LayoutScript layout;
-        private BinaryFile file;
+        private BinaryData file;
         private Stack<CodeBlock> scopeStack;
         private HashSet<LayoutScript> includedLayouts;
         private TextWriter echoWriter;
@@ -98,7 +98,7 @@ namespace WHampson.Cascara.Interpreter
             file = null;
         }
 
-        public void Execute(SymbolTable rootSymbol, BinaryFile file)
+        public void Execute(SymbolTable rootSymbol, BinaryData file)
         {
             Reset();
 
@@ -630,8 +630,8 @@ namespace WHampson.Cascara.Interpreter
 
             if (!sym.IsStruct && !sym.IsCollection)
             {
-                method = typeof(BinaryFile)
-                    .GetMethod(nameof(BinaryFile.Get), new Type[] { typeof(int) })
+                method = typeof(BinaryData)
+                    .GetMethod(nameof(BinaryData.Get), new Type[] { typeof(int) })
                     .MakeGenericMethod(sym.DataType);
 
                 val = method.Invoke(file, new object[] { sym.GlobalDataAddress });

@@ -32,11 +32,11 @@ using WHampson.Cascara.Interpreter;
 namespace WHampson.Cascara
 {
     /// <summary>
-    /// Represents a composite data type found in a <see cref="BinaryFile"/>.
+    /// Represents a composite data type found in a <see cref="BinaryData"/>.
     /// </summary>
     public class Structure : IFileObject
     {
-        internal Structure(BinaryFile sourceFile, SymbolTable symbol)
+        internal Structure(BinaryData sourceFile, SymbolTable symbol)
         {
             this.SourceFile = sourceFile;
             Symbol = symbol;
@@ -63,7 +63,7 @@ namespace WHampson.Cascara
 
         /// <summary>
         /// Gets the position of this <see cref="IFileObject"/> relative to the start
-        /// of the <see cref="BinaryFile"/>.
+        /// of the <see cref="BinaryData"/>.
         /// </summary>
         public int GlobalOffset
         {
@@ -106,10 +106,10 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Gets the <see cref="BinaryFile"/> that this <see cref="IFileObject"/>
+        /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        public BinaryFile SourceFile
+        public BinaryData SourceFile
         {
             get;
         }
@@ -135,7 +135,7 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
-        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// Converts the data in this <see cref="BinaryData"/> into an object
         /// by setting properties or fields using the names specified in a
         /// <see cref="LayoutScript"/>.
         /// </summary>
