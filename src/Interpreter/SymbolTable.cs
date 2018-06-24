@@ -135,10 +135,10 @@ namespace WHampson.Cascara.Interpreter
         /// <returns>
         /// A <see cref="List{Symbol}"/> of all <see cref="SymbolTable"/>s with a matching identifier.
         /// </returns>
-        private static List<SymbolTable> SearchUp(string identifier, SymbolTable sym)
+        private static List<SymbolTable> SearchUp(string identifier, bool ignoreCase, SymbolTable sym)
         {
             List<SymbolTable> results = new List<SymbolTable>();
-            SearchUp(identifier, sym, ref results);
+            SearchUp(identifier, ignoreCase, sym, ref results);
 
             return results;
         }
@@ -160,7 +160,7 @@ namespace WHampson.Cascara.Interpreter
         /// A <see cref="List{Symbol}"/> reference which is added to in each recursive
         /// call of this function.
         /// </param>
-        private static void SearchUp(string identifier, SymbolTable sym, ref List<SymbolTable> results)
+        private static void SearchUp(string identifier, bool ignoreCase, SymbolTable sym, ref List<SymbolTable> results)
         {
             if (sym == null)
             {
@@ -177,7 +177,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Add entry to list if it exists in the current table
-            if (sym.Members.TryGetValue(tempName, out SymbolTable entry))
+            if (TryGetSymbol(sym, tempName, ignoreCase, out SymbolTable entry))
             {
                 if (isSearchingForCollection)
                 {
@@ -193,7 +193,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Search the parent table
-            SearchUp(identifier, sym.Parent, ref results);
+            SearchUp(identifier, ignoreCase, sym.Parent, ref results);
         }
 
         /// <summary>
@@ -210,7 +210,7 @@ namespace WHampson.Cascara.Interpreter
         /// The <see cref="SymbolTable"/> with the matching name, if found.
         /// <code>Null</code> otherwise.
         /// </returns>
-        private static SymbolTable SearchDown(string identifier, SymbolTable sym)
+        private static SymbolTable SearchDown(string identifier, bool ignoreCase, SymbolTable sym)
         {
             if (sym == null)
             {
@@ -227,7 +227,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Look for top-level name in current symbol table
-            if (!sym.Members.TryGetValue(splitIdent[0], out SymbolTable entry))
+            if (TryGetSymbol(sym, splitIdent[0], ignoreCase, out SymbolTable entry))
             {
                 return null;
             }
@@ -250,7 +250,27 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Continue searching down the tree for the rest of the name
-            return SearchDown(splitIdent[1], entry);
+            return SearchDown(splitIdent[1], ignoreCase, entry);
+        }
+
+        private static bool TryGetSymbol(SymbolTable sym, string identifier, bool ignoreCase, out SymbolTable entry)
+        {
+            bool result;
+
+            if (ignoreCase)
+            {
+                KeyValuePair<string, SymbolTable> item = sym.Members.FirstOrDefault(x =>
+                    x.Key.ToUpperInvariant() == identifier.ToUpperInvariant());
+
+                entry = item.Value;
+                result = (item.Key != null);
+            }
+            else
+            {
+                result = sym.Members.TryGetValue(identifier, out entry);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -627,10 +647,15 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public SymbolTable Lookup(string identifier)
         {
+            return Lookup(identifier, false);
+        }
+
+        public SymbolTable Lookup(string identifier, bool ignoreCase)
+        {
             string[] splitIdent = identifier.Split(new char[] { StructureReferenceOperatorChar }, 2);
 
             // Get a list of all symbols in scope matching top-level name
-            List<SymbolTable> symbols = SearchUp(splitIdent[0], this);
+            List<SymbolTable> symbols = SearchUp(splitIdent[0], ignoreCase, this);
             if (symbols.Count == 0)
             {
                 return null;
@@ -646,7 +671,7 @@ namespace WHampson.Cascara.Interpreter
             SymbolTable retval = null;
             foreach (SymbolTable s in symbols)
             {
-                if ((retval = SearchDown(splitIdent[1], s)) != null)
+                if ((retval = SearchDown(splitIdent[1], ignoreCase, s)) != null)
                 {
                     break;
                 }
@@ -673,7 +698,12 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public bool TryLookup(string identifier, out SymbolTable table)
         {
-            return (table = Lookup(identifier)) != null;
+            return TryLookup(identifier, false, out table);
+        }
+
+        public bool TryLookup(string identifier, bool ignoreCase, out SymbolTable table)
+        {
+            return (table = Lookup(identifier, ignoreCase)) != null;
         }
 
         /// <summary>

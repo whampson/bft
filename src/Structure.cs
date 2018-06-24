@@ -227,14 +227,16 @@ namespace WHampson.Cascara
 
         private object DeserializePrimitive(string name, Type t, object o, DeserializationFlags flags)
         {
-            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
 
             return prim;
         }
 
         private object DeserializeValue(string name, Type t, object o, DeserializationFlags flags)
         {
-            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
             if (prim == null)
             {
                 return null;
@@ -246,7 +248,8 @@ namespace WHampson.Cascara
 
         private object DeserializeValueArray(string name, Type t, object o, DeserializationFlags flags)
         {
-            object prim = GetPrimitive(t, name);  // TODO: case sensitivity
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
             if (prim == null)
             {
                 return null;
@@ -270,7 +273,8 @@ namespace WHampson.Cascara
 
         private object DeserializeStructure(string name, Type t, object o, DeserializationFlags flags)
         {
-            Structure s = GetStructure(name); // TODO: case sensitivity
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            Structure s = GetStructure(name, ignoreCase);
             if (s == null)
             {
                 return null;
@@ -281,7 +285,8 @@ namespace WHampson.Cascara
 
         private object DeserializeStructureArray(string name, Type t, object o, DeserializationFlags flags)
         {
-            Structure s = GetStructure(name); // TODO: case sensitivity
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            Structure s = GetStructure(name, ignoreCase);
             if (s == null)
             {
                 return null;
@@ -306,7 +311,12 @@ namespace WHampson.Cascara
         /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise.</returns>
         public Structure GetStructure(string name)
         {
-            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
+            return GetStructure(name, false);
+        }
+
+        private Structure GetStructure(string name, bool ignoreCase)
+        {
+            bool exists = Symbol.TryLookup(name, ignoreCase, out SymbolTable sym);
             if (!exists || !sym.IsStruct)
             {
                 return null;
@@ -326,7 +336,13 @@ namespace WHampson.Cascara
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
-            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
+            return GetPrimitive<T>(name, false);
+        }
+
+        private Primitive<T> GetPrimitive<T>(string name, bool ignoreCase)
+            where T : struct
+        {
+            bool exists = Symbol.TryLookup(name, ignoreCase, out SymbolTable sym);
             if (!exists || sym.IsStruct)
             {
                 return null;
@@ -340,12 +356,17 @@ namespace WHampson.Cascara
             return new Primitive<T>(SourceFile, sym);
         }
 
-        private object GetPrimitive(Type t, string name)
+        private object GetPrimitive(Type t, string name, bool ignoreCase)
         {
-            MethodInfo m = this.GetType().GetMethod(nameof(GetPrimitive));
+            string mName = nameof(GetPrimitive);
+            Type[] sig = new Type[] { typeof(string), typeof(bool) };
+            BindingFlags bFlags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+            MethodInfo m = this.GetType()
+                .GetMethod(mName, bFlags, null, sig, null);
             m = m.MakeGenericMethod(t);
 
-            return m.Invoke(this, new object[] { name });
+            return m.Invoke(this, new object[] { name, ignoreCase });
         }
 
         /// <summary>
