@@ -240,7 +240,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Look for top-level name in current symbol table
-            if (TryGetSymbol(sym, splitIdent[0], ignoreCase, out SymbolTable entry))
+            if (!TryGetSymbol(sym, splitIdent[0], ignoreCase, out SymbolTable entry))
             {
                 return null;
             }
