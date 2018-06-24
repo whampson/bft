@@ -427,7 +427,7 @@ namespace WHampson.Cascara.Interpreter
         /// </summary>
         public bool IsStruct
         {
-            get { return Members.Any(); }
+            get { return Members.Any() || DataType == typeof(Structure); }
         }
 
         /// <summary>
