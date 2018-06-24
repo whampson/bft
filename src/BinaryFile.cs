@@ -390,6 +390,35 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
+        /// method must have been called prior for this to work properly.
+        /// <see cref="DeserializationFlags"/> for this method are set to
+        /// <see cref="DeserializationFlags.Public"/> and
+        /// <see cref="DeserializationFlags.Properties"/>.
+        /// </summary>
+        public T Deserialize<T>() where T : new()
+        {
+            return fileStructure.Deserialize<T>();
+        }
+
+        /// <summary>
+        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
+        /// method must have been called prior for this to work properly.
+        /// </summary>
+        /// <param name="flags">
+        /// A <see cref="DeserializationFlags"/> bitfield that controls the
+        /// behavior of deserialization.
+        /// </param>
+        public T Deserialize<T>(DeserializationFlags flags) where T : new()
+        {
+            return fileStructure.Deserialize<T>(flags);
+        }
+
+        /// <summary>
         /// Writes the binary data to a file.
         /// If the file already exists, it will be overwritten.
         /// </summary>

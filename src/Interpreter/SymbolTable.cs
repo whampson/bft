@@ -124,10 +124,15 @@ namespace WHampson.Cascara.Interpreter
         /// to the root for all occurrences of the specified identifier.
         /// </summary>
         /// <remarks>
-        /// This is a wrapper function for <see cref="SearchUp(string, SymbolTable, ref List{SymbolTable})"/>.
+        /// This is a wrapper function for
+        /// <see cref="SearchUp(string, bool, SymbolTable, ref List{SymbolTable})"/>.
         /// </remarks>
         /// <param name="identifier">
         /// The identifier to search for.
+        /// </param>
+        /// <param name="ignoreCase">
+        /// A value indicating whether to ignore the case of the identifier when
+        /// searching.
         /// </param>
         /// <param name="sym">
         /// The node in the symbol tree from which to begin the search.
@@ -135,10 +140,10 @@ namespace WHampson.Cascara.Interpreter
         /// <returns>
         /// A <see cref="List{Symbol}"/> of all <see cref="SymbolTable"/>s with a matching identifier.
         /// </returns>
-        private static List<SymbolTable> SearchUp(string identifier, SymbolTable sym)
+        private static List<SymbolTable> SearchUp(string identifier, bool ignoreCase, SymbolTable sym)
         {
             List<SymbolTable> results = new List<SymbolTable>();
-            SearchUp(identifier, sym, ref results);
+            SearchUp(identifier, ignoreCase, sym, ref results);
 
             return results;
         }
@@ -153,6 +158,10 @@ namespace WHampson.Cascara.Interpreter
         /// <param name="identifier">
         /// The identifier to search for.
         /// </param>
+        /// <param name="ignoreCase">
+        /// A value indicating whether to ignore the case of the identifier when
+        /// searching.
+        /// </param>
         /// <param name="sym">
         /// The node in the symbol tree from which to begin the search.
         /// </param>
@@ -160,7 +169,7 @@ namespace WHampson.Cascara.Interpreter
         /// A <see cref="List{Symbol}"/> reference which is added to in each recursive
         /// call of this function.
         /// </param>
-        private static void SearchUp(string identifier, SymbolTable sym, ref List<SymbolTable> results)
+        private static void SearchUp(string identifier, bool ignoreCase, SymbolTable sym, ref List<SymbolTable> results)
         {
             if (sym == null)
             {
@@ -177,7 +186,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Add entry to list if it exists in the current table
-            if (sym.Members.TryGetValue(tempName, out SymbolTable entry))
+            if (TryGetSymbol(sym, tempName, ignoreCase, out SymbolTable entry))
             {
                 if (isSearchingForCollection)
                 {
@@ -193,7 +202,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Search the parent table
-            SearchUp(identifier, sym.Parent, ref results);
+            SearchUp(identifier, ignoreCase, sym.Parent, ref results);
         }
 
         /// <summary>
@@ -203,6 +212,10 @@ namespace WHampson.Cascara.Interpreter
         /// <param name="identifier">
         /// The fully-qualified name of the <see cref="SymbolTable"/> search for.
         /// </param>
+        /// <param name="ignoreCase">
+        /// A value indicating whether to ignore the case of the identifier when
+        /// searching.
+        /// </param>
         /// <param name="sym">
         /// The node of the symbol tree to begin the search.
         /// </param>
@@ -210,7 +223,7 @@ namespace WHampson.Cascara.Interpreter
         /// The <see cref="SymbolTable"/> with the matching name, if found.
         /// <code>Null</code> otherwise.
         /// </returns>
-        private static SymbolTable SearchDown(string identifier, SymbolTable sym)
+        private static SymbolTable SearchDown(string identifier, bool ignoreCase, SymbolTable sym)
         {
             if (sym == null)
             {
@@ -227,7 +240,7 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Look for top-level name in current symbol table
-            if (!sym.Members.TryGetValue(splitIdent[0], out SymbolTable entry))
+            if (TryGetSymbol(sym, splitIdent[0], ignoreCase, out SymbolTable entry))
             {
                 return null;
             }
@@ -250,7 +263,27 @@ namespace WHampson.Cascara.Interpreter
             }
 
             // Continue searching down the tree for the rest of the name
-            return SearchDown(splitIdent[1], entry);
+            return SearchDown(splitIdent[1], ignoreCase, entry);
+        }
+
+        private static bool TryGetSymbol(SymbolTable sym, string identifier, bool ignoreCase, out SymbolTable entry)
+        {
+            bool result;
+
+            if (ignoreCase)
+            {
+                KeyValuePair<string, SymbolTable> item = sym.Members.FirstOrDefault(x =>
+                    x.Key.ToUpperInvariant() == identifier.ToUpperInvariant());
+
+                entry = item.Value;
+                result = (item.Key != null);
+            }
+            else
+            {
+                result = sym.Members.TryGetValue(identifier, out entry);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -427,7 +460,7 @@ namespace WHampson.Cascara.Interpreter
         /// </summary>
         public bool IsStruct
         {
-            get { return Members.Any(); }
+            get { return Members.Any() || DataType == typeof(Structure); }
         }
 
         /// <summary>
@@ -627,10 +660,30 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public SymbolTable Lookup(string identifier)
         {
+            return Lookup(identifier, false);
+        }
+
+        /// <summary>
+        /// Searches the symbol tree for specified symbol.
+        /// The search will be conducted relative to this <see cref="SymbolTable"/>.
+        /// </summary>
+        /// <param name="identifier">
+        /// The symbol to search for.
+        /// </param>
+        /// <param name="ignoreCase">
+        /// A value indicating whether to ignore the case of the identifier when
+        /// searching.
+        /// </param>
+        /// <returns>
+        /// The symbol's <see cref="SymbolTable"/> if found,
+        /// <code>Null</code> otherwise.
+        /// </returns>
+        public SymbolTable Lookup(string identifier, bool ignoreCase)
+        {
             string[] splitIdent = identifier.Split(new char[] { StructureReferenceOperatorChar }, 2);
 
             // Get a list of all symbols in scope matching top-level name
-            List<SymbolTable> symbols = SearchUp(splitIdent[0], this);
+            List<SymbolTable> symbols = SearchUp(splitIdent[0], ignoreCase, this);
             if (symbols.Count == 0)
             {
                 return null;
@@ -646,7 +699,7 @@ namespace WHampson.Cascara.Interpreter
             SymbolTable retval = null;
             foreach (SymbolTable s in symbols)
             {
-                if ((retval = SearchDown(splitIdent[1], s)) != null)
+                if ((retval = SearchDown(splitIdent[1], ignoreCase, s)) != null)
                 {
                     break;
                 }
@@ -673,7 +726,32 @@ namespace WHampson.Cascara.Interpreter
         /// </returns>
         public bool TryLookup(string identifier, out SymbolTable table)
         {
-            return (table = Lookup(identifier)) != null;
+            return TryLookup(identifier, false, out table);
+        }
+
+        /// <summary>
+        /// Attempts to search the symbol tree for specified symbol and returns
+        /// a value indicating whether the search was successful.
+        /// The search will be conducted relative to this <see cref="SymbolTable"/>.
+        /// </summary>
+        /// <param name="identifier">
+        /// The symbol to search for.
+        /// </param>
+        /// <param name="ignoreCase">
+        /// A value indicating whether to ignore the case of the identifier when
+        /// searching.
+        /// </param>
+        /// <param name="table">
+        /// The variable to store the result of the search in.
+        /// If the search fails, this will be set to <code>Null</code>.
+        /// </param>
+        /// <returns>
+        /// <code>True</code> if a <see cref="SymbolTable"/> matching the provided
+        /// name was found, <code>False</code> otherwise.
+        /// </returns>
+        public bool TryLookup(string identifier, bool ignoreCase, out SymbolTable table)
+        {
+            return (table = Lookup(identifier, ignoreCase)) != null;
         }
 
         /// <summary>

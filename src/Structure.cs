@@ -120,6 +120,259 @@ namespace WHampson.Cascara
         }
 
         /// <summary>
+        /// Converts the data in this <see cref="Structure"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>.
+        /// <see cref="DeserializationFlags"/> for this method are set to
+        /// <see cref="DeserializationFlags.Public"/> and
+        /// <see cref="DeserializationFlags.Properties"/>.
+        /// </summary>
+        public T Deserialize<T>() where T : new()
+        {
+            DeserializationFlags flags =
+                DeserializationFlags.Public | DeserializationFlags.Properties;
+            return Deserialize<T>(flags);
+        }
+
+        /// <summary>
+        /// Converts the data in this <see cref="BinaryFile"/> into an object
+        /// by setting properties or fields using the names specified in a
+        /// <see cref="LayoutScript"/>.
+        /// </summary>
+        /// <param name="flags">
+        /// A <see cref="DeserializationFlags"/> bitfield that controls the
+        /// behavior of deserialization.
+        /// </param>
+        public T Deserialize<T>(DeserializationFlags flags) where T : new()
+        {
+            return (T) Deserialize(typeof(T), flags);
+        }
+
+        private object Deserialize(Type t, DeserializationFlags flags)
+        {
+            object o;
+            BindingFlags bindFlags;
+
+            o = Activator.CreateInstance(t);
+
+            bindFlags = BindingFlags.Instance;
+            if (flags.HasFlag(DeserializationFlags.NonPublic))
+            {
+                bindFlags |= BindingFlags.NonPublic;
+            }
+            if (flags.HasFlag(DeserializationFlags.Public))
+            {
+                bindFlags |= BindingFlags.Public;
+            }
+
+            o = DeserializeToProperties(t, o, flags, bindFlags);
+            o = DeserializeToFields(t, o, flags, bindFlags);
+
+            return o;
+        }
+
+        private object DeserializeToProperties(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
+        {
+            PropertyInfo[] allProperties;
+            Type propType;
+            bool isArray;
+            Type elemType;
+            bool isGeneric;
+            Type genType;
+            object val;
+
+            if (!flags.HasFlag(DeserializationFlags.Properties))
+            {
+                return o;
+            }
+
+            allProperties = t.GetProperties(bindFlags);
+
+            foreach (PropertyInfo p in allProperties)
+            {
+                propType = p.PropertyType;
+                isArray = propType.IsArray;
+                elemType = propType.GetElementType();
+                isGeneric = propType.IsGenericType;
+
+                if (p.GetSetMethod() == null)
+                {
+                    continue;
+                }
+
+                if (isGeneric && propType.GetGenericTypeDefinition() == typeof(Primitive<>))
+                {
+                    genType = propType.GetGenericArguments()[0];
+                    val = DeserializePrimitive(p.Name, genType, o, flags);
+                }
+                else if (isArray)
+                {
+                    if (PrimitiveTypeUtils.IsPrimitiveType(elemType))
+                    {
+                        val = DeserializeValueArray(p.Name, elemType, o, flags);
+                    }
+                    else
+                    {
+                        val = DeserializeStructureArray(p.Name, elemType, o, flags);
+                    }
+                }
+                else if (PrimitiveTypeUtils.IsPrimitiveType(propType))
+                {
+                    val = DeserializeValue(p.Name, propType, o, flags);
+                }
+                else
+                {
+                    val = DeserializeStructure(p.Name, propType, o, flags);
+                }
+
+                if (val != null)
+                {
+                    p.SetValue(o, val);
+                }
+            }
+
+            return o;
+        }
+
+        private object DeserializeToFields(Type t, object o, DeserializationFlags flags, BindingFlags bindFlags)
+        {
+            // TODO: there /has/ to be some way to generalize this process
+            //       for both fields and properties...
+
+            FieldInfo[] allFields;
+            Type fieldType;
+            bool isArray;
+            Type elemType;
+            bool isGeneric;
+            Type genType;
+            object val;
+
+            if (!flags.HasFlag(DeserializationFlags.Fields))
+            {
+                return o;
+            }
+
+            allFields = t.GetFields(bindFlags);
+
+            foreach (FieldInfo f in allFields)
+            {
+                fieldType = f.FieldType;
+                isArray = fieldType.IsArray;
+                elemType = fieldType.GetElementType();
+                isGeneric = fieldType.IsGenericType;
+
+                if (isGeneric && fieldType.GetGenericTypeDefinition() == typeof(Primitive<>))
+                {
+                    genType = fieldType.GetGenericArguments()[0];
+                    val = DeserializePrimitive(f.Name, genType, o, flags);
+                }
+                else if (isArray)
+                {
+                    if (PrimitiveTypeUtils.IsPrimitiveType(elemType))
+                    {
+                        val = DeserializeValueArray(f.Name, elemType, o, flags);
+                    }
+                    else
+                    {
+                        val = DeserializeStructureArray(f.Name, elemType, o, flags);
+                    }
+                }
+                else if (PrimitiveTypeUtils.IsPrimitiveType(fieldType))
+                {
+                    val = DeserializeValue(f.Name, fieldType, o, flags);
+                }
+                else
+                {
+                    val = DeserializeStructure(f.Name, fieldType, o, flags);
+                }
+
+                if (val != null)
+                {
+                    f.SetValue(o, val);
+                }
+            }
+
+            return o;
+        }
+
+        private object DeserializePrimitive(string name, Type t, object o, DeserializationFlags flags)
+        {
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
+
+            return prim;
+        }
+
+        private object DeserializeValue(string name, Type t, object o, DeserializationFlags flags)
+        {
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
+            if (prim == null)
+            {
+                return null;
+            }
+
+            PropertyInfo valueProp = prim.GetType().GetProperty(nameof(Primitive<byte>.Value));
+            return valueProp.GetValue(prim, null);
+        }
+
+        private object DeserializeValueArray(string name, Type t, object o, DeserializationFlags flags)
+        {
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            object prim = GetPrimitive(t, name, ignoreCase);
+            if (prim == null)
+            {
+                return null;
+            }
+
+            PropertyInfo elemCountProp = prim.GetType().GetProperty(nameof(Primitive<byte>.ElementCount));
+            PropertyInfo valueProp = prim.GetType().GetProperty(nameof(Primitive<byte>.Value));
+            MethodInfo indexerMeth = prim.GetType().GetMethod("get_Item");   // 'this[int i]' property
+
+            int elemCount = (int) elemCountProp.GetValue(prim, null);
+            Array arr = Array.CreateInstance(t, elemCount);
+            for (int i = 0; i < elemCount; i++)
+            {
+                object elem = indexerMeth.Invoke(prim, new object[] { i });
+                object val = valueProp.GetValue(elem);
+                arr.SetValue(val, i);
+            }
+
+            return arr;
+        }
+
+        private object DeserializeStructure(string name, Type t, object o, DeserializationFlags flags)
+        {
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            Structure s = GetStructure(name, ignoreCase);
+            if (s == null)
+            {
+                return null;
+            }
+
+            return s.Deserialize(t, flags);
+        }
+
+        private object DeserializeStructureArray(string name, Type t, object o, DeserializationFlags flags)
+        {
+            bool ignoreCase = flags.HasFlag(DeserializationFlags.IgnoreCase);
+            Structure s = GetStructure(name, ignoreCase);
+            if (s == null)
+            {
+                return null;
+            }
+
+            Array arr = Array.CreateInstance(t, s.ElementCount);
+            for (int i = 0; i < s.ElementCount; i++)
+            {
+                object elem = s[i].Deserialize(t, flags);
+                arr.SetValue(elem, i);
+            }
+
+            return arr;
+        }
+
+        /// <summary>
         /// Gets a <see cref="Structure"/> by searching this structure's
         /// symbol table for the specified name. If no match is found,
         /// <c>null</c> is returned.
@@ -128,7 +381,12 @@ namespace WHampson.Cascara
         /// <returns>The <see cref="Structure"/> object, if found. <c>null</c> otherwise.</returns>
         public Structure GetStructure(string name)
         {
-            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
+            return GetStructure(name, false);
+        }
+
+        private Structure GetStructure(string name, bool ignoreCase)
+        {
+            bool exists = Symbol.TryLookup(name, ignoreCase, out SymbolTable sym);
             if (!exists || !sym.IsStruct)
             {
                 return null;
@@ -148,7 +406,13 @@ namespace WHampson.Cascara
         public Primitive<T> GetPrimitive<T>(string name)
             where T : struct
         {
-            bool exists = Symbol.TryLookup(name, out SymbolTable sym);
+            return GetPrimitive<T>(name, false);
+        }
+
+        private Primitive<T> GetPrimitive<T>(string name, bool ignoreCase)
+            where T : struct
+        {
+            bool exists = Symbol.TryLookup(name, ignoreCase, out SymbolTable sym);
             if (!exists || sym.IsStruct)
             {
                 return null;
@@ -160,6 +424,19 @@ namespace WHampson.Cascara
             }
 
             return new Primitive<T>(SourceFile, sym);
+        }
+
+        private object GetPrimitive(Type t, string name, bool ignoreCase)
+        {
+            string mName = nameof(GetPrimitive);
+            Type[] sig = new Type[] { typeof(string), typeof(bool) };
+            BindingFlags bFlags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+            MethodInfo m = this.GetType()
+                .GetMethod(mName, bFlags, null, sig, null);
+            m = m.MakeGenericMethod(t);
+
+            return m.Invoke(this, new object[] { name, ignoreCase });
         }
 
         /// <summary>
