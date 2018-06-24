@@ -92,15 +92,60 @@ namespace CascaraTests
         public void Interpreter_Echo_StructureMembers()
         {
             // Arrange
-            uint val = 0xDEADBEEF;
+            ulong val = 0xDEADBEEF00000000;
             byte[] data = BitConverter.GetBytes(val);
-            string expOutput = val.ToString();
+            string expOutput = string.Format(
+                "Value1: {0}" + Environment.NewLine +
+                "Value2: {1}" + Environment.NewLine +
+                "Offset1: 0" + Environment.NewLine +
+                "Offset2: 4",
+                (val & 0xFFFFFFFF).ToString(), (val >> 32).ToString());
+
             string src = @"
                 <struct name='MyStruct'>
-                    <uint name='Foo'/>
+                    <uint name='Zero'/>
+                    <uint name='Beef'/>
                 </struct>
 
-                <echo message='${MyStruct.Foo}'/>
+                <echo message='Value1: ${MyStruct.Zero}'/>
+                <echo message='Value2: ${MyStruct.Beef}'/>
+                <echo message='Offset1: $OffsetOf(MyStruct.Zero)'/>
+                <echo message='Offset2: $OffsetOf(MyStruct.Beef)'/>
+            ";
+
+            string script = BuildXmlLayoutScript(src);
+            TestEnv test = new TestEnv(script, data);
+
+            // Act
+            test.Run();
+
+            // Assert
+            Assert.Equal(expOutput, test.Output);
+        }
+
+        [Fact]
+        public void Interpreter_Echo_UnionMembers()
+        {
+            // Arrange
+            ulong val = 0xDEADBEEF;
+            byte[] data = BitConverter.GetBytes(val);
+            string expOutput = string.Format(
+                "Value1: {0}" + Environment.NewLine +
+                "Value2: {1}" + Environment.NewLine +
+                "Offset1: 0" + Environment.NewLine +
+                "Offset2: 0",
+                val.ToString(), val.ToString());
+
+            string src = @"
+                <union name='MyUnion'>
+                    <uint name='Beef1'/>
+                    <uint name='Beef2'/>
+                </union>
+
+                <echo message='Value1: ${MyUnion.Beef1}'/>
+                <echo message='Value2: ${MyUnion.Beef2}'/>
+                <echo message='Offset1: $OffsetOf(MyUnion.Beef1)'/>
+                <echo message='Offset2: $OffsetOf(MyUnion.Beef2)'/>
             ";
 
             string script = BuildXmlLayoutScript(src);
@@ -162,7 +207,10 @@ namespace CascaraTests
         public void Interpreter_Typedef_Structure()
         {
             // Arrange
-            string expOutput = "Size: 8\nOffset1: 0\nOffset2: 4";
+            string expOutput =
+                "Size: 8" + Environment.NewLine +
+                "Offset1: 0" + Environment.NewLine +
+                "Offset2: 4";
             string src = @"
                 <typedef name='my_struct' kind='struct'>
                     <uint name='Foo'/>
@@ -190,7 +238,10 @@ namespace CascaraTests
         public void Interpreter_Typedef_Union()
         {
             // Arrange
-            string expOutput = "Size: 8\nOffset1: 0\nOffset2: 0";
+            string expOutput =
+                "Size: 4" + Environment.NewLine +
+                "Offset1: 0" + Environment.NewLine +
+                "Offset2: 0";
             string src = @"
                 <typedef name='my_union' kind='union'>
                     <uint name='Foo'/>
