@@ -99,7 +99,7 @@ namespace WHampson.CascaraExamples
             ";
 
             BinaryData b = new BinaryData(data);
-            b.ApplyLayout(LayoutScript.Parse(src));
+            b.RunLayoutScript(LayoutScript.Parse(src));
             DeserializationFlags flags = DeserializationFlags.Fields
                 | DeserializationFlags.IgnoreCase
                 | DeserializationFlags.NonPublic;
