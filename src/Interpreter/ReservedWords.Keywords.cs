@@ -36,9 +36,9 @@ namespace WHampson.Cascara.Interpreter
         internal static class Keywords
         {
             /// <summary>
-            /// The root element name for XML-formatted Binary Layouts.
+            /// The root element name for XML-formatted Layout Scripts.
             /// </summary>
-            public const string XmlDocumentRoot = "cascaraLayout";
+            public const string XmlDocumentRoot = "layoutScript";
 
             public static class DataTypes
             {

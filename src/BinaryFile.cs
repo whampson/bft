@@ -392,7 +392,7 @@ namespace WHampson.Cascara
         /// <summary>
         /// Converts the data in this <see cref="BinaryData"/> into an object
         /// by setting properties or fields using the names specified in a
-        /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
+        /// <see cref="LayoutScript"/>. The <see cref="RunLayoutScript(LayoutScript)"/>
         /// method must have been called prior for this to work properly.
         /// <see cref="DeserializationFlags"/> for this method are set to
         /// <see cref="DeserializationFlags.Public"/> and
@@ -406,7 +406,7 @@ namespace WHampson.Cascara
         /// <summary>
         /// Converts the data in this <see cref="BinaryData"/> into an object
         /// by setting properties or fields using the names specified in a
-        /// <see cref="LayoutScript"/>. The <see cref="ApplyLayout(LayoutScript)"/>
+        /// <see cref="LayoutScript"/>. The <see cref="RunLayoutScript(LayoutScript)"/>
         /// method must have been called prior for this to work properly.
         /// </summary>
         /// <param name="flags">
@@ -527,14 +527,26 @@ namespace WHampson.Cascara
             return GetPrimitive<T>(name) != null;
         }
 
-        public void ApplyLayout(LayoutScript layout)
+        /// <summary>
+        /// Executes a <see cref="LayoutScript"/> on the binary data.
+        /// Any textual output from the script will be written to
+        /// <see cref="Console.Out"/>.
+        /// <param name="script">The layout script to run.</param>
+        /// </summary>
+        public void RunLayoutScript(LayoutScript script)
         {
-            ApplyLayout(layout, Console.Out);
+            RunLayoutScript(script, Console.Out);
         }
 
-        public void ApplyLayout(LayoutScript layout, TextWriter echoWriter)
+        /// <summary>
+        /// Executes a <see cref="LayoutScript"/> on the binary data.
+        /// <param name="script">The layout script to run.</param>
+        /// <param name="scriptOutputWriter">A <see cref="TextWriter"/> to which
+        /// textual output from the script will be written.</param>
+        /// </summary>
+        public void RunLayoutScript(LayoutScript script, TextWriter scriptOutputWriter)
         {
-            LayoutInterpreter interpreter = new LayoutInterpreter(layout, echoWriter);
+            LayoutInterpreter interpreter = new LayoutInterpreter(script, scriptOutputWriter);
             interpreter.Execute(fileStructure.Symbol, this);
         }
 

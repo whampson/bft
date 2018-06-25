@@ -187,15 +187,6 @@ namespace WHampson.Cascara {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Missing name for Binary Layout..
-        /// </summary>
-        internal static string SyntaxExceptionMissingLayoutName {
-            get {
-                return ResourceManager.GetString("SyntaxExceptionMissingLayoutName", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Missing required parameter &apos;{0}&apos;..
         /// </summary>
         internal static string SyntaxExceptionMissingRequiredParameter {
@@ -223,7 +214,7 @@ namespace WHampson.Cascara {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Root element must be named &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Invalid root element name for Layout Script. Root element must be named &apos;{0}&apos;..
         /// </summary>
         internal static string SyntaxExceptionXmlInvalidRootElement {
             get {
