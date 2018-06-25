@@ -220,7 +220,7 @@ namespace CascaraTests
                 <my_struct name='Foobar'/>
 
                 <echo message='Size: $SizeOf(Foobar)'/>
-                <echo message='Offset1: ${Foobar.Foo}'/>
+                <echo message='Offset1: $OffsetOf(Foobar.Foo)'/>
                 <echo message='Offset2: $OffsetOf(Foobar.Bar)'/>
             ";
 
@@ -251,7 +251,7 @@ namespace CascaraTests
                 <my_union name='Foobar'/>
 
                 <echo message='Size: $SizeOf(Foobar)'/>
-                <echo message='Offset1: ${Foobar.Foo}'/>
+                <echo message='Offset1: $OffsetOf(Foobar.Foo)'/>
                 <echo message='Offset2: $OffsetOf(Foobar.Bar)'/>
             ";
 
