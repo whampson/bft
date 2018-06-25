@@ -9,7 +9,7 @@ namespace WHampson.CascaraExamples
     class Program
     {
         const string LayoutXml = @"
-<cascaraLayout name='a layout' description='A Test Layout'>
+<layoutScript name='a layout' description='A Test Layout'>
     <struct name='test'>
         <int name='foo'/>
         <struct name='nest'>
@@ -22,7 +22,7 @@ namespace WHampson.CascaraExamples
     </struct>
     <echo message='$OffsetOf(test.nest.str)'/>
     <echo message='$GlobalOffsetOf(test.nest.str)'/>
-</cascaraLayout>";
+</layoutScript>";
 
         static void Main(string[] args)
         {
@@ -78,7 +78,7 @@ namespace WHampson.CascaraExamples
             };
 
             string src = @"
-                <cascaraLayout>
+                <layoutScript>
                     <short name='Health'/>
                     <short name='Armor'/>
                     <int name='Score'/>
@@ -95,7 +95,7 @@ namespace WHampson.CascaraExamples
                         <align count='3'/>
                     </struct>
                     <char name='Name' count='32'/>
-                </cascaraLayout>
+                </layoutScript>
             ";
 
             BinaryData b = new BinaryData(data);

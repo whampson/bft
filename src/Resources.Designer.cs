@@ -223,7 +223,7 @@ namespace WHampson.Cascara {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Invalid root element name for Binary Layout. Root element must be named &apos;{0}&apos;..
+        ///   Looks up a localized string similar to Invalid root element name for Layout Script. Root element must be named &apos;{0}&apos;..
         /// </summary>
         internal static string SyntaxExceptionXmlInvalidRootElement {
             get {

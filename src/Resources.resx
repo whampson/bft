@@ -165,7 +165,7 @@
     <value>At least one file object declaration required.</value>
   </data>
   <data name="SyntaxExceptionMissingLayoutName" xml:space="preserve">
-    <value>Missing name for Binary Layout.</value>
+    <value>Missing name forLayout.</value>
   </data>
   <data name="SyntaxExceptionMissingRequiredParameter" xml:space="preserve">
     <value>Missing required parameter '{0}'.</value>
@@ -179,7 +179,7 @@
     <comment>{0} - identifier</comment>
   </data>
   <data name="SyntaxExceptionXmlInvalidRootElement" xml:space="preserve">
-    <value>Invalid root element name for Binary Layout. Root element must be named '{0}'.</value>
+    <value>Invalid root element name for Layout Script. Root element must be named '{0}'.</value>
     <comment>{0} - root element identifier</comment>
   </data>
   <data name="SyntaxExceptionXmlInvalidUsageOfRootElement" xml:space="preserve">
