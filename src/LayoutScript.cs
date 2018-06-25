@@ -161,7 +161,10 @@ namespace WHampson.Cascara
             }
 
             Version = version;
-            SourcePath = Path.GetFullPath(sourcePath);
+            if (sourcePath != null)
+            {
+                SourcePath = Path.GetFullPath(sourcePath);
+            }
             _metadata = new Dictionary<string, string>();
         }
 
