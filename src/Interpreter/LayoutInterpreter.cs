@@ -367,6 +367,43 @@ namespace WHampson.Cascara.Interpreter
             echoWriter.WriteLine(ResolveLayoutVariables(echoMsg));
         }
 
+        private void InterpretInclude(Statement stmt)
+        {
+            EnsureParameters(stmt, Parameters.Path);
+
+            GetRequiredParameter(stmt, Parameters.Path, out string path);
+
+            // Path is relative to the current layout script's path.
+            // If the current script was not loaded from a file, the path is
+            // relative to the current program's directory.
+            string fullPath;
+            if (layout.SourcePath == null)
+            {
+                fullPath = Directory.GetCurrentDirectory() + "/" + path;
+            }
+            else
+            {
+                fullPath = Path.GetDirectoryName(layout.SourcePath) + "/" + path;
+            }
+            fullPath = Path.GetFullPath(fullPath);
+
+            if (!File.Exists(fullPath))
+            {
+                string fmt = "File not found - {0}";
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, fmt, path);
+            }
+
+            LayoutScript incl = LayoutScript.Load(fullPath);
+            if (includedLayouts.Contains(incl))
+            {
+                string msg = "Include cycle detected!";
+                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg);
+            }
+
+            includedLayouts.Add(incl);
+            InterpretRootStatement(incl.RootStatement);
+        }
+
         private void InterpretLocal(Statement stmt)
         {
             EnsureParameters(stmt, Parameters.Comment, Parameters.Name, Parameters.Value);
@@ -395,7 +432,6 @@ namespace WHampson.Cascara.Interpreter
             GetRequiredParameter(stmt, Parameters.Kind, out string baseTypeName);
             GetRequiredParameter(stmt, Parameters.Name, out string newTypeName);
 
-            // TODO: handle struct/union
             bool isStruct = baseTypeName == Keywords.DataTypes.Struct;
             bool isUnion = baseTypeName == Keywords.DataTypes.Union;
             TypeInfo baseType;
@@ -705,7 +741,7 @@ namespace WHampson.Cascara.Interpreter
             //directiveActionMap[Keywords.Directives.Branch] = InterpretBranch;
             directiveActionMap[Keywords.Directives.Echo] = InterpretEcho;
             //directiveActionMap[Keywords.Directives.Goto] = InterpretGoto;
-            //directiveActionMap[Keywords.Directives.Include] = InterpretInclude;
+            directiveActionMap[Keywords.Directives.Include] = InterpretInclude;
             //directiveActionMap[Keywords.Directives.Label] = InterpretLabel;
             directiveActionMap[Keywords.Directives.Local] = InterpretLocal;
             directiveActionMap[Keywords.Directives.Typedef] = InterpretTypedef;
