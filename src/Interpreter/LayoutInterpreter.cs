@@ -169,10 +169,10 @@ namespace WHampson.Cascara.Interpreter
             bool hasName = GetParameter(stmt, Parameters.Name, out string objName);
 
             string typeName = stmt.Keyword;
-            bool isStruct = (typeName == Keywords.DataTypes.Struct || typeName == Keywords.DataTypes.Union);
+            bool isAnonymousStructure = (typeName == Keywords.DataTypes.Struct || typeName == Keywords.DataTypes.Union);
 
             TypeInfo type = default(TypeInfo);
-            if (!isStruct && !TryLookupType(typeName, out type))
+            if (!isAnonymousStructure && !TryLookupType(typeName, out type))
             {
                 string msg = "Unknown type '{0}'.";
                 throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, typeName);
@@ -229,13 +229,13 @@ namespace WHampson.Cascara.Interpreter
             // Set symbol properties
             sym.GlobalDataAddress = GlobalOffset;
             sym.LocalDataAddress = CurrentCodeBlock.Offset;
-            if (!(isStruct || type.IsStruct))
+            if (isAnonymousStructure || type.IsStruct || type.IsUnion)
             {
-                sym.DataType = type.NativeType;
+                sym.DataType = typeof(Structure);
             }
             else
             {
-                sym.DataType = typeof(Structure);
+                sym.DataType = type.NativeType;
             }
 
             int totalDataLength = 0;
@@ -248,7 +248,7 @@ namespace WHampson.Cascara.Interpreter
                 }
                 elemSym.GlobalDataAddress = GlobalOffset;
 
-                if (isStruct || type.IsStruct)
+                if (isAnonymousStructure || type.IsStruct || type.IsUnion)
                 {
                     if (hasName)
                     {
@@ -258,9 +258,9 @@ namespace WHampson.Cascara.Interpreter
                     {
                         scopeStack.Push(new CodeBlock(SymbolTable.CreateNamelessSymbolTable(CurrentCodeBlock.Symbol)));
                     }
-                    CurrentCodeBlock.IsUnion = (stmt.Keyword == Keywords.DataTypes.Union);
+                    CurrentCodeBlock.IsUnion = (stmt.Keyword == Keywords.DataTypes.Union || (type != null && type.IsUnion));
 
-                    IEnumerable<Statement> members = (isStruct)
+                    IEnumerable<Statement> members = (isAnonymousStructure)
                         ? stmt.NestedStatements
                         : type.Members;
                     if (!members.Any())
@@ -396,8 +396,23 @@ namespace WHampson.Cascara.Interpreter
             GetRequiredParameter(stmt, Parameters.Name, out string newTypeName);
 
             // TODO: handle struct/union
+            bool isStruct = baseTypeName == Keywords.DataTypes.Struct;
+            bool isUnion = baseTypeName == Keywords.DataTypes.Union;
+            TypeInfo baseType;
 
-            if (!TryLookupType(baseTypeName, out TypeInfo baseType)) {
+            if (isStruct)
+            {
+                // TODO: setting size to 0 here;, might want to reconsider this
+                // if we want SizeOf to work on types in addition to objects
+                baseType = TypeInfo.CreateStruct(0, stmt.NestedStatements.ToArray());
+            }
+            else if (isUnion)
+            {
+                // TODO: setting size to 0 here; might want to reconsider this
+                // if we want SizeOf to work on types in addition to objects
+                baseType = TypeInfo.CreateUnion(0, stmt.NestedStatements.ToArray());
+            }
+            else if (!TryLookupType(baseTypeName, out baseType)) {
                 string msg = "Unknown type '{0}'.";
                 throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, baseTypeName);
             }
@@ -625,8 +640,6 @@ namespace WHampson.Cascara.Interpreter
             {
                 return;
             }
-
-            // TODO: write char[] and Char8[] as contiguous characters
 
             if (!sym.IsStruct && !sym.IsCollection)
             {
