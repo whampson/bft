@@ -25,6 +25,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -160,7 +161,7 @@ namespace WHampson.Cascara
             }
 
             Version = version;
-            SourcePath = sourcePath;
+            SourcePath = Path.GetFullPath(sourcePath);
             _metadata = new Dictionary<string, string>();
         }
 
