@@ -42,7 +42,20 @@ namespace WHampson.Cascara.Interpreter
 
         public static TypeInfo CreateStruct(int size, params Statement[] members)
         {
-            return new TypeInfo(size, members);
+            TypeInfo ti = new TypeInfo(size, members);
+            ti.IsStruct = true;
+            ti.IsUnion = false;
+
+            return ti;
+        }
+
+        public static TypeInfo CreateUnion(int size, params Statement[] members)
+        {
+            TypeInfo ti = new TypeInfo(size, members);
+            ti.IsStruct = false;
+            ti.IsUnion = true;
+
+            return ti;
         }
 
         private TypeInfo(int size, Type nativeType)
@@ -50,6 +63,9 @@ namespace WHampson.Cascara.Interpreter
             Size = size;
             NativeType = nativeType;
             Members = new List<Statement>();
+            IsPrimitive = true;
+            IsStruct = false;
+            IsUnion = false;
         }
 
         private TypeInfo(int size, params Statement[] members)
@@ -57,6 +73,7 @@ namespace WHampson.Cascara.Interpreter
             Size = size;
             NativeType = null;
             Members = new List<Statement>(members);
+            IsPrimitive = false;
         }
 
         public int Size
@@ -74,9 +91,22 @@ namespace WHampson.Cascara.Interpreter
             get;
         }
 
+        public bool IsPrimitive
+        {
+            get;
+            private set;
+        }
+
         public bool IsStruct
         {
-            get { return NativeType == null && Members.Any(); }
+            get;
+            private set;
+        }
+
+        public bool IsUnion
+        {
+            get;
+            private set;
         }
 
         public override string ToString()
@@ -84,7 +114,9 @@ namespace WHampson.Cascara.Interpreter
             JObject o = new JObject();
             o.Add(nameof(Size), Size);
             o.Add(nameof(NativeType), NativeType.FullName);
+            o.Add(nameof(IsPrimitive), IsPrimitive);
             o.Add(nameof(IsStruct), IsStruct);
+            o.Add(nameof(IsUnion), IsUnion);
             o.Add(nameof(Members), JToken.FromObject(Members));
             return o.ToString(Formatting.None);
         }
