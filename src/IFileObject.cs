@@ -81,7 +81,7 @@ namespace WHampson.Cascara
         /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        BinaryData SourceFile
+        BinaryData DataSource
         {
             get;
         }
