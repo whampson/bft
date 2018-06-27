@@ -40,7 +40,7 @@ namespace WHampson.Cascara
         where T : struct
     {
         /// <summary>
-        /// Creates a <see cref="Primitive"/> at the specified offset in the
+        /// Creates a <see cref="Primitive{T}"/> at the specified offset in the
         /// <see cref="BinaryData"/>.
         /// </summary>
         public Primitive(BinaryData data, int offset)
