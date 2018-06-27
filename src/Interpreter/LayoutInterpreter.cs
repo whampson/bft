@@ -242,7 +242,7 @@ namespace WHampson.Cascara.Interpreter
             SymbolTable elemSym = sym;
             for (int i = 0; i < count; i++)
             {
-                if (hasCount)
+                if (hasCount && hasName)
                 {
                     elemSym = sym[i];
                 }
