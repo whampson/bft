@@ -343,7 +343,7 @@ namespace WHampson.Cascara.Interpreter
         /// <param name="parent">
         /// The <see cref="SymbolTable"/> that this <see cref="SymbolTable"/> is a child of.
         /// </param>
-        private SymbolTable(string name, SymbolTable parent)
+        internal SymbolTable(string name, SymbolTable parent)
             : this(name, parent, 0)
         {
         }
@@ -364,7 +364,7 @@ namespace WHampson.Cascara.Interpreter
         /// <exception cref="ArgumentOutOfRangeException">
         /// Thrown if the <paramref name="elemCount"/> is out of range.
         /// </exception>
-        private SymbolTable(string identifier, SymbolTable parent, int elemCount)
+        internal SymbolTable(string identifier, SymbolTable parent, int elemCount)
         {
             if (elemCount < 0)
             {

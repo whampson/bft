@@ -39,6 +39,22 @@ namespace WHampson.Cascara
     public class Primitive<T> : IFileObject
         where T : struct
     {
+        /// <summary>
+        /// Creates a <see cref="Primitive"/> at the specified offset in the
+        /// <see cref="BinaryData"/>.
+        /// </summary>
+        public Primitive(BinaryData data, int offset)
+        {
+            if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
+            {
+                string msg = Resources.ArgumentExceptionPrimitiveType;
+                throw new ArgumentException(msg, nameof(T));
+            }
+
+            this.DataSource = data;
+            this.Symbol = new SymbolTable(null, null);
+        }
+
         internal Primitive(BinaryData data, SymbolTable symbol)
         {
             if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
