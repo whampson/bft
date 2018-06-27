@@ -101,8 +101,9 @@ namespace WHampson.Cascara.Interpreter
                 return false;
             }
 
-            // Don't allow identifiers that match reserved words
-            if (ReservedWords.AllReservedWords.Contains(identifier))
+            // Don't allow identifiers that match certain reserved words
+            if (ReservedWords.Keywords.AllKeywords.Contains(identifier) ||
+                ReservedWords.SpecialVariables.AllSpecialVariables.Contains(identifier))
             {
                 return false;
             }
