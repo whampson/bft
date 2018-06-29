@@ -38,7 +38,7 @@ namespace WHampson.Cascara
     {
         internal Structure(BinaryData sourceFile, SymbolTable symbol)
         {
-            this.SourceFile = sourceFile;
+            this.DataSource = sourceFile;
             Symbol = symbol;
         }
 
@@ -109,7 +109,7 @@ namespace WHampson.Cascara
         /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        public BinaryData SourceFile
+        public BinaryData DataSource
         {
             get;
         }
@@ -392,7 +392,7 @@ namespace WHampson.Cascara
                 return null;
             }
 
-            return new Structure(SourceFile, sym);
+            return new Structure(DataSource, sym);
         }
 
         /// <summary>
@@ -423,7 +423,7 @@ namespace WHampson.Cascara
                 return null;
             }
 
-            return new Primitive<T>(SourceFile, sym);
+            return new Primitive<T>(DataSource, sym);
         }
 
         private object GetPrimitive(Type t, string name, bool ignoreCase)
@@ -466,7 +466,7 @@ namespace WHampson.Cascara
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            return new Structure(SourceFile, Symbol[index]);
+            return new Structure(DataSource, Symbol[index]);
         }
 
         /// <summary>

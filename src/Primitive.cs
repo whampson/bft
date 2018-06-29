@@ -39,7 +39,23 @@ namespace WHampson.Cascara
     public class Primitive<T> : IFileObject
         where T : struct
     {
-        internal Primitive(BinaryData sourceFile, SymbolTable symbol)
+        /// <summary>
+        /// Creates a <see cref="Primitive{T}"/> at the specified offset in the
+        /// <see cref="BinaryData"/>.
+        /// </summary>
+        public Primitive(BinaryData data, int offset)
+        {
+            if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
+            {
+                string msg = Resources.ArgumentExceptionPrimitiveType;
+                throw new ArgumentException(msg, nameof(T));
+            }
+
+            this.DataSource = data;
+            this.Symbol = new SymbolTable(null, null);
+        }
+
+        internal Primitive(BinaryData data, SymbolTable symbol)
         {
             if (!PrimitiveTypeUtils.IsPrimitiveType<T>())
             {
@@ -52,7 +68,7 @@ namespace WHampson.Cascara
                 throw new ArgumentException(msg, nameof(T));
             }
 
-            this.SourceFile = sourceFile;
+            this.DataSource = data;
             this.Symbol = symbol;
         }
 
@@ -90,7 +106,7 @@ namespace WHampson.Cascara
                     string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
-                return SourceFile.Get<T>(GlobalOffset);
+                return DataSource.Get<T>(GlobalOffset);
             }
 
             set
@@ -101,7 +117,7 @@ namespace WHampson.Cascara
                     string msg = string.Format(fmt, nameof(Value));
                     throw new InvalidOperationException(msg);
                 }
-                SourceFile.Set<T>(GlobalOffset, value);
+                DataSource.Set<T>(GlobalOffset, value);
             }
         }
 
@@ -198,7 +214,7 @@ namespace WHampson.Cascara
         /// Gets the <see cref="BinaryData"/> that this <see cref="IFileObject"/>
         /// belongs to.
         /// </summary>
-        public BinaryData SourceFile
+        public BinaryData DataSource
         {
             get;
         }
@@ -220,7 +236,7 @@ namespace WHampson.Cascara
         public Primitive<U> ReinterpretCast<U>()
             where U : struct
         {
-            return new Primitive<U>(SourceFile, Symbol);
+            return new Primitive<U>(DataSource, Symbol);
         }
 
         /// <summary>
@@ -250,7 +266,7 @@ namespace WHampson.Cascara
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            return new Primitive<T>(SourceFile, Symbol[index]);
+            return new Primitive<T>(DataSource, Symbol[index]);
         }
 
         /// <summary>
