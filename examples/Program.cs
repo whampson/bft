@@ -92,7 +92,7 @@ namespace WHampson.CascaraExamples
                         <uint name='NumDeaths'/>
                         <int name='HighScore'/>
                         <bool name='FoundTreasure'/>
-                        <align count='3'/>
+                        <byte count='3'/>
                     </struct>
                     <char name='Name' count='32'/>
                 </layoutScript>

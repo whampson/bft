@@ -77,7 +77,6 @@ namespace WHampson.Cascara.Interpreter
 
             public static class Directives
             {
-                public const string Align = "align";
                 public const string Branch = "branch";
                 public const string Echo = "echo";
                 public const string Goto = "goto";

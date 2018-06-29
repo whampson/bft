@@ -316,48 +316,6 @@ namespace WHampson.Cascara.Interpreter
             sym.DataLength = totalDataLength;
         }
 
-        private void InterpretAlign(Statement stmt)
-        {
-            EnsureParameters(stmt, Parameters.Comment, Parameters.Count, Parameters.Kind);
-
-            bool hasCount = GetParameter(stmt, Parameters.Count, out string countStr);
-            bool hasKind = GetParameter(stmt, Parameters.Kind, out string kindStr);
-
-            int count = 1;
-            int unitSize = 1;
-
-            if (hasCount)
-            {
-                try
-                {
-                    count = (int) EvaluateExpression(countStr);
-                }
-                catch (SyntaxErrorException e)
-                {
-                    string msg = "'{0}' is not a valid expression.";
-                    throw LayoutScriptException.Create<LayoutScriptException>(layout, e, stmt, msg, countStr);
-                }
-
-                if (count <= 0)
-                {
-                    string msg = "Parameter '{0}' must be a positive integer.";
-                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, Parameters.Count);
-                }
-            }
-
-            if (hasKind)
-            {
-                if (!TryLookupType(kindStr, out TypeInfo unit))
-                {
-                    string msg = "Unknown type '{0}'.";
-                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, kindStr);
-                }
-                unitSize = unit.Size;
-            }
-
-            CurrentCodeBlock.Offset += (unitSize * count);
-        }
-
         private void InterpretEcho(Statement stmt)
         {
             EnsureParameters(stmt, Parameters.Comment, Parameters.Message);
@@ -737,7 +695,6 @@ namespace WHampson.Cascara.Interpreter
         {
             statementTypeActionMap[StatementType.FileObjectDefinition] = InterpretFileObjectDefinition;
 
-            directiveActionMap[Keywords.Directives.Align] = InterpretAlign;
             //directiveActionMap[Keywords.Directives.Branch] = InterpretBranch;
             directiveActionMap[Keywords.Directives.Echo] = InterpretEcho;
             //directiveActionMap[Keywords.Directives.Goto] = InterpretGoto;
