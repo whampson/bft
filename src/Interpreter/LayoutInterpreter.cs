@@ -390,40 +390,66 @@ namespace WHampson.Cascara.Interpreter
             GetRequiredParameter(stmt, Parameters.Kind, out string baseTypeName);
             GetRequiredParameter(stmt, Parameters.Name, out string newTypeName);
 
-            bool isStruct = baseTypeName == Keywords.DataTypes.Struct;
-            bool isUnion = baseTypeName == Keywords.DataTypes.Union;
-            TypeInfo baseType;
-
-            if (isStruct)
+            if (!SymbolTable.IsIdentifierValid(newTypeName))
             {
-                // TODO: setting size to 0 here;, might want to reconsider this
-                // if we want SizeOf to work on types in addition to objects
-                baseType = TypeInfo.CreateStruct(0, stmt.NestedStatements.ToArray());
-            }
-            else if (isUnion)
-            {
-                // TODO: setting size to 0 here; might want to reconsider this
-                // if we want SizeOf to work on types in addition to objects
-                baseType = TypeInfo.CreateUnion(0, stmt.NestedStatements.ToArray());
-            }
-            else if (!TryLookupType(baseTypeName, out baseType)) {
-                string msg = "Unknown type '{0}'.";
-                throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, baseTypeName);
-            }
-
-            if (!SymbolTable.IsIdentifierValid(newTypeName)) {
                 string msg = "Invalid identifier '{0}'. " +
                     "Identifiers must consist of only letters, numbers, and underscores. " +
                     "Identifiers cannot begin with a digit nor can they be identical to a reserved word.";
                 throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, newTypeName);
             }
 
-            if (TryLookupType(newTypeName, out TypeInfo dummyType)) {
+            if (TryLookupType(newTypeName, out TypeInfo dummyType))
+            {
                 string msg = "Type '{0}' already exists.";
                 throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, newTypeName);
             }
 
+            bool isStruct = baseTypeName == Keywords.DataTypes.Struct;
+            bool isUnion = baseTypeName == Keywords.DataTypes.Union;
+            TypeInfo baseType;
+
+            if (isStruct || isUnion)
+            {
+                baseType = CreateStructureType(stmt, isUnion);
+            }
+            else
+            {
+                bool exists = TryLookupType(baseTypeName, out baseType);
+                if (!exists)
+                {
+                    string msg = "Unknown type '{0}'.";
+                    throw LayoutScriptException.Create<LayoutScriptException>(layout, stmt, msg, baseTypeName);
+                }
+            }
+
             userDefinedTypes[newTypeName] = baseType;
+        }
+
+        private TypeInfo CreateStructureType(Statement stmt, bool isUnion)
+        {
+            SymbolTable codeBlockSym = SymbolTable.CreateNamelessSymbolTable(CurrentCodeBlock.Symbol);
+            CodeBlock codeBlock = new CodeBlock(codeBlockSym);
+            codeBlock.IsProcessingTypedef = true;
+            codeBlock.IsUnion = isUnion;
+
+            scopeStack.Push(codeBlock);
+            foreach (Statement s in stmt.NestedStatements)
+            {
+                InterpretStatement(s);
+            }
+            scopeStack.Pop();
+
+            TypeInfo baseType;
+            if (isUnion)
+            {
+                baseType = TypeInfo.CreateUnion(codeBlock.MaxOffset, stmt.NestedStatements.ToArray());
+            }
+            else
+            {
+                baseType = TypeInfo.CreateStruct(codeBlock.MaxOffset, stmt.NestedStatements.ToArray());
+            }
+
+            return baseType;
         }
 
         private bool TryLookupType(string typeName, out TypeInfo typeInfo)
@@ -584,11 +610,14 @@ namespace WHampson.Cascara.Interpreter
                 return localVarVal + "";
             }
 
-            // Handle file-mapped variables
-            if (!CurrentCodeBlock.Symbol.TryLookup(varName, out SymbolTable sym))
+            bool isVar = CurrentCodeBlock.Symbol.TryLookup(varName, out SymbolTable sym);
+            bool isUserDefinedType = userDefinedTypes.TryGetValue(varName, out TypeInfo usrType);
+            bool isBuiltinType = BuiltInPrimitives.TryGetValue(varName, out TypeInfo builtinType);
+
+            if (!(isVar || isUserDefinedType || isBuiltinType))
             {
                 // TODO: get statement. Perhaps throw a different exception and have Caller of ResolveVariables catch and handle it
-                string msg = "Unknown layout variable '{0}'";
+                string msg = "Unknown variable or typename '{0}'";
                 throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
             }
 
@@ -596,16 +625,72 @@ namespace WHampson.Cascara.Interpreter
             switch (op)
             {
                 case Operator.GlobalOffsetOf:
-                    val = sym.GlobalDataAddress.ToString();
+                    if (CurrentCodeBlock.IsProcessingTypedef)
+                    {
+                        string msg = "GlobalOffsetOf operator not valid within type definitions.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
+
+                    if (isVar)
+                    {
+                        val = sym.GlobalDataAddress.ToString();
+                    }
+                    else
+                    {
+                        string msg = "GlobalOffsetOf operator not valid for types.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
                     break;
+
                 case Operator.OffsetOf:
-                    val = sym.LocalDataAddress.ToString();
+                    if (CurrentCodeBlock.IsProcessingTypedef)
+                    {
+                        string msg = "OffsetOf operator not valid within type definitions.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
+
+                    if (isVar)
+                    {
+                        val = sym.LocalDataAddress.ToString();
+                    }
+                    else
+                    {
+                        string msg = "OffsetOf operator not valid for types.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
                     break;
+
                 case Operator.SizeOf:
-                    val = sym.DataLength.ToString();
+                    if (isVar)
+                    {
+                        val = sym.DataLength.ToString();
+                    }
+                    else if (isBuiltinType)
+                    {
+                        val = builtinType.Size.ToString();
+                    }
+                    else if (isUserDefinedType)
+                    {
+                        val = usrType.Size.ToString();
+                    }
                     break;
+
                 case Operator.ValueOf:
-                    val = StringValueOf(sym);
+                    if (CurrentCodeBlock.IsProcessingTypedef)
+                    {
+                        string msg = "ValueOf operator not valid within type definitions.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
+
+                    if (isVar)
+                    {
+                        val = StringValueOf(sym);
+                    }
+                    else
+                    {
+                        string msg = "ValueOf operator not valid for types.";
+                        throw LayoutScriptException.Create<LayoutScriptException>(layout, null, msg, varName);
+                    }
                     break;
             }
 
@@ -765,6 +850,12 @@ namespace WHampson.Cascara.Interpreter
             }
 
             public bool IsUnion
+            {
+                get;
+                set;
+            }
+
+            public bool IsProcessingTypedef
             {
                 get;
                 set;
