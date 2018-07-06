@@ -314,6 +314,22 @@ namespace WHampson.Cascara
             return values;
         }
 
+        public string GetString(int index, int maxLen)
+        {
+            string s = "";
+            char c;
+
+            for (int i = 0; i < maxLen; i++) {
+                c = (char) this[index + i];
+                if (c == '\0') {
+                    break;
+                }
+                s += c;
+            }
+
+            return s;
+        }
+
         /// <summary>
         /// Sets a value in the file data.
         /// </summary>
