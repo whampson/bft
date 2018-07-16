@@ -563,19 +563,18 @@ namespace WHampson.Cascara
         public void RunLayoutScript(LayoutScript script, TextWriter scriptOutputWriter)
         {
             LayoutInterpreter interpreter = new LayoutInterpreter(script, scriptOutputWriter);
+
+            fileStructure = new Structure(this, SymbolTable.CreateRootSymbolTable());
             interpreter.Execute(fileStructure.Symbol, this);
         }
 
-        /// <summary>
-        /// Frees all unmanaged memory and disposes this object.
-        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (!hasBeenDisposed)
             {
                 if (disposing)
                 {
-                    // TODO: dispose managed state (managed objects).
+                    // dispose managed objects...
                 }
 
                 if (dataPtr != IntPtr.Zero)
@@ -588,17 +587,11 @@ namespace WHampson.Cascara
             }
         }
 
-        /// <summary>
-        /// Destructor.
-        /// </summary>
         ~BinaryData()
         {
             Dispose(false);
         }
 
-        /// <summary>
-        /// Frees all unmanaged memory and disposes this object.
-        /// </summary>
         public void Dispose()
         {
             Dispose(true);
